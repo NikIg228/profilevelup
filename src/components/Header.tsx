@@ -7,7 +7,7 @@ export default function Header() {
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-      isActive ? 'bg-primary text-white' : 'text-ink hover:bg-secondary/40'
+      isActive ? 'text-primary' : 'text-heading hover:text-primary'
     }`;
 
   return (
@@ -15,7 +15,7 @@ export default function Header() {
       <div className="container-balanced h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img
-            src="/ogog2.png"
+            src="/new logo.jpeg"
             alt="Логотип Профиль будущего"
             className="w-10 h-10 rounded-full object-cover shadow-soft border border-secondary/50"
             loading="lazy"
@@ -31,7 +31,7 @@ export default function Header() {
         </nav>
 
         <button
-          className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl hover:bg-secondary/40 text-ink"
+          className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl hover:bg-secondary/40 text-heading"
           onClick={() => setOpen(!open)}
           aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
           aria-expanded={open}

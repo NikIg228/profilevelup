@@ -11,7 +11,7 @@ body {
 }
 
 h1, h2, h3, h4 {
-  @apply font-heading text-ink;
+  @apply font-heading text-heading;
 }
 
 .container-balanced {
@@ -30,7 +30,7 @@ h1, h2, h3, h4 {
   border-radius: 8px;
 }
 .btn-primary:hover {
-  background-color: #244A40;
+  background-color: #9E7F3A;
 }
 .btn-ghost {
   @apply bg-transparent text-primary border border-primary;
@@ -38,7 +38,8 @@ h1, h2, h3, h4 {
   border-radius: 8px;
 }
 .btn-ghost:hover {
-  background-color: rgba(47, 93, 80, 0.08);
+  background-color: #C9A24D;
+  color: #FFFFFF;
 }
 
 .fade-section {

@@ -117,13 +117,13 @@ export default function HomePage() {
             </div>
           </div>
           <div className="lg:hidden fade-section">
-            <div className="rounded-2xl overflow-visible bg-base aspect-[3/2] mb-6 sm:mb-0">
-              <img src="/ogog2.png" alt="Иллюстрация профориентации" className="w-full h-full object-contain" loading="lazy" />
+            <div className="rounded-2xl overflow-visible bg-base aspect-square mb-6 sm:mb-0 flex items-center justify-center p-8">
+              <img src="/new logo.jpeg" alt="Логотип Профиль будущего" className="w-full h-full object-contain" loading="lazy" />
             </div>
           </div>
           <div className="hidden lg:block fade-section">
-            <div className="rounded-2xl overflow-visible bg-base aspect-[3/2]">
-              <img src="/ogog2.png" alt="Иллюстрация профориентации" className="w-full h-full object-contain" loading="lazy" />
+            <div className="rounded-2xl overflow-visible bg-base aspect-square flex items-center justify-center p-8">
+              <img src="/new logo.jpeg" alt="Логотип Профиль будущего" className="w-full h-full object-contain" loading="lazy" />
             </div>
           </div>
         </div>
@@ -193,11 +193,11 @@ export default function HomePage() {
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-primary">Расширенный тест</h3>
-                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-primary-600 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     6 990 тг
                   </span>
                 </div>
-                <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-secondary pl-4">
+                <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-primary-200 pl-4">
                   <ul className="list-disc list-inside space-y-2">
                     <li>Персональный профиль, отражающий твой текущий этап жизни</li>
                     <li>Индивидуальный отчёт с разбором и рекомендациями (PDF)</li>
@@ -218,9 +218,9 @@ export default function HomePage() {
           </div>
 
           {/* Premium для родителей */}
-          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-gradient-to-br from-accent/5 via-primary/5 to-white order-3 h-full min-h-[500px] relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer border-2 border-accent/20 hover:border-accent/40">
+          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 h-full min-h-[500px] relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer border-2 border-primary hover:border-primary-hover">
             {/* Плавающий бейдж */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-warning/10 text-warning-700 rounded-full px-3 py-1 text-sm shadow-md z-10 whitespace-nowrap font-semibold border border-warning/20">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary/10 text-primary rounded-full px-3 py-1 text-sm shadow-md z-10 whitespace-nowrap font-semibold border border-primary/20">
               ⭐ Рекомендуем родителям
             </div>
             
@@ -252,7 +252,7 @@ export default function HomePage() {
                     <li>Какие слова и подходы работают, а какие вызывают сопротивление</li>
                     <li>На что можно опираться в диалоге, а где лучше не давить</li>
                   </ul>
-                  <p className="mt-3 text-xs text-muted-light">Подходит родителям подростков 13–18 лет</p>
+                  <p className="mt-3 text-xs text-muted">Подходит родителям подростков 13–18 лет</p>
                 </div>
               </div>
               <button
@@ -693,11 +693,11 @@ export default function HomePage() {
               />
               <span>
                 Настоящим Вы соглашаетесь с{' '}
-                <Link to="/privacy" className="text-primary hover:underline">
+                <Link to="/privacy" className="text-blue-500 hover:underline">
                   Политикой конфиденциальности
                 </Link>
                 ,{' '}
-                <Link to="/terms" className="text-primary hover:underline">
+                <Link to="/terms" className="text-blue-500 hover:underline">
                   Пользовательским соглашением
                 </Link>{' '}
                 и получением рассылок.<br />
@@ -762,8 +762,8 @@ function WhoForCards() {
             loading="lazy"
           />
           {/* Элементы роста */}
-          <Sparkles className="absolute top-1 right-1 sm:top-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 text-muted-light/60" />
-          <Sparkles className="absolute top-2 left-1 sm:top-4 sm:left-2 w-3 h-3 sm:w-4 sm:h-4 text-muted-light/50" />
+          <Sparkles className="absolute top-1 right-1 sm:top-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 text-blue-400/60" />
+          <Sparkles className="absolute top-2 left-1 sm:top-4 sm:left-2 w-3 h-3 sm:w-4 sm:h-4 text-blue-300/50" />
         </div>
         
         <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3">Ученикам старших классов</h3>
