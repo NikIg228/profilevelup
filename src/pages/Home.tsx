@@ -105,14 +105,14 @@ export default function HomePage() {
         <div className="grid lg:grid-cols-2 items-center gap-8">
           <div className="fade-section">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight">
-              Твоя профессия - твой путь.
-              <span className="block">Выбери его осознанно</span>
+              Твой путь начинается с понимания себя
             </h1>
             <p className="mt-4 text-muted text-lg">
-             Авторский тест, созданный на основе мировых методик: RIASEC (Холланд) и MBTI
+            Короткий тест, который помогает увидеть свои сильные стороны
+            и роли, в которых тебе естественно и комфортно быть собой.
             </p>
             <div className="mt-6 flex gap-3 flex-col sm:flex-row">
-              <button className="btn btn-primary px-5 py-3 w-full sm:w-auto" onClick={() => openFor('free')}>Начать тестирование</button>
+              <button className="btn btn-primary px-5 py-3 w-full sm:w-auto" onClick={() => openFor('free')}>Начать бесплатное тестирование</button>
               <Link to="/details" className="btn btn-ghost px-5 py-3 w-full sm:w-auto">Подробнее</Link>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function HomePage() {
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-primary">Базовый тест</h3>
-                  <span className="px-4 py-1.5 bg-green-500 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     Бесплатно
                   </span>
                 </div>
@@ -162,7 +162,7 @@ export default function HomePage() {
                 </ul>
               </div>
               <button
-                className="btn mt-6 px-5 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-300 rounded-xl group-hover:scale-105"
+                className="btn btn-primary mt-6 px-5 py-3 text-white font-semibold transition-all duration-300 rounded-xl group-hover:scale-105"
                 onClick={() => openFor('free', 'Базовый тест')}
               >
                 Начать тест
@@ -171,11 +171,11 @@ export default function HomePage() {
           </div>
 
           {/* Расширенный тест */}
-          <div className="card p-8 flex flex-col border border-green-100 rounded-2xl shadow-md bg-gradient-to-b from-[#F6FAF8] to-white order-2 h-full min-h-[440px] relative
-            transition-all duration-300 hover:shadow-xl hover:-translate-y-1
+          <div className="card p-8 flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 h-full min-h-[440px] relative
+            transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/40
             group cursor-pointer">
             {/* Маленький бейдж */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-50 text-blue-700 shadow-sm rounded-full px-3 py-1 text-xs z-10">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-info/10 text-info shadow-sm rounded-full px-3 py-1 text-xs z-10 font-semibold border border-info/20">
               🔍 Оптимальный выбор
             </div>
             
@@ -193,11 +193,11 @@ export default function HomePage() {
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-primary">Расширенный тест</h3>
-                  <span className="px-4 py-1.5 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-primary-600 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     6 990 тг
                   </span>
                 </div>
-                <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-green-100 pl-4">
+                <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-primary-200 pl-4">
                   <ul className="list-disc list-inside space-y-2">
                     <li>Персональный профиль, отражающий твой текущий этап жизни</li>
                     <li>Индивидуальный отчёт с разбором и рекомендациями (PDF)</li>
@@ -209,7 +209,7 @@ export default function HomePage() {
                 </div>
               </div>
               <button
-                className="btn mt-6 px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md rounded-xl transition-all duration-300 group-hover:scale-105"
+                className="btn btn-primary mt-6 px-5 py-3 text-white font-semibold shadow-md rounded-xl transition-all duration-300 group-hover:scale-105"
                 onClick={() => openFor('pro', 'Расширенный тест')}
               >
                 Выбрать
@@ -218,9 +218,9 @@ export default function HomePage() {
           </div>
 
           {/* Premium для родителей */}
-          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-gradient-to-b from-[#F7FDF9] to-white order-3 h-full relative transition-all duration-300 lg:scale-105 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer" style={{ border: '2px solid transparent', backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, rgba(74, 222, 128, 0.4), rgba(21, 128, 61, 0.4))', backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box' }}>
+          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-gradient-to-br from-accent/5 via-primary/5 to-white order-3 h-full relative transition-all duration-300 lg:scale-105 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer border-2 border-accent/20 hover:border-accent/40">
             {/* Плавающий бейдж */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-100 text-amber-700 rounded-full px-3 py-1 text-sm shadow z-10 whitespace-nowrap">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-warning/10 text-warning-700 rounded-full px-3 py-1 text-sm shadow-md z-10 whitespace-nowrap font-semibold border border-warning/20">
               ⭐ Рекомендуем родителям
             </div>
             
@@ -238,7 +238,7 @@ export default function HomePage() {
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-primary">Premium для родителей</h3>
-                  <span className="px-4 py-1.5 bg-green-700 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-accent text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     14 990 тг
                   </span>
                 </div>
@@ -256,7 +256,7 @@ export default function HomePage() {
                 </div>
               </div>
               <button
-                className="btn mt-6 px-5 py-3 bg-green-700/95 hover:bg-green-800 text-white font-semibold shadow-lg rounded-xl scale-[102%] transition-all duration-300 group-hover:scale-110"
+                className="btn mt-6 px-5 py-3 bg-accent hover:bg-accent/90 text-white font-semibold shadow-lg rounded-xl scale-[102%] transition-all duration-300 group-hover:scale-110"
                 onClick={() => openFor('pro', 'Premium для родителей')}
               >
                 Выбрать
@@ -721,7 +721,7 @@ export default function HomePage() {
             }`}
             onClick={startTest}
           >
-            Начать тестирование
+            Начать бесплатное тестирование
           </button>
         </div>
       </Modal>

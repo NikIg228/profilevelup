@@ -8,34 +8,38 @@ export default {
   theme: {
     extend: {
       colors: {
-        base: '#F8F6F0',
+        base: '#F0FDF4', // Светло-зеленый фон (было #F8F6F0)
         card: '#FFFFFF',
-        ink: '#3A3A3A',
-        muted: '#4A4A4A',
-        heading: '#3A5A40',
-        secondary: '#DAD7CD',
+        ink: '#1F2937', // Более контрастный текст (было #3A3A3A)
+        muted: '#6B7280', // Более читаемый серый (было #4A4A4A)
+        heading: '#065F46', // Яркий темно-зеленый (было #3A5A40)
+        secondary: '#D1FAE5', // Светло-зеленый для фонов (было #DAD7CD)
         primary: {
-          DEFAULT: '#6B9080',
-          50: '#F2F6F4',
-          100: '#E0EAE5',
-          200: '#C2D5CC',
-          300: '#A4C1B3',
-          400: '#87AC9B',
-          500: '#6B9080',
-          600: '#547366',
-          700: '#3D564C',
-          800: '#273A32',
-          900: '#112017',
+          DEFAULT: '#10B981', // Яркий зеленый (было #6B9080)
+          50: '#ECFDF5',
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#34D399',
+          500: '#10B981', // Основной
+          600: '#059669',
+          700: '#047857',
+          800: '#065F46',
+          900: '#064E3B',
         },
-        accent: '#C67C48',
+        accent: '#F59E0B', // Яркий янтарный для акцентов (было #C67C48)
+        success: '#10B981',
+        info: '#3B82F6',
+        warning: '#F59E0B',
+        error: '#EF4444',
       },
       borderRadius: {
         xl: '16px',
         lg: '12px',
       },
       boxShadow: {
-        soft: '0 8px 24px rgba(17, 17, 19, 0.06)',
-        hover: '0 12px 28px rgba(17, 17, 19, 0.10)'
+        soft: '0 8px 24px rgba(16, 185, 129, 0.08)',
+        hover: '0 12px 28px rgba(16, 185, 129, 0.15)'
       },
       fontFamily: {
         heading: ['Montserrat', 'Poppins', 'Inter', 'system-ui', 'sans-serif'],
