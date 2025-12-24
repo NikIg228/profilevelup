@@ -10,7 +10,7 @@ export default function ProgressBar({ current, total }: Props) {
       </div>
       <div className="relative h-3 bg-secondary/30 rounded-full overflow-hidden">
         <div 
-          className="h-full bg-gradient-to-r from-primary to-primary-600 rounded-full transition-all duration-500 ease-out relative"
+          className="h-full bg-gradient-to-r from-primary to-primary-hover rounded-full transition-all duration-500 ease-out relative"
           style={{ width: `${pct}%` }}
         >
           <div className="absolute inset-0 bg-white/20 animate-pulse"></div>

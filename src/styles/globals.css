@@ -11,7 +11,7 @@ body {
 }
 
 h1, h2, h3, h4 {
-  @apply font-heading text-heading;
+  @apply font-heading text-ink;
 }
 
 .container-balanced {
@@ -26,10 +26,19 @@ h1, h2, h3, h4 {
   @apply inline-flex items-center justify-center rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary;
 }
 .btn-primary {
-  @apply bg-primary text-white hover:bg-primary-600 focus:ring-primary-200 shadow-md hover:shadow-lg transition-all duration-200;
+  @apply bg-primary text-white focus:ring-primary/20 shadow-sm hover:shadow-md transition-all duration-200;
+  border-radius: 8px;
+}
+.btn-primary:hover {
+  background-color: #244A40;
 }
 .btn-ghost {
-  @apply bg-transparent text-ink border border-secondary/60 hover:bg-secondary/30;
+  @apply bg-transparent text-primary border border-primary;
+  border-width: 1.5px;
+  border-radius: 8px;
+}
+.btn-ghost:hover {
+  background-color: rgba(47, 93, 80, 0.08);
 }
 
 .fade-section {

@@ -124,9 +124,9 @@ export default function TestingPage() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0"
+              className="w-12 h-12 rounded-full bg-badge-bg flex items-center justify-center flex-shrink-0"
             >
-              <CheckCircle className="w-6 h-6 text-primary-600" />
+              <CheckCircle className="w-6 h-6 text-primary" />
             </motion.div>
             <div>
               <h1 className="text-2xl font-semibold">Результат</h1>
@@ -139,7 +139,7 @@ export default function TestingPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.3 }}
-            className="mt-4 p-5 bg-gradient-to-br from-primary-50 to-white rounded-xl border-2 border-primary-200"
+            className="mt-4 p-5 bg-gradient-to-br from-badge-bg to-white rounded-xl border-2 border-secondary"
           >
             <p className="text-sm text-muted mb-1">Ваше направление</p>
             <p className="text-2xl font-bold text-primary">{brief}</p>
@@ -164,7 +164,7 @@ export default function TestingPage() {
                     initial={{ width: 0 }}
                     animate={{ width: `${totalVotes > 0 ? (votes.people / totalVotes) * 100 : 0}%` }}
                     transition={{ delay: 0.5, duration: 0.8, ease: 'easeOut' }}
-                    className="bg-blue-500 h-2 rounded-full"
+                    className="bg-primary h-2 rounded-full"
                   ></motion.div>
                 </div>
               </div>
@@ -192,7 +192,7 @@ export default function TestingPage() {
                     initial={{ width: 0 }}
                     animate={{ width: `${totalVotes > 0 ? (votes.create / totalVotes) * 100 : 0}%` }}
                     transition={{ delay: 0.7, duration: 0.8, ease: 'easeOut' }}
-                    className="bg-purple-500 h-2 rounded-full"
+                    className="bg-primary h-2 rounded-full"
                   ></motion.div>
                 </div>
               </div>

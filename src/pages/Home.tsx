@@ -131,9 +131,9 @@ export default function HomePage() {
 
       {/* Formats */}
       <section id="formats" className="container-balanced mt-14 lg:mt-20">
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* Базовый тест */}
-          <div className="card p-8 flex flex-col shadow-md bg-white order-1 h-full 
+          <div className="card p-8 flex flex-col shadow-md bg-white order-1 h-full min-h-[500px]
             transition-all duration-300 hover:shadow-xl hover:-translate-y-1
             group cursor-pointer">
             <div className="flex flex-col h-full justify-between">
@@ -162,16 +162,16 @@ export default function HomePage() {
                 </ul>
               </div>
               <button
-                className="btn btn-primary mt-6 px-5 py-3 text-white font-semibold transition-all duration-300 rounded-xl group-hover:scale-105"
+                className="btn btn-primary mt-auto px-5 py-3 text-white font-semibold transition-all duration-300 rounded-xl group-hover:scale-105"
                 onClick={() => openFor('free', 'Базовый тест')}
               >
-                Начать тест
+                Начать
               </button>
             </div>
           </div>
 
           {/* Расширенный тест */}
-          <div className="card p-8 flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 h-full min-h-[440px] relative
+          <div className="card p-8 flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 h-full min-h-[500px] relative
             transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/40
             group cursor-pointer">
             {/* Маленький бейдж */}
@@ -193,11 +193,11 @@ export default function HomePage() {
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-primary">Расширенный тест</h3>
-                  <span className="px-4 py-1.5 bg-primary-600 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     6 990 тг
                   </span>
                 </div>
-                <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-primary-200 pl-4">
+                <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-secondary pl-4">
                   <ul className="list-disc list-inside space-y-2">
                     <li>Персональный профиль, отражающий твой текущий этап жизни</li>
                     <li>Индивидуальный отчёт с разбором и рекомендациями (PDF)</li>
@@ -209,16 +209,16 @@ export default function HomePage() {
                 </div>
               </div>
               <button
-                className="btn btn-primary mt-6 px-5 py-3 text-white font-semibold shadow-md rounded-xl transition-all duration-300 group-hover:scale-105"
+                className="btn btn-primary mt-auto px-5 py-3 text-white font-semibold shadow-md rounded-xl transition-all duration-300 group-hover:scale-105"
                 onClick={() => openFor('pro', 'Расширенный тест')}
               >
-                Выбрать
+                Начать
               </button>
             </div>
           </div>
 
           {/* Premium для родителей */}
-          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-gradient-to-br from-accent/5 via-primary/5 to-white order-3 h-full relative transition-all duration-300 lg:scale-105 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer border-2 border-accent/20 hover:border-accent/40">
+          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-gradient-to-br from-accent/5 via-primary/5 to-white order-3 h-full min-h-[500px] relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer border-2 border-accent/20 hover:border-accent/40">
             {/* Плавающий бейдж */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-warning/10 text-warning-700 rounded-full px-3 py-1 text-sm shadow-md z-10 whitespace-nowrap font-semibold border border-warning/20">
               ⭐ Рекомендуем родителям
@@ -238,7 +238,7 @@ export default function HomePage() {
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-primary">Premium для родителей</h3>
-                  <span className="px-4 py-1.5 bg-accent text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     14 990 тг
                   </span>
                 </div>
@@ -252,14 +252,14 @@ export default function HomePage() {
                     <li>Какие слова и подходы работают, а какие вызывают сопротивление</li>
                     <li>На что можно опираться в диалоге, а где лучше не давить</li>
                   </ul>
-                  <p className="mt-3 text-xs text-muted/80">Подходит родителям подростков 13–18 лет</p>
+                  <p className="mt-3 text-xs text-muted-light">Подходит родителям подростков 13–18 лет</p>
                 </div>
               </div>
               <button
-                className="btn mt-6 px-5 py-3 bg-accent hover:bg-accent/90 text-white font-semibold shadow-lg rounded-xl scale-[102%] transition-all duration-300 group-hover:scale-110"
+                className="btn btn-primary mt-auto px-5 py-3 text-white font-semibold shadow-lg transition-all duration-300 group-hover:scale-105"
                 onClick={() => openFor('pro', 'Premium для родителей')}
               >
-                Выбрать
+                Начать
               </button>
             </div>
           </div>
@@ -693,11 +693,11 @@ export default function HomePage() {
               />
               <span>
                 Настоящим Вы соглашаетесь с{' '}
-                <Link to="/privacy" className="text-blue-500 hover:underline">
+                <Link to="/privacy" className="text-primary hover:underline">
                   Политикой конфиденциальности
                 </Link>
                 ,{' '}
-                <Link to="/terms" className="text-blue-500 hover:underline">
+                <Link to="/terms" className="text-primary hover:underline">
                   Пользовательским соглашением
                 </Link>{' '}
                 и получением рассылок.<br />
@@ -762,8 +762,8 @@ function WhoForCards() {
             loading="lazy"
           />
           {/* Элементы роста */}
-          <Sparkles className="absolute top-1 right-1 sm:top-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 text-blue-400/60" />
-          <Sparkles className="absolute top-2 left-1 sm:top-4 sm:left-2 w-3 h-3 sm:w-4 sm:h-4 text-blue-300/50" />
+          <Sparkles className="absolute top-1 right-1 sm:top-2 sm:right-2 w-4 h-4 sm:w-5 sm:h-5 text-muted-light/60" />
+          <Sparkles className="absolute top-2 left-1 sm:top-4 sm:left-2 w-3 h-3 sm:w-4 sm:h-4 text-muted-light/50" />
         </div>
         
         <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3">Ученикам старших классов</h3>

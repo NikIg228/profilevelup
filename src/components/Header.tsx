@@ -11,7 +11,7 @@ export default function Header() {
     }`;
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 bg-base/80 backdrop-blur border-b border-black/5">
+    <header className="fixed top-0 inset-x-0 z-50 bg-base/80 backdrop-blur border-b border-secondary">
       <div className="container-balanced h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img
@@ -45,7 +45,7 @@ export default function Header() {
       </div>
 
       {open && (
-        <div className="md:hidden border-t border-black/5 bg-base">
+        <div className="md:hidden border-t border-secondary bg-base">
           <div className="container-balanced py-2 grid gap-2">
             <NavLink to="/" onClick={() => setOpen(false)} className={navLinkClass}>Главная</NavLink>
             <NavLink to="/reviews" onClick={() => setOpen(false)} className={navLinkClass}>Отзывы</NavLink>
