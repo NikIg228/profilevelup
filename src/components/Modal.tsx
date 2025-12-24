@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type ModalProps = {
   open: boolean;
@@ -26,13 +27,30 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
     };
   }, [open]);
 
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/30 animate-fadeInUp overflow-y-auto scrollbar-hide" onClick={onClose}>
-      <div className={`card w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto my-auto ${hideScrollbar ? 'scrollbar-hide' : ''}`} onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
-    </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/30 overflow-y-auto scrollbar-hide"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className={`card w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto my-auto ${hideScrollbar ? 'scrollbar-hide' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

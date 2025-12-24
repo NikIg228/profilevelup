@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles } from 'lucide-react';
+import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import Modal from '../components/Modal';
 import AutoSlider from '../components/AutoSlider';
@@ -133,11 +133,13 @@ export default function HomePage() {
       <section id="formats" className="container-balanced mt-14 lg:mt-20">
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Базовый тест */}
-          <div className="card p-8 flex flex-col shadow-md bg-white order-1 h-full">
+          <div className="card p-8 flex flex-col shadow-md bg-white order-1 h-full 
+            transition-all duration-300 hover:shadow-xl hover:-translate-y-1
+            group cursor-pointer">
             <div className="flex flex-col h-full justify-between">
               <div>
                 {/* Иллюстрация */}
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/undraw_mobile-testing_sm2l.svg"
                     alt=""
@@ -146,25 +148,32 @@ export default function HomePage() {
                   />
                 </div>
                 
-                <h3 className="text-xl font-semibold text-primary">Базовый тест</h3>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <h3 className="text-xl font-semibold text-primary">Базовый тест</h3>
+                  <span className="px-4 py-1.5 bg-green-500 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                    Бесплатно
+                  </span>
+                </div>
                 <ul className="mt-6 text-sm text-muted space-y-2 list-disc list-inside">
-                  <li>Короткий тест (5 вопросов)</li>
-                  <li>Предварительное определение типа личности</li>
-                  <li>Краткое описание вашего стиля мышления и поведения</li>
-                  <li>Отлично подходит, чтобы познакомиться с методикой</li>
+                  <li>Короткий вводный тест</li>
+                  <li>Первичное понимание своего стиля мышления и действий</li>
+                  <li>Краткое описание твоего стиля мышления и поведения</li>
+                  <li>Помогает понять, откликается ли тебе этот формат</li>
                 </ul>
               </div>
               <button
-                className="btn mt-6 px-5 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-300 rounded-xl"
+                className="btn mt-6 px-5 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold transition-all duration-300 rounded-xl group-hover:scale-105"
                 onClick={() => openFor('free', 'Базовый тест')}
               >
-                Бесплатно
+                Начать тест
               </button>
             </div>
           </div>
 
           {/* Расширенный тест */}
-          <div className="card p-8 flex flex-col border border-green-100 rounded-2xl shadow-md bg-gradient-to-b from-[#F6FAF8] to-white order-2 h-full min-h-[440px] relative">
+          <div className="card p-8 flex flex-col border border-green-100 rounded-2xl shadow-md bg-gradient-to-b from-[#F6FAF8] to-white order-2 h-full min-h-[440px] relative
+            transition-all duration-300 hover:shadow-xl hover:-translate-y-1
+            group cursor-pointer">
             {/* Маленький бейдж */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-50 text-blue-700 shadow-sm rounded-full px-3 py-1 text-xs z-10">
               🔍 Оптимальный выбор
@@ -173,7 +182,7 @@ export default function HomePage() {
             <div className="flex flex-col h-full justify-between">
               <div>
                 {/* Иллюстрация */}
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/undraw_usability-testing_w7dd.svg"
                     alt=""
@@ -182,29 +191,34 @@ export default function HomePage() {
                   />
                 </div>
                 
-                <h3 className="text-xl font-semibold text-primary">Расширенный тест</h3>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <h3 className="text-xl font-semibold text-primary">Расширенный тест</h3>
+                  <span className="px-4 py-1.5 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                    6 990 тг
+                  </span>
+                </div>
                 <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-green-100 pl-4">
-                  <p>40+ продуманных вопросов</p>
                   <ul className="list-disc list-inside space-y-2">
-                    <li>Детальный психологический профиль</li>
-                    <li>Персонализированный VIP-отчёт в PDF</li>
-                    <li>Сильные и уязвимые стороны</li>
-                    <li>Подходящие профессии и естественная рабочая среда</li>
+                    <li>Персональный профиль, отражающий твой текущий этап жизни</li>
+                    <li>Индивидуальный отчёт с разбором и рекомендациями (PDF)</li>
+                    <li>Сильные стороны и зоны роста</li>
+                    <li>Профессии и направления, где тебе легче быть собой</li>
+                    <li>Формат и условия работы, в которых ты раскрываешься естественно</li>
                     <li>Рекомендации по развитию и взаимодействию с другими</li>
                   </ul>
                 </div>
               </div>
               <button
-                className="btn mt-6 px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md rounded-xl transition-all duration-300"
+                className="btn mt-6 px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md rounded-xl transition-all duration-300 group-hover:scale-105"
                 onClick={() => openFor('pro', 'Расширенный тест')}
               >
-                USD 9,99
+                Выбрать
               </button>
             </div>
           </div>
 
           {/* Premium для родителей */}
-          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-gradient-to-b from-[#F7FDF9] to-white order-3 h-full relative transition-all duration-300 lg:scale-105" style={{ border: '2px solid transparent', backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, rgba(74, 222, 128, 0.4), rgba(21, 128, 61, 0.4))', backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box' }}>
+          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-gradient-to-b from-[#F7FDF9] to-white order-3 h-full relative transition-all duration-300 lg:scale-105 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer" style={{ border: '2px solid transparent', backgroundImage: 'linear-gradient(white, white), linear-gradient(to right, rgba(74, 222, 128, 0.4), rgba(21, 128, 61, 0.4))', backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box' }}>
             {/* Плавающий бейдж */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-100 text-amber-700 rounded-full px-3 py-1 text-sm shadow z-10 whitespace-nowrap">
               ⭐ Рекомендуем родителям
@@ -213,7 +227,7 @@ export default function HomePage() {
             <div className="flex flex-col h-full justify-between">
               <div>
                 {/* Иллюстрация */}
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/undraw_shared-goals_jn0a.svg"
                     alt=""
@@ -222,20 +236,30 @@ export default function HomePage() {
                   />
                 </div>
                 
-                <h3 className="text-xl font-semibold text-primary">Premium для родителей</h3>
-                <ul className="mt-6 text-sm text-muted space-y-2 list-disc list-inside">
-                  <li className="list-none">Все из Расширенного теста +</li>
-                  <li>Подробное описание личности ребёнка</li>
-                  <li>Руководство для родителей: как понимать, поддерживать и мотивировать</li>
-                  <li>Советы, как строить доверие и улучшать общение в семье</li>
-                  <li>Подходит родителям подростков 13-18 лет</li>
-                </ul>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <h3 className="text-xl font-semibold text-primary">Premium для родителей</h3>
+                  <span className="px-4 py-1.5 bg-green-700 text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                    14 990 тг
+                  </span>
+                </div>
+                <div className="mt-6 text-sm text-muted space-y-2">
+                  <p className="mb-2">Ребёнок проходит расширенный тест и получает свой персональный отчёт.</p>
+                  <p className="mb-3">Родитель получает отдельный отчёт с рекомендациями по взаимодействию.</p>
+                  <ul className="list-disc list-inside space-y-2">
+                    <li>Персональный отчёт для ребёнка — без изменений</li>
+                    <li>Отдельный отчёт для родителя, который приходит на e-mail</li>
+                    <li>Как общаться с ребёнком так, чтобы мотивировать, а не загонять в угол</li>
+                    <li>Какие слова и подходы работают, а какие вызывают сопротивление</li>
+                    <li>На что можно опираться в диалоге, а где лучше не давить</li>
+                  </ul>
+                  <p className="mt-3 text-xs text-muted/80">Подходит родителям подростков 13–18 лет</p>
+                </div>
               </div>
               <button
-                className="btn mt-6 px-5 py-3 bg-green-700/95 hover:bg-green-800 text-white font-semibold shadow-lg rounded-xl scale-[102%] transition-all duration-300"
+                className="btn mt-6 px-5 py-3 bg-green-700/95 hover:bg-green-800 text-white font-semibold shadow-lg rounded-xl scale-[102%] transition-all duration-300 group-hover:scale-110"
                 onClick={() => openFor('pro', 'Premium для родителей')}
               >
-                USD 19,99
+                Выбрать
               </button>
             </div>
           </div>
@@ -468,21 +492,44 @@ export default function HomePage() {
           <div className="space-y-1">
             <input
               type="text"
-              className={`w-full px-4 py-3 rounded-xl border border-black/10 shadow-sm transition focus:outline-none focus:ring-1 focus:ring-primary/40 ${errors.name ? 'border-red-500' : ''}`}
+              className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                errors.name 
+                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                  : 'border-black/10 focus:border-primary'
+              } focus:outline-none focus:ring-2 focus:ring-primary/20`}
               placeholder="Имя"
               value={form.name}
+              autoFocus={!form.name}
               onChange={(e) => {
                 setForm({ ...form, name: e.target.value });
                 clearError('name');
               }}
+              onBlur={() => {
+                if (!form.name.trim()) {
+                  setErrors(prev => ({ ...prev, name: 'Укажите имя' }));
+                }
+              }}
               aria-invalid={Boolean(errors.name)}
             />
-            {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+            {errors.name && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500 flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                {errors.name}
+              </motion.p>
+            )}
           </div>
           <div className="space-y-1">
             <input
               type="text"
-              className={`w-full px-4 py-3 rounded-xl border border-black/10 shadow-sm transition focus:outline-none focus:ring-1 focus:ring-primary/40 ${errors.age ? 'border-red-500' : ''}`}
+              className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                errors.age 
+                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                  : 'border-black/10 focus:border-primary'
+              } focus:outline-none focus:ring-2 focus:ring-primary/20`}
               placeholder="Возраст"
               inputMode="numeric"
               value={form.age}
@@ -490,9 +537,23 @@ export default function HomePage() {
                 setForm({ ...form, age: e.target.value });
                 clearError('age');
               }}
+              onBlur={() => {
+                if (!form.age.trim()) {
+                  setErrors(prev => ({ ...prev, age: 'Укажите возраст' }));
+                }
+              }}
               aria-invalid={Boolean(errors.age)}
             />
-            {errors.age && <p className="text-xs text-red-500">{errors.age}</p>}
+            {errors.age && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500 flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                {errors.age}
+              </motion.p>
+            )}
           </div>
           <div className="space-y-1">
             <Select
@@ -508,35 +569,87 @@ export default function HomePage() {
               ]}
               error={Boolean(errors.gender)}
             />
-            {errors.gender && <p className="text-xs text-red-500">{errors.gender}</p>}
+            {errors.gender && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500 flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                {errors.gender}
+              </motion.p>
+            )}
           </div>
           <div className="space-y-1">
             <input
               type="email"
-              className={`w-full px-4 py-3 rounded-xl border border-black/10 shadow-sm transition focus:outline-none focus:ring-1 focus:ring-primary/40 ${errors.email ? 'border-red-500' : ''}`}
+              className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                errors.email 
+                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                  : 'border-black/10 focus:border-primary'
+              } focus:outline-none focus:ring-2 focus:ring-primary/20`}
               placeholder="Email (обязательно)"
               value={form.email}
               onChange={(e) => {
                 setForm({ ...form, email: e.target.value });
                 clearError('email');
               }}
+              onBlur={() => {
+                const emailValue = form.email.trim();
+                if (!emailValue) {
+                  setErrors(prev => ({ ...prev, email: 'Укажите email' }));
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+                  setErrors(prev => ({ ...prev, email: 'Введите корректный email' }));
+                }
+              }}
               aria-invalid={Boolean(errors.email)}
             />
-            {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+            {errors.email && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500 flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                {errors.email}
+              </motion.p>
+            )}
           </div>
           <div className="space-y-1">
             <input
               type="email"
-              className={`w-full px-4 py-3 rounded-xl border border-black/10 shadow-sm transition focus:outline-none focus:ring-1 focus:ring-primary/40 ${errors.emailConfirm ? 'border-red-500' : ''}`}
+              className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                errors.emailConfirm 
+                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                  : 'border-black/10 focus:border-primary'
+              } focus:outline-none focus:ring-2 focus:ring-primary/20`}
               placeholder="Подтвердите email"
               value={form.emailConfirm}
               onChange={(e) => {
                 setForm({ ...form, emailConfirm: e.target.value });
                 clearError('emailConfirm');
               }}
+              onBlur={() => {
+                const emailValue = form.email.trim();
+                const emailConfirmValue = form.emailConfirm.trim();
+                if (!emailConfirmValue) {
+                  setErrors(prev => ({ ...prev, emailConfirm: 'Повторите email' }));
+                } else if (emailConfirmValue !== emailValue) {
+                  setErrors(prev => ({ ...prev, emailConfirm: 'Email не совпадает' }));
+                }
+              }}
               aria-invalid={Boolean(errors.emailConfirm)}
             />
-            {errors.emailConfirm && <p className="text-xs text-red-500">{errors.emailConfirm}</p>}
+            {errors.emailConfirm && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500 flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                {errors.emailConfirm}
+              </motion.p>
+            )}
           </div>
           {!form.testType && (
             <div className="space-y-1">
@@ -554,7 +667,16 @@ export default function HomePage() {
                 ]}
                 error={Boolean(errors.testType)}
               />
-              {errors.testType && <p className="text-xs text-red-500">{errors.testType}</p>}
+              {errors.testType && (
+                <motion.p 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-red-500 flex items-center gap-1"
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.testType}
+                </motion.p>
+              )}
             </div>
           )}
           <div className="space-y-1 text-xs text-muted">
@@ -581,7 +703,16 @@ export default function HomePage() {
                 и получением рассылок.<br />
               </span>
             </label>
-            {errors.consent && <p className="text-xs text-red-500">{errors.consent}</p>}
+            {errors.consent && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500 flex items-center gap-1"
+              >
+                <AlertCircle className="w-3 h-3" />
+                {errors.consent}
+              </motion.p>
+            )}
           </div>
           <button
             type="button"
