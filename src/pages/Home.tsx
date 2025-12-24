@@ -117,13 +117,13 @@ export default function HomePage() {
             </div>
           </div>
           <div className="lg:hidden fade-section">
-            <div className="rounded-2xl overflow-visible bg-base aspect-square mb-6 sm:mb-0 flex items-center justify-center p-8">
-              <img src="/new logo.jpeg" alt="Логотип Профиль будущего" className="w-full h-full object-contain" loading="lazy" />
+            <div className="rounded-2xl overflow-visible aspect-square mb-6 sm:mb-0 flex items-center justify-center p-8">
+              <img src="/logo.png" alt="Логотип Профиль будущего" className="w-full h-full object-contain" loading="lazy" />
             </div>
           </div>
           <div className="hidden lg:block fade-section">
-            <div className="rounded-2xl overflow-visible bg-base aspect-square flex items-center justify-center p-8">
-              <img src="/new logo.jpeg" alt="Логотип Профиль будущего" className="w-full h-full object-contain" loading="lazy" />
+            <div className="rounded-2xl overflow-visible aspect-square flex items-center justify-center p-8">
+              <img src="/logo.png" alt="Логотип Профиль будущего" className="w-full h-full object-contain" loading="lazy" />
             </div>
           </div>
         </div>

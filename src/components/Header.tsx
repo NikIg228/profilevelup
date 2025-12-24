@@ -15,7 +15,7 @@ export default function Header() {
       <div className="container-balanced h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img
-            src="/new logo.jpeg"
+            src="/logo.png"
             alt="Логотип Профиль будущего"
             className="w-10 h-10 rounded-full object-cover shadow-soft border border-secondary/50"
             loading="lazy"
