@@ -15,12 +15,12 @@ export default function Header() {
       <div className="container-balanced h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img
-            src="/logo.png"
+            src="/headerlogo.png"
             alt="Логотип Профиль будущего"
             className="w-10 h-10 rounded-full object-cover shadow-soft border border-secondary/50"
             loading="lazy"
           />
-          <span className="text-lg font-heading text-heading font-semibold">Профиль будущего</span>
+          <span className="text-lg font-sans text-heading font-normal uppercase tracking-wide">ПРОФИЛЬ БУДУЩЕГО</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-2">

@@ -27,12 +27,11 @@ export default function ReviewsPage() {
         <div className="grid md:grid-cols-2 gap-6">
           {reviews.map((r, i) => (
             <article key={i} className="card p-5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">{r.name}</h3>
                 <span className="text-xs text-muted">{r.date}</span>
               </div>
-              <div className="mt-2 text-sm text-muted">Результат: <span className="text-ink font-medium">{r.result}</span></div>
-              <p className="mt-3 leading-relaxed">{r.text}</p>
+              <p className="leading-relaxed">{r.text}</p>
             </article>
           ))}
         </div>
