@@ -12,6 +12,8 @@ import ReviewsPage from './pages/Reviews';
 import AboutPage from './pages/About';
 import HelpPage from './pages/Help';
 import DetailsPage from './pages/Details';
+import AdminPage from './pages/Admin';
+import { initializeDefaultReviews } from './utils/reviewsStorage';
 
 const router = createBrowserRouter([
   {
@@ -26,9 +28,13 @@ const router = createBrowserRouter([
       { path: 'terms', element: <TermsPage /> },
       { path: 'help', element: <HelpPage /> },
       { path: 'details', element: <DetailsPage /> },
+      { path: 'admin', element: <AdminPage /> },
     ],
   },
 ]);
+
+// Инициализация дефолтных отзывов
+initializeDefaultReviews();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

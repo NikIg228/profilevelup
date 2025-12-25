@@ -7,6 +7,8 @@ import AutoSlider from '../components/AutoSlider';
 import Select from '../components/Select';
 import CountUp from '../components/CountUp';
 import VideoPlayer from '../components/VideoPlayer';
+import ReviewForm from '../components/ReviewForm';
+import { getReviews } from '../utils/reviewsStorage';
 import type { VideoItem } from '../hooks/useVideoController';
 
 type FormErrorKey = 'name' | 'age' | 'gender' | 'testType' | 'email' | 'emailConfirm' | 'consent';
@@ -160,7 +162,7 @@ export default function HomePage() {
                   <img
                     src="/komu/basic.png"
                     alt=""
-                    className="h-[120px] opacity-90 object-contain"
+                    className="h-[156px] opacity-90 object-contain"
                     loading="lazy"
                   />
                 </div>
@@ -196,9 +198,9 @@ export default function HomePage() {
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
-                    src="/komu/undraw_usability-testing_w7dd.svg"
+                    src="/komu/vip.png"
                     alt=""
-                    className="h-[70px] opacity-90 object-contain"
+                    className="h-[156px] opacity-90 object-contain"
                     loading="lazy"
                   />
                 </div>
@@ -239,11 +241,11 @@ export default function HomePage() {
             <div className="flex flex-col h-full justify-between">
               <div>
                 {/* Иллюстрация */}
-                <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300 mt-2">
+                <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
-                    src="/komu/undraw_shared-goals_jn0a.svg"
+                    src="/komu/PREMIUM .png"
                     alt=""
-                    className="h-[70px] opacity-90 object-contain"
+                    className="h-[156px] opacity-90 object-contain"
                     loading="lazy"
                   />
                 </div>
@@ -602,26 +604,21 @@ export default function HomePage() {
 
 
 function ReviewsSection() {
-  const reviews = [
-    { name: 'Айгерим Садыкова', date: '12.02.2025', result: 'Креативные индустрии', text: 'Тест помог понять, что мне ближе дизайн и визуальные коммуникации. Понравились вопросы и формат.' },
-    { name: 'Нурболат Тлеуханов', date: '18.02.2025', result: 'Технологии и аналитика', text: 'Получил понятные рекомендации и список направлений. Уже смотрю курсы по аналитике данных.' },
-    { name: 'Алтынай Жумабек', date: '21.02.2025', result: 'Коммуникации и сервис', text: 'Опрос структурировал мысли. Я лучше понимаю, где мои сильные стороны в работе с людьми.' },
-    { name: 'Ерлан Каскенов', date: '25.02.2025', result: 'Технологии и аналитика', text: 'Хороший баланс вопросов. Итог совпал с моими ощущениями. Рекомендации по профессиям — в тему.' },
-    { name: 'Дана Абишева', date: '28.02.2025', result: 'Креативные индустрии', text: 'Понравились примеры и понятная подача. Стало ясно, куда двигаться дальше.' },
-    { name: 'Сергей Фадеев', date: '03.03.2025', result: 'Коммуникации и сервис', text: 'Простой и аккуратный интерфейс. Результат помог выбрать профиль для поступления.' },
-    { name: 'Екатерина Лебедева', date: '07.03.2025', result: 'Креативные индустрии', text: 'Краткий отчёт дал направление, а расширенная версия — подробный план развития.' },
-    { name: 'Владислав Соколов', date: '10.03.2025', result: 'Технологии и аналитика', text: 'Раньше сомневался между ИТ и экономикой. Тест склоняет к данным — логично по моим ответам.' },
-    { name: 'Полина Зайцева', date: '12.03.2025', result: 'Коммуникации и сервис', text: 'Теперь понимаю, что мне ближе работа с людьми и проекты в сфере образования.' },
-    { name: 'Никита Морозов', date: '15.03.2025', result: 'Технологии и аналитика', text: 'Отличная точка старта. Планирую пройти платный тест и получить полный отчёт.' },
-  ];
+  const [reviews, setReviews] = useState(getReviews());
+  const [reviewFormOpen, setReviewFormOpen] = useState(false);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [direction, setDirection] = useState(1); // 1 для вперед, -1 для назад
 
+  // Загрузка отзывов при изменении
+  useEffect(() => {
+    setReviews(getReviews());
+  }, [reviewFormOpen]);
+
   // Автоматическое переключение каждые 5 секунд (зацикленное)
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || reviews.length === 0) return;
     
     const interval = setInterval(() => {
       setDirection(1);
@@ -640,6 +637,31 @@ function ReviewsSection() {
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
   };
+
+  if (reviews.length === 0) {
+    return (
+      <section className="container-balanced mt-12 lg:mt-16">
+        <h2 className="text-2xl font-semibold mb-6">Отзывы</h2>
+        <div className="card p-8 text-center">
+          <p className="text-muted mb-6">Пока нет отзывов</p>
+          <button
+            onClick={() => setReviewFormOpen(true)}
+            className="px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
+          >
+            Оставить отзыв
+          </button>
+        </div>
+        <ReviewForm
+          open={reviewFormOpen}
+          onClose={() => setReviewFormOpen(false)}
+          onSuccess={() => {
+            setReviews(getReviews());
+            setCurrentIndex(0);
+          }}
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="container-balanced mt-12 lg:mt-16">
@@ -701,7 +723,26 @@ function ReviewsSection() {
             />
           ))}
         </div>
+
+        {/* Кнопка "Оставить отзыв" */}
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => setReviewFormOpen(true)}
+            className="px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
+          >
+            Оставить отзыв
+          </button>
+        </div>
       </div>
+
+      <ReviewForm
+        open={reviewFormOpen}
+        onClose={() => setReviewFormOpen(false)}
+        onSuccess={() => {
+          setReviews(getReviews());
+          setCurrentIndex(0);
+        }}
+      />
     </section>
   );
 }
@@ -720,11 +761,11 @@ function WhoForCards() {
         className="card pt-4 px-4 pb-4 sm:pt-6 sm:px-6 sm:pb-6 bg-base border border-secondary/40 rounded-xl sm:rounded-2xl overflow-hidden relative flex flex-col"
       >
         {/* Иллюстрация */}
-        <div className="flex items-start justify-center h-[120px] sm:h-[160px] mb-3 sm:mb-4 relative">
+        <div className="flex items-start justify-center h-[180px] mb-3 sm:mb-4 relative">
           <img
-            src="/komu/undraw_true-friends_1h3v.svg"
+            src="/komu/okushylar.png"
             alt=""
-            className="max-h-[100px] sm:max-h-[140px] w-auto object-contain object-top"
+            className="h-[180px] w-auto object-contain object-top"
             loading="lazy"
           />
           {/* Элементы роста */}
@@ -756,14 +797,14 @@ function WhoForCards() {
         className="card pt-4 px-4 pb-4 sm:pt-6 sm:px-6 sm:pb-6 bg-base border border-secondary/40 rounded-xl sm:rounded-2xl overflow-hidden relative flex flex-col"
       >
         {/* Иллюстрация */}
-        <div className="flex items-start justify-center h-[120px] sm:h-[160px] mb-3 sm:mb-4 relative">
+        <div className="flex items-start justify-center h-[180px] mb-3 sm:mb-4 relative">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-emerald-200/30 blur-xl rounded-full w-24 h-24 sm:w-32 sm:h-32 transform translate-x-1 translate-y-1 sm:translate-x-2 sm:translate-y-2"></div>
           </div>
           <img
-            src="/komu/undraw_continuous-learning_a1ld.svg"
+            src="/komu/students.png"
             alt=""
-            className="max-h-[100px] sm:max-h-[140px] w-auto object-contain object-top relative z-10"
+            className="h-[180px] w-auto object-contain object-top relative z-10"
             loading="lazy"
           />
           {/* Элементы роста */}
@@ -794,18 +835,18 @@ function WhoForCards() {
         className="card pt-4 px-4 pb-4 sm:pt-6 sm:px-6 sm:pb-6 bg-base border border-secondary/40 rounded-xl sm:rounded-2xl overflow-hidden relative flex flex-col"
       >
         {/* Иллюстрация */}
-        <div className="flex items-start justify-center h-[120px] sm:h-[160px] mb-3 sm:mb-4 relative">
+        <div className="flex items-start justify-center h-[180px] mb-3 sm:mb-4 relative">
           <img
-            src="/komu/undraw_together_s27q.svg"
+            src="/komu/parents.png"
             alt=""
-            className="max-h-[100px] sm:max-h-[140px] w-auto object-contain object-top"
+            className="h-[180px] w-auto object-contain object-top"
             loading="lazy"
           />
           {/* Элементы роста */}
           <Sparkles className="absolute top-1 left-1 sm:top-2 sm:left-2 w-3 h-3 sm:w-4 sm:h-4 text-amber-400/50" />
         </div>
         
-        <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3">Родителям подростков (13–18)</h3>
+        <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3">Родителям подростков</h3>
         
         <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4">
           Подростковый возраст — это поиск своего голоса.
@@ -836,11 +877,11 @@ function WhoForCards() {
         className="card pt-4 px-4 pb-4 sm:pt-6 sm:px-6 sm:pb-6 bg-base border border-secondary/40 rounded-xl sm:rounded-2xl overflow-hidden relative flex flex-col"
       >
         {/* Иллюстрация */}
-        <div className="flex items-start justify-center h-[120px] sm:h-[160px] mb-3 sm:mb-4 relative">
+        <div className="flex items-start justify-center h-[180px] mb-3 sm:mb-4 relative">
           <img
-            src="/komu/undraw_bussiness.svg"
+            src="/komu/vzroslym.png"
             alt=""
-            className="max-h-[100px] sm:max-h-[140px] w-auto object-contain object-top"
+            className="h-[180px] w-auto object-contain object-top"
             loading="lazy"
           />
           {/* Элементы роста */}

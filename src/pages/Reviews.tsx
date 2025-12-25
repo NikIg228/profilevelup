@@ -1,16 +1,14 @@
+import { useState, useEffect } from 'react';
+import ReviewForm from '../components/ReviewForm';
+import { getReviews } from '../utils/reviewsStorage';
+
 export default function ReviewsPage() {
-  const reviews = [
-    { name: 'Айгерим Садыкова', date: '12.02.2025', result: 'Креативные индустрии', text: 'Тест помог понять, что мне ближе дизайн и визуальные коммуникации. Понравились вопросы и формат.' },
-    { name: 'Нурболат Тлеуханов', date: '18.02.2025', result: 'Технологии и аналитика', text: 'Получил понятные рекомендации и список направлений. Уже смотрю курсы по аналитике данных.' },
-    { name: 'Алтынай Жумабек', date: '21.02.2025', result: 'Коммуникации и сервис', text: 'Опрос структурировал мысли. Я лучше понимаю, где мои сильные стороны в работе с людьми.' },
-    { name: 'Ерлан Каскенов', date: '25.02.2025', result: 'Технологии и аналитика', text: 'Хороший баланс вопросов. Итог совпал с моими ощущениями. Рекомендации по профессиям — в тему.' },
-    { name: 'Дана Абишева', date: '28.02.2025', result: 'Креативные индустрии', text: 'Понравились примеры и понятная подача. Стало ясно, куда двигаться дальше.' },
-    { name: 'Сергей Фадеев', date: '03.03.2025', result: 'Коммуникации и сервис', text: 'Простой и аккуратный интерфейс. Результат помог выбрать профиль для поступления.' },
-    { name: 'Екатерина Лебедева', date: '07.03.2025', result: 'Креативные индустрии', text: 'Краткий отчёт дал направление, а расширенная версия — подробный план развития.' },
-    { name: 'Владислав Соколов', date: '10.03.2025', result: 'Технологии и аналитика', text: 'Раньше сомневался между ИТ и экономикой. Тест склоняет к данным — логично по моим ответам.' },
-    { name: 'Полина Зайцева', date: '12.03.2025', result: 'Коммуникации и сервис', text: 'Теперь понимаю, что мне ближе работа с людьми и проекты в сфере образования.' },
-    { name: 'Никита Морозов', date: '15.03.2025', result: 'Технологии и аналитика', text: 'Отличная точка старта. Планирую пройти платный тест и получить полный отчёт.' },
-  ];
+  const [reviews, setReviews] = useState(getReviews());
+  const [reviewFormOpen, setReviewFormOpen] = useState(false);
+
+  useEffect(() => {
+    setReviews(getReviews());
+  }, [reviewFormOpen]);
 
   return (
     <section className="container-balanced mt-10">
@@ -25,8 +23,8 @@ export default function ReviewsPage() {
         </header>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {reviews.map((r, i) => (
-            <article key={i} className="card p-5">
+          {reviews.map((r) => (
+            <article key={r.id} className="card p-5">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">{r.name}</h3>
                 <span className="text-xs text-muted">{r.date}</span>
@@ -35,7 +33,25 @@ export default function ReviewsPage() {
             </article>
           ))}
         </div>
+
+        {/* Кнопка "Оставить отзыв" */}
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => setReviewFormOpen(true)}
+            className="px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
+          >
+            Оставить отзыв
+          </button>
+        </div>
       </div>
+
+      <ReviewForm
+        open={reviewFormOpen}
+        onClose={() => setReviewFormOpen(false)}
+        onSuccess={() => {
+          setReviews(getReviews());
+        }}
+      />
     </section>
   );
 }

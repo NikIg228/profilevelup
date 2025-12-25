@@ -118,15 +118,10 @@ export default function HelpPage() {
       </section>
 
       <section className="fade-section">
-        <h2 className="text-2xl font-semibold mb-4">FAQ</h2>
-        <Accordion items={faqItems} />
-      </section>
-
-      <section className="fade-section">
         <div className="card p-6 md:p-8 border border-secondary/40 grid gap-4">
           <h2 className="text-2xl font-semibold">Контакты</h2>
           <p className="text-muted max-w-xl">
-            Есть вопросы или нужна поддержка? Мы рядом 👇
+            Есть вопросы или нужна поддержка?
           </p>
           <div className="grid gap-2 text-muted text-sm">
             <a href="mailto:support@profilevelup.com" className="flex items-center gap-2 text-primary hover:underline w-fit">
@@ -162,6 +157,11 @@ export default function HelpPage() {
           </div>
           <div className="text-sm text-muted">🕒 Ответы: Пн–Пт, 10:00–19:00</div>
         </div>
+      </section>
+
+      <section className="fade-section">
+        <h2 className="text-2xl font-semibold mb-4">FAQ</h2>
+        <Accordion items={faqItems} />
       </section>
     </div>
   );
