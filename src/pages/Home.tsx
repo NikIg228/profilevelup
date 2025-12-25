@@ -38,7 +38,7 @@ export default function HomePage() {
 
   const trimmedEmail = form.email.trim();
   const trimmedEmailConfirm = form.emailConfirm.trim();
-  const isBasicTest = plan === 'free' || form.testType === 'Базовый тест';
+  const isBasicTest = plan === 'free' || form.testType === 'Базовый';
   const emailsMatch = trimmedEmail && trimmedEmailConfirm && trimmedEmail === trimmedEmailConfirm;
   const isFormComplete = Boolean(
     form.name.trim() &&
@@ -69,7 +69,7 @@ export default function HomePage() {
   const startTest = () => {
     const emailValue = form.email.trim();
     const emailConfirmValue = form.emailConfirm.trim();
-    const isBasicTest = plan === 'free' || form.testType === 'Базовый тест';
+    const isBasicTest = plan === 'free' || form.testType === 'Базовый';
     const newErrors: Partial<Record<FormErrorKey, string>> = {};
 
     if (!form.name.trim()) newErrors.name = 'Укажите имя';
@@ -149,7 +149,7 @@ export default function HomePage() {
       {/* Formats */}
       <section id="formats" className="container-balanced mt-4 lg:mt-8">
         <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
-          {/* Базовый тест */}
+          {/* Базовый */}
           <div className="card p-8 flex flex-col shadow-md bg-white order-1 h-full min-h-[500px]
             transition-all duration-300 hover:shadow-xl hover:-translate-y-1
             group cursor-pointer">
@@ -166,7 +166,7 @@ export default function HomePage() {
                 </div>
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
-                  <h3 className="text-xl font-semibold text-heading">Базовый тест</h3>
+                  <h3 className="text-xl font-semibold text-heading">Базовый</h3>
                   <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     Бесплатно
                   </span>
@@ -180,14 +180,14 @@ export default function HomePage() {
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('free', 'Базовый тест')}
+                onClick={() => openFor('free', 'Базовый')}
               >
                 Начать
               </button>
             </div>
           </div>
 
-          {/* Расширенный тест */}
+          {/* Расширенный */}
           <div className="card p-8 flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 h-full min-h-[500px] relative
             transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/40
             group cursor-pointer">
@@ -204,7 +204,7 @@ export default function HomePage() {
                 </div>
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
-                  <h3 className="text-xl font-semibold text-heading">Расширенный тест</h3>
+                  <h3 className="text-xl font-semibold text-heading">Расширенный</h3>
                   <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     6 990 тг
                   </span>
@@ -222,17 +222,17 @@ export default function HomePage() {
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('pro', 'Расширенный тест')}
+                onClick={() => openFor('pro', 'Расширенный')}
               >
                 Начать
               </button>
             </div>
           </div>
 
-          {/* Premium для родителей */}
+          {/* Premium */}
           <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 h-full min-h-[500px] relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer border-2 border-primary hover:border-primary-hover">
             {/* Баннер сверху */}
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-heading text-white px-4 py-2 rounded-lg shadow-md z-10">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-2 rounded-lg shadow-md z-10">
               <p className="text-sm font-semibold whitespace-nowrap">Для родителей подростков</p>
             </div>
             
@@ -249,14 +249,14 @@ export default function HomePage() {
                 </div>
                 
                 <div className="flex items-center justify-between gap-3 mb-2">
-                  <h3 className="text-xl font-semibold text-heading">Premium для родителей</h3>
+                  <h3 className="text-xl font-semibold text-heading">Premium</h3>
                   <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
                     14 990 тг
                   </span>
                 </div>
                 <div className="mt-6 text-sm text-muted space-y-2">
-                  <p className="mb-2 font-bold text-heading">Ребёнок проходит расширенный тест и получает свой персональный отчёт.</p>
-                  <p className="mb-2 font-bold text-heading">Родитель получает отдельный отчёт с рекомендациями по взаимодействию.</p>
+                  <p className="mb-2 px-3 py-2 bg-primary/10 rounded-lg text-ink font-medium border-l-2 border-primary">Ребёнок проходит расширенный тест и получает свой персональный отчёт.</p>
+                  <p className="mb-2 px-3 py-2 bg-primary/10 rounded-lg text-ink font-medium border-l-2 border-primary">Родитель получает отдельный отчёт с рекомендациями по взаимодействию.</p>
                   <ul className="list-disc list-inside space-y-1 mb-8">
                     <li>Персональный отчёт для ребёнка — без изменений</li>
                     <li>Отдельный отчёт для родителя, который приходит на e-mail</li>
@@ -268,7 +268,7 @@ export default function HomePage() {
               </div>
               <button
                 className="mt-auto mt-6 px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('pro', 'Premium для родителей')}
+                onClick={() => openFor('pro', 'Premium')}
               >
                 Начать
               </button>
@@ -522,9 +522,9 @@ export default function HomePage() {
                 }}
                 placeholder="Вид теста"
                 options={[
-                  { value: 'Базовый тест', label: 'Базовый' },
-                  { value: 'Расширенный тест', label: 'Расширенный' },
-                  { value: 'Premium для родителей', label: 'Premium для родителей' },
+                  { value: 'Базовый', label: 'Базовый' },
+                  { value: 'Расширенный', label: 'Расширенный' },
+                  { value: 'Premium', label: 'Premium' },
                 ]}
                 error={Boolean(errors.testType)}
               />
