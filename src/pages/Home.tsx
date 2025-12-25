@@ -158,9 +158,9 @@ export default function HomePage() {
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
-                    src="/komu/undraw_mobile-testing_sm2l.svg"
+                    src="/komu/basic.png"
                     alt=""
-                    className="h-[70px] opacity-90 object-contain"
+                    className="h-[120px] opacity-90 object-contain"
                     loading="lazy"
                   />
                 </div>
@@ -179,7 +179,7 @@ export default function HomePage() {
                 </ul>
               </div>
               <button
-                className="btn btn-primary mt-auto px-5 py-3 text-white font-semibold transition-all duration-300 rounded-xl group-hover:scale-105"
+                className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
                 onClick={() => openFor('free', 'Базовый тест')}
               >
                 Начать
@@ -221,7 +221,7 @@ export default function HomePage() {
                 </div>
               </div>
               <button
-                className="btn btn-primary mt-auto px-5 py-3 text-white font-semibold shadow-md rounded-xl transition-all duration-300 group-hover:scale-105"
+                className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
                 onClick={() => openFor('pro', 'Расширенный тест')}
               >
                 Начать
@@ -267,7 +267,7 @@ export default function HomePage() {
                 </div>
               </div>
               <button
-                className="btn btn-primary mt-auto mt-6 px-5 py-3 text-white font-semibold shadow-lg transition-all duration-300 group-hover:scale-105"
+                className="mt-auto mt-6 px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
                 onClick={() => openFor('pro', 'Premium для родителей')}
               >
                 Начать
@@ -322,14 +322,14 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Reviews */}
+      <ReviewsSection />
+
       {/* Who for */}
       <section className="container-balanced mt-12 lg:mt-16">
         <h2 className="text-2xl font-semibold">Кому подойдёт</h2>
         <WhoForCards />
       </section>
-
-      {/* Reviews */}
-      <ReviewsSection />
 
       {/* anchors удалены по просьбе пользователя */}
 
@@ -617,12 +617,14 @@ function ReviewsSection() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [direction, setDirection] = useState(1); // 1 для вперед, -1 для назад
 
-  // Автоматическое переключение каждые 5 секунд
+  // Автоматическое переключение каждые 5 секунд (зацикленное)
   useEffect(() => {
     if (isPaused) return;
     
     const interval = setInterval(() => {
+      setDirection(1);
       setCurrentIndex((prev) => (prev + 1) % reviews.length);
     }, 5000);
 
@@ -630,10 +632,12 @@ function ReviewsSection() {
   }, [isPaused, reviews.length]);
 
   const goToNext = () => {
+    setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % reviews.length);
   };
 
   const goToPrev = () => {
+    setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
   };
 
@@ -659,10 +663,10 @@ function ReviewsSection() {
         <div className="overflow-hidden">
           <motion.div
             key={currentIndex}
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
             className="card p-6 md:p-8"
           >
             <div className="flex items-center justify-between mb-4">
