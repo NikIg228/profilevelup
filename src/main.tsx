@@ -15,30 +15,23 @@ import DetailsPage from './pages/Details';
 import AdminPage from './pages/Admin';
 import { initializeDefaultReviews } from './utils/reviewsStorage';
 
-const router = createBrowserRouter(
-  [
-    {
-      path: '/',
-      element: <AppLayout />,
-      children: [
-        { index: true, element: <HomePage /> },
-        { path: 'test', element: <TestingPage /> },
-        { path: 'reviews', element: <ReviewsPage /> },
-        { path: 'about', element: <AboutPage /> },
-        { path: 'privacy', element: <PrivacyPage /> },
-        { path: 'terms', element: <TermsPage /> },
-        { path: 'help', element: <HelpPage /> },
-        { path: 'details', element: <DetailsPage /> },
-        { path: 'admin', element: <AdminPage /> },
-      ],
-    },
-  ],
+const router = createBrowserRouter([
   {
-    future: {
-      v7_startTransition: true,
-    },
-  }
-);
+    path: '/',
+    element: <AppLayout />,
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: 'test', element: <TestingPage /> },
+      { path: 'reviews', element: <ReviewsPage /> },
+      { path: 'about', element: <AboutPage /> },
+      { path: 'privacy', element: <PrivacyPage /> },
+      { path: 'terms', element: <TermsPage /> },
+      { path: 'help', element: <HelpPage /> },
+      { path: 'details', element: <DetailsPage /> },
+      { path: 'admin', element: <AdminPage /> },
+    ],
+  },
+]);
 
 // Инициализация дефолтных отзывов
 initializeDefaultReviews();

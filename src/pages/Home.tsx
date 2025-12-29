@@ -26,7 +26,7 @@ export default function HomePage() {
 
   // Состояния для Hero анимации
   const [heroStage, setHeroStage] = useState<'pain' | 'transition' | 'solution' | 'complete'>('pain');
-  const [currentPainIndex, setCurrentPainIndex] = useState(0);
+  const [currentPainIndex, setCurrentPainIndex] = useState(-1); // -1 означает задержку перед первой фразой
   const [animationSkipped, setAnimationSkipped] = useState(false);
   
   const painPhrases = [
@@ -55,12 +55,23 @@ export default function HomePage() {
     };
   }, [heroStage]);
 
+  // Задержка перед первой фразой (2 секунды)
+  useEffect(() => {
+    if (animationSkipped || heroStage !== 'pain' || currentPainIndex !== -1) return;
+    
+    const initialDelay = setTimeout(() => {
+      setCurrentPainIndex(0);
+    }, 2000); // 2 секунды задержка перед первой фразой
+    
+    return () => clearTimeout(initialDelay);
+  }, [currentPainIndex, heroStage, animationSkipped]);
+
   // Управление анимацией фраз боли
   useEffect(() => {
-    if (animationSkipped || heroStage !== 'pain') return;
+    if (animationSkipped || heroStage !== 'pain' || currentPainIndex < 0) return;
 
     if (currentPainIndex < painPhrases.length) {
-      // Каждая фраза показывается ~2.5 сек (pop-in + shake + показ) + 0.5 сек fade-out = ~3 сек
+      // Каждая фраза показывается 2 сек + интервал 1.5 сек = 3.5 сек
       const showTimer = setTimeout(() => {
         if (currentPainIndex === painPhrases.length - 1) {
           // Последняя фраза - переход к следующей стадии
@@ -73,7 +84,7 @@ export default function HomePage() {
         } else {
           setCurrentPainIndex(prev => prev + 1);
         }
-      }, 3000); // 2.5 сек показ + 0.5 сек fade-out
+      }, 3500); // 2 сек показ + 1.5 сек интервал
 
       return () => clearTimeout(showTimer);
     }
@@ -185,7 +196,7 @@ export default function HomePage() {
     <div>
       {/* Hero */}
       <section 
-        className={`${heroStage === 'pain' || heroStage === 'transition' ? 'fixed' : 'relative'} inset-0 ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-[100vh] lg:min-h-[80vh] flex flex-col items-center justify-center overflow-hidden transition-all duration-1000 ${
+        className={`${heroStage === 'pain' || heroStage === 'transition' ? 'fixed' : 'relative'} inset-0 ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-[100vh] lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} overflow-hidden transition-all duration-1000 ${
           heroStage === 'pain' || heroStage === 'transition' 
             ? 'bg-gray-900' 
             : 'bg-base'
@@ -208,7 +219,7 @@ export default function HomePage() {
         {/* Мобильная версия */}
         <div className="lg:hidden w-full flex flex-col items-center justify-center px-4 py-8 relative z-10">
           {/* Стадия 1: Фразы боли */}
-          {heroStage === 'pain' && (
+          {heroStage === 'pain' && currentPainIndex >= 0 && (
             <motion.div
               key={currentPainIndex}
               className="text-center px-4"
@@ -218,8 +229,8 @@ export default function HomePage() {
                 scale: [0.7, 1, 1, 0.8],
               }}
               transition={{
-                duration: 3,
-                times: [0, 0.1, 0.83, 1],
+                duration: 3.5,
+                times: [0, 0.143, 0.714, 1], // pop-in 0.5 сек, показ 2 сек, fade-out 1.5 сек
                 ease: [0.34, 1.56, 0.64, 1], // pop-in
               }}
             >
@@ -230,24 +241,25 @@ export default function HomePage() {
                 }}
                 transition={{
                   duration: 0.4,
-                  delay: 0.1,
+                  delay: 0.15,
                   ease: 'easeInOut',
                 }}
               >
                 {painPhrases[currentPainIndex]}
               </motion.h2>
-              {/* Подсказка о пропуске */}
-              {currentPainIndex === 0 && (
-                <motion.p
-                  className="text-xs text-white/50 mt-6"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 2.5 }}
-                >
-                  Нажмите, чтобы пропустить
-                </motion.p>
-              )}
             </motion.div>
+          )}
+          
+          {/* Подсказка о пропуске - внизу экрана, еле заметная */}
+          {heroStage === 'pain' && currentPainIndex >= 0 && (
+            <motion.p
+              className="fixed bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-white/20 text-center pointer-events-none z-[10000]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2.5 }}
+            >
+              Нажмите, чтобы пропустить
+            </motion.p>
           )}
 
           {/* Переход: затемнение и переход к свету */}
@@ -277,7 +289,7 @@ export default function HomePage() {
 
               {/* CTA кнопка */}
               <motion.div
-                className="w-full px-4 mt-6"
+                className="flex justify-center mt-6"
                 initial={{ opacity: 0, y: 20, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ 
@@ -289,13 +301,13 @@ export default function HomePage() {
                 }}
               >
                 <button 
-                  className="btn btn-primary w-full min-h-[52px] text-base sm:text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="btn btn-primary px-6 py-3 min-h-[52px] text-base sm:text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                   onClick={(e) => {
                     e.stopPropagation();
                     openFor('free');
                   }}
                 >
-                  Начать бесплатное тестирование 🚀
+                  Начать бесплатное тестирование 
                 </button>
               </motion.div>
             </>
@@ -303,9 +315,9 @@ export default function HomePage() {
         </div>
 
         {/* Desktop версия */}
-        <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center w-full container-balanced relative z-10">
+        <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-start w-full container-balanced relative z-10 pt-4 lg:pt-6">
           {/* Стадия 1: Фразы боли */}
-          {heroStage === 'pain' && (
+          {heroStage === 'pain' && currentPainIndex >= 0 && (
             <motion.div
               key={currentPainIndex}
               className="text-center px-4"
@@ -315,8 +327,8 @@ export default function HomePage() {
                 scale: [0.7, 1, 1, 0.8],
               }}
               transition={{
-                duration: 3,
-                times: [0, 0.1, 0.83, 1],
+                duration: 3.5,
+                times: [0, 0.143, 0.714, 1], // pop-in 0.5 сек, показ 2 сек, fade-out 1.5 сек
                 ease: [0.34, 1.56, 0.64, 1], // pop-in
               }}
             >
@@ -327,24 +339,25 @@ export default function HomePage() {
                 }}
                 transition={{
                   duration: 0.4,
-                  delay: 0.1,
+                  delay: 0.15,
                   ease: 'easeInOut',
                 }}
               >
                 {painPhrases[currentPainIndex]}
               </motion.h2>
-              {/* Подсказка о пропуске */}
-              {currentPainIndex === 0 && (
-                <motion.p
-                  className="text-sm text-white/50 mt-6"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 2.5 }}
-                >
-                  Нажмите, чтобы пропустить
-                </motion.p>
-              )}
             </motion.div>
+          )}
+          
+          {/* Подсказка о пропуске - внизу экрана, еле заметная */}
+          {heroStage === 'pain' && currentPainIndex >= 0 && (
+            <motion.p
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-white/20 text-center pointer-events-none z-[10000]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2.5 }}
+            >
+              Нажмите, чтобы пропустить
+            </motion.p>
           )}
 
           {/* Переход: затемнение и переход к свету */}
@@ -374,7 +387,7 @@ export default function HomePage() {
                 </p>
                 <div className="flex gap-3">
                   <button className="btn btn-primary px-5 py-3" onClick={() => openFor('free')}>
-                    Начать бесплатное тестирование 🚀
+                    Начать бесплатное тестирование 
                   </button>
                   <Link to="/details" className="btn btn-ghost px-5 py-3 text-center">
                     Подробнее
@@ -387,8 +400,8 @@ export default function HomePage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.8, delay: 0.3 }}
                 >
-                  <div className="rounded-2xl overflow-visible aspect-square flex items-center justify-center p-3">
-                    <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[120%] h-[120%] object-contain" loading="lazy" />
+                  <div className="rounded-2xl overflow-visible flex items-center justify-center">
+                    <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[91%] h-[91%] max-w-[520px] max-h-[520px] object-contain" loading="lazy" />
                   </div>
                 </motion.div>
               </div>
@@ -401,8 +414,9 @@ export default function HomePage() {
       {(heroStage === 'solution' || animationSkipped) && (
         <>
           {/* Formats */}
-          <section id="formats" className="container-balanced mt-4 lg:mt-8">
-        <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
+          <section id="formats" className="container-balanced mt-12 lg:mt-16">
+            <h2 className="text-3xl lg:text-4xl font-semibold text-heading mb-8 lg:mb-12 text-center lg:text-left">Наши тесты</h2>
+            <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* Базовый */}
           <div className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
             ${expandedCard === 'basic' ? 'shadow-lg bg-base/30' : ''}
