@@ -3,14 +3,12 @@ export default function TermsPage() {
     <section className="container-balanced mt-10 mb-16">
       <div className="card p-6 md:p-8 grid gap-5">
         <div className="grid gap-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold">📝 Пользовательское соглашение</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold"> Пользовательское соглашение</h1>
           <div className="text-muted">
-            <div>Сервис «ProfiLevelUp»</div>
-            <div>Дата последнего обновления: 14/11/2025 г.</div>
           </div>
           <p className="text-muted">
             Настоящее Пользовательское соглашение (далее — «Соглашение») регулирует условия использования онлайн-сервиса
-            ProfiLevelUp (далее — «Сервис»), расположенного по адресу: __________________________.
+            ProfiLevelUp (далее — «Сервис»).
           </p>
         </div>
 

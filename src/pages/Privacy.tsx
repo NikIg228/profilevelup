@@ -4,9 +4,7 @@ export default function PrivacyPage() {
       <div className="card p-6 md:p-8 grid gap-5">
         <div className="grid gap-2">
           <h1 className="text-2xl sm:text-3xl font-semibold">Политика конфиденциальности</h1>
-          <div className="text-muted">
-            <div>Проекта «Профиль будущего»</div>
-            <div>Дата последнего обновления: 14 / 11 / 2025 г.</div>
+          <div className="text-muted">           
           </div>
           <p className="text-muted">
             Настоящая Политика конфиденциальности регулирует порядок обработки и защиты персональных данных пользователей сервиса

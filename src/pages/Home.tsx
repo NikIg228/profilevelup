@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import Modal from '../components/Modal';
 import AutoSlider from '../components/AutoSlider';
@@ -21,6 +21,8 @@ export default function HomePage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  // Состояния для accordion-карточек на мобильных
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const videoItems: VideoItem[] = [
@@ -123,26 +125,31 @@ export default function HomePage() {
       <section className="container-balanced -mt-8 sm:-mt-12">
         <div className="grid lg:grid-cols-2 items-center gap-8">
           <div className="fade-section">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight">
-              Твой путь начинается с понимания себя
+            {/* Мобильная версия: заголовок в 2 строки */}
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight">
+              <span className="block lg:inline">Твой путь начинается</span>
+              <span className="block lg:inline lg:ml-1">с понимания себя</span>
             </h1>
-            <p className="mt-4 text-muted text-lg">
-            Короткий тест, который помогает увидеть свои сильные стороны
-            и роли, в которых тебе естественно и комфортно быть собой.
+            {/* Мобильная версия: подзаголовок короче */}
+            <p className="mt-4 text-muted text-base sm:text-lg">
+            Короткий тест, который помогает увидеть
+            <span className="hidden sm:inline"> свои сильные стороны</span>
+            <span className="hidden md:inline"> и роли, в которых тебе естественно и комфортно быть собой.</span>
             </p>
             <div className="mt-6 flex gap-3 flex-col sm:flex-row">
-              <button className="btn btn-primary px-5 py-3 w-full sm:w-auto" onClick={() => openFor('free')}>Начать бесплатное тестирование</button>
-              <Link to="/details" className="btn btn-ghost px-5 py-3 w-full sm:w-auto">Подробнее</Link>
+              <button className="btn btn-primary px-5 py-3 w-full sm:w-auto min-h-[48px] sm:min-h-0" onClick={() => openFor('free')}>Начать бесплатное тестирование</button>
+              <Link to="/details" className="btn btn-ghost px-5 py-3 w-full sm:w-auto min-h-[48px] sm:min-h-0 text-center">Подробнее</Link>
             </div>
           </div>
-          <div className="lg:hidden fade-section">
-            <div className="rounded-2xl overflow-visible aspect-square mb-6 sm:mb-0 flex items-center justify-center p-6">
-              <img src="/logo.png" alt="Логотип Профиль будущего" className="w-[120%] h-[120%] object-contain" loading="lazy" />
+          {/* Мобильная версия: иллюстрация меньше (на 20-30%) и ниже */}
+          <div className="lg:hidden fade-section order-first lg:order-none">
+            <div className="rounded-2xl overflow-visible aspect-square mb-4 flex items-center justify-center p-4">
+              <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[90%] h-[90%] object-contain" loading="lazy" />
             </div>
           </div>
           <div className="hidden lg:block fade-section">
             <div className="rounded-2xl overflow-visible aspect-square flex items-center justify-center p-6">
-              <img src="/logo.png" alt="Логотип Профиль будущего" className="w-[120%] h-[120%] object-contain" loading="lazy" />
+              <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[120%] h-[120%] object-contain" loading="lazy" />
             </div>
           </div>
         </div>
@@ -152,12 +159,12 @@ export default function HomePage() {
       <section id="formats" className="container-balanced mt-4 lg:mt-8">
         <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* Базовый */}
-          <div className="card p-8 flex flex-col shadow-md bg-white order-1 h-full min-h-[500px]
-            transition-all duration-300 hover:shadow-xl hover:-translate-y-1
-            group cursor-pointer">
-            <div className="flex flex-col h-full justify-between">
+          <div className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
+            ${expandedCard === 'basic' ? 'border-2 border-primary shadow-lg bg-base/30' : ''}
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:group lg:cursor-pointer`}>
+            {/* Desktop версия */}
+            <div className="hidden lg:flex flex-col h-full justify-between">
               <div>
-                {/* Иллюстрация */}
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/basic.png"
@@ -166,7 +173,6 @@ export default function HomePage() {
                     loading="lazy"
                   />
                 </div>
-                
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-heading">Базовый</h3>
                   <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
@@ -187,15 +193,83 @@ export default function HomePage() {
                 Начать
               </button>
             </div>
+
+            {/* Мобильная версия - accordion */}
+            <div className={`lg:hidden p-3 sm:p-4 transition-all duration-300 ${expandedCard === 'basic' ? 'bg-base/50' : ''}`}>
+              {/* Свернутое состояние */}
+              <div className="flex items-start gap-3 mb-2">
+                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-secondary/20 flex items-center justify-center">
+                  <img src="/komu/basic.png" alt="" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" loading="lazy" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  {/* Название + цена в одной строке */}
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-heading">Базовый</h3>
+                    <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
+                      Бесплатно
+                    </span>
+                  </div>
+                  {/* Подзаголовок = 1 строка смысла */}
+                  <p className="text-sm text-muted">Мягкий формат для начала</p>
+                </div>
+              </div>
+
+              {/* CTA с анимированной стрелкой */}
+              <button
+                onClick={() => setExpandedCard(expandedCard === 'basic' ? null : 'basic')}
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-secondary/10 rounded-xl hover:bg-secondary/20 transition-colors"
+              >
+                <span className="text-sm font-medium text-heading">Подробнее</span>
+                <motion.div
+                  animate={{ rotate: expandedCard === 'basic' ? 90 : 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+                </motion.div>
+              </button>
+
+              {/* Развернутое состояние - сразу список без заголовка */}
+              <motion.div
+                initial={false}
+                animate={{
+                  maxHeight: expandedCard === 'basic' ? 1000 : 0,
+                  opacity: expandedCard === 'basic' ? 1 : 0,
+                }}
+                transition={{
+                  duration: 0.3,
+                  ease: [0.4, 0, 0.2, 1],
+                }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div className="pt-3 pb-2">
+                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
+                    <li>Короткий вводный тест</li>
+                    <li>Первичное понимание своего стиля мышления и действий</li>
+                    <li>Краткое описание твоего стиля мышления и поведения</li>
+                    <li>Помогает понять, откликается ли тебе этот формат</li>
+                  </ul>
+                </div>
+              </motion.div>
+
+              {/* CTA кнопка - единственный главный CTA */}
+              {expandedCard === 'basic' && (
+                <button
+                  onClick={() => openFor('free', 'Базовый')}
+                  className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
+                >
+                  Начать тест
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Расширенный */}
-          <div className="card p-8 flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 h-full min-h-[500px] relative
-            transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/40
-            group cursor-pointer">
-            <div className="flex flex-col h-full justify-between">
+          <div className={`card flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 transition-all duration-300 relative
+            ${expandedCard === 'extended' ? 'border-2 border-primary shadow-lg bg-base/30' : ''}
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:hover:border-primary/40 lg:group lg:cursor-pointer`}>
+            {/* Desktop версия */}
+            <div className="hidden lg:flex flex-col h-full justify-between">
               <div>
-                {/* Иллюстрация */}
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/vip.png"
@@ -204,7 +278,6 @@ export default function HomePage() {
                     loading="lazy"
                   />
                 </div>
-                
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-heading">Расширенный</h3>
                   <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
@@ -229,18 +302,88 @@ export default function HomePage() {
                 Начать
               </button>
             </div>
+
+            {/* Мобильная версия - accordion */}
+            <div className={`lg:hidden p-3 sm:p-4 transition-all duration-300 ${expandedCard === 'extended' ? 'bg-base/50' : ''}`}>
+              <div className="flex items-start gap-3 mb-2">
+                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-secondary/20 flex items-center justify-center">
+                  <img src="/komu/vip.png" alt="" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" loading="lazy" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  {/* Название + цена в одной строке */}
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-heading">Расширенный</h3>
+                    <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
+                      6 990 тг
+                    </span>
+                  </div>
+                  {/* Подзаголовок = 1 строка смысла */}
+                  <p className="text-sm text-muted">Понимание себя в деталях</p>
+                </div>
+              </div>
+
+              {/* CTA с анимированной стрелкой */}
+              <button
+                onClick={() => setExpandedCard(expandedCard === 'extended' ? null : 'extended')}
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-secondary/10 rounded-xl hover:bg-secondary/20 transition-colors"
+              >
+                <span className="text-sm font-medium text-heading">Подробнее</span>
+                <motion.div
+                  animate={{ rotate: expandedCard === 'extended' ? 90 : 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+                </motion.div>
+              </button>
+
+              {/* Развернутое состояние - сразу список без заголовка */}
+              <motion.div
+                initial={false}
+                animate={{
+                  maxHeight: expandedCard === 'extended' ? 1000 : 0,
+                  opacity: expandedCard === 'extended' ? 1 : 0,
+                }}
+                transition={{
+                  duration: 0.3,
+                  ease: [0.4, 0, 0.2, 1],
+                }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div className="pt-3 pb-2">
+                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
+                    <li>Персональный профиль</li>
+                    <li>Подробный PDF-отчёт</li>
+                    <li>Сильные стороны</li>
+                    <li>Подходящие профессии</li>
+                    <li>Рекомендации по развитию</li>
+                  </ul>
+                </div>
+              </motion.div>
+
+              {/* CTA кнопка - единственный главный CTA */}
+              {expandedCard === 'extended' && (
+                <button
+                  onClick={() => openFor('pro', 'Расширенный')}
+                  className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
+                >
+                  Начать тест
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Premium */}
-          <div className="card p-8 flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 h-full min-h-[500px] relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer border-2 border-primary hover:border-primary-hover">
+          <div className={`card flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 transition-all duration-300 relative
+            ${expandedCard === 'premium' ? 'border-2 border-primary shadow-lg' : ''}
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:group lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}>
             {/* Баннер сверху */}
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-2 rounded-lg shadow-md z-10">
-              <p className="text-sm font-semibold whitespace-nowrap">Для родителей подростков</p>
+            <div className="absolute -top-3 lg:-top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg shadow-md z-10">
+              <p className="text-xs lg:text-sm font-semibold whitespace-nowrap">Для родителей</p>
             </div>
             
-            <div className="flex flex-col h-full justify-between">
+            {/* Desktop версия */}
+            <div className="hidden lg:flex flex-col h-full justify-between">
               <div>
-                {/* Иллюстрация */}
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/PREMIUM .png"
@@ -249,7 +392,6 @@ export default function HomePage() {
                     loading="lazy"
                   />
                 </div>
-                
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <h3 className="text-xl font-semibold text-heading">Premium</h3>
                   <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
@@ -275,13 +417,82 @@ export default function HomePage() {
                 Начать
               </button>
             </div>
+
+            {/* Мобильная версия - accordion */}
+            <div className={`lg:hidden p-3 sm:p-4 bg-primary/5 transition-all duration-300 ${expandedCard === 'premium' ? 'bg-primary/10 border-2 border-primary shadow-lg' : ''}`}>
+              <div className="flex items-start gap-3 mb-2">
+                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <img src="/komu/PREMIUM .png" alt="" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" loading="lazy" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  {/* Название + цена в одной строке */}
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-heading">Premium для родителей</h3>
+                    <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
+                      14 990 тг
+                    </span>
+                  </div>
+                  {/* Подзаголовок с акцентом */}
+                  <p className="text-sm text-muted font-medium">Помогает понять ребёнка и выстроить доверительный диалог</p>
+                </div>
+              </div>
+
+              {/* CTA с анимированной стрелкой */}
+              <button
+                onClick={() => setExpandedCard(expandedCard === 'premium' ? null : 'premium')}
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-secondary/10 rounded-xl hover:bg-secondary/20 transition-colors"
+              >
+                <span className="text-sm font-medium text-heading">Подробнее</span>
+                <motion.div
+                  animate={{ rotate: expandedCard === 'premium' ? 90 : 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+                </motion.div>
+              </button>
+
+              {/* Развернутое состояние - сразу список без заголовка */}
+              <motion.div
+                initial={false}
+                animate={{
+                  maxHeight: expandedCard === 'premium' ? 1000 : 0,
+                  opacity: expandedCard === 'premium' ? 1 : 0,
+                }}
+                transition={{
+                  duration: 0.3,
+                  ease: [0.4, 0, 0.2, 1],
+                }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div className="pt-3 pb-2">
+                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
+                    <li>Персональный отчёт для ребёнка</li>
+                    <li>Отдельный отчёт для родителя на e-mail</li>
+                    <li>Как общаться с ребёнком так, чтобы мотивировать</li>
+                    <li>Какие слова и подходы работают</li>
+                    <li>На что можно опираться в диалоге</li>
+                  </ul>
+                </div>
+              </motion.div>
+
+              {/* CTA кнопка - единственный главный CTA */}
+              {expandedCard === 'premium' && (
+                <button
+                  onClick={() => openFor('pro', 'Premium')}
+                  className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
+                >
+                  Начать тест
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Social proof */}
+      {/* Social proof - Trust cards */}
       <section className="container-balanced mt-12 lg:mt-16">
-        <div className="grid sm:grid-cols-3 gap-4">
+        {/* Desktop: 3 колонки */}
+        <div className="hidden sm:grid sm:grid-cols-3 gap-4">
           <div className="card p-5 md:p-6 border border-secondary/40 flex items-start gap-3">
             <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" strokeWidth={2.5} />
             <div className="text-lg md:text-xl font-semibold text-heading">
@@ -319,6 +530,52 @@ export default function HomePage() {
                 duration={2}
                 className="inline text-ink"
               /><span className="text-ink">%</span> родителей отмечают, что ребёнок стал увереннее
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile: вертикальный список trust-cards */}
+        <div className="sm:hidden space-y-4">
+          <div className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-primary flex-shrink-0 mt-1" strokeWidth={2.5} />
+            <div className="text-base font-semibold text-heading">
+              <CountUp
+                from={0}
+                to={8200}
+                separator=" "
+                direction="up"
+                duration={2}
+                className="inline text-ink"
+              />+ человек
+              <div className="text-sm font-normal text-muted mt-0.5">прошли тест</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-primary flex-shrink-0 mt-1" strokeWidth={2.5} />
+            <div className="text-base font-semibold text-heading">
+              <CountUp
+                from={0}
+                to={92}
+                separator=""
+                direction="up"
+                duration={2}
+                className="inline text-ink"
+              /><span className="text-ink">%</span>
+              <div className="text-sm font-normal text-muted mt-0.5">говорят: «Я понял(а) себя лучше»</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-primary flex-shrink-0 mt-1" strokeWidth={2.5} />
+            <div className="text-base font-semibold text-heading">
+              <CountUp
+                from={0}
+                to={78}
+                separator=""
+                direction="up"
+                duration={2}
+                className="inline text-ink"
+              /><span className="text-ink">%</span> родителей
+              <div className="text-sm font-normal text-muted mt-0.5">отмечают рост уверенности</div>
             </div>
           </div>
         </div>
@@ -611,19 +868,25 @@ function ReviewsSection() {
   const [isPaused, setIsPaused] = useState(false);
   const [direction, setDirection] = useState(1); // 1 для вперед, -1 для назад
 
+  // Для swipe на мобильных
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const SWIPE_THRESHOLD = 50;
+
   // Загрузка отзывов при изменении
   useEffect(() => {
     setReviews(getReviews());
   }, [reviewFormOpen]);
 
-  // Автоматическое переключение каждые 5 секунд (зацикленное)
+  // Автоматическое переключение каждые 4 секунды (зацикленное)
   useEffect(() => {
     if (isPaused || reviews.length === 0) return;
     
     const interval = setInterval(() => {
       setDirection(1);
       setCurrentIndex((prev) => (prev + 1) % reviews.length);
-    }, 5000);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [isPaused, reviews.length]);
@@ -637,6 +900,70 @@ function ReviewsSection() {
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
   };
+
+  // Обработчики для swipe на мобильных
+  useEffect(() => {
+    if (reviews.length === 0) return;
+    
+    const cardElement = cardRef.current;
+    if (!cardElement) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (touchStartX.current !== null && touchStartY.current !== null) {
+        const deltaX = Math.abs(e.touches[0].clientX - touchStartX.current);
+        const deltaY = Math.abs(e.touches[0].clientY - touchStartY.current);
+        if (deltaX > deltaY && deltaX > 10) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) {
+        touchStartX.current = null;
+        touchStartY.current = null;
+        return;
+      }
+
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX.current;
+      const deltaY = Math.abs(touchEndY - touchStartY.current);
+      const absDeltaX = Math.abs(deltaX);
+
+      if (absDeltaX > deltaY && absDeltaX > SWIPE_THRESHOLD) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (deltaX > 0) {
+          setDirection(-1);
+          setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
+        } else {
+          setDirection(1);
+          setCurrentIndex((prev) => (prev + 1) % reviews.length);
+        }
+      }
+
+      touchStartX.current = null;
+      touchStartY.current = null;
+    };
+
+    cardElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+    cardElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    cardElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      cardElement.removeEventListener('touchstart', handleTouchStart);
+      cardElement.removeEventListener('touchmove', handleTouchMove);
+      cardElement.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [reviews.length]);
 
   if (reviews.length === 0) {
     return (
@@ -672,10 +999,10 @@ function ReviewsSection() {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Стрелка влево */}
+        {/* Стрелка влево - только на desktop */}
         <button
           onClick={goToPrev}
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
+          className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
           aria-label="Предыдущий отзыв"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -683,26 +1010,30 @@ function ReviewsSection() {
 
         {/* Слайдер */}
         <div className="overflow-hidden">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-            className="card p-6 md:p-8"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-heading">{reviews[currentIndex].name}</h3>
-              <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
-            </div>
-            <p className="text-ink leading-relaxed">{reviews[currentIndex].text}</p>
-          </motion.div>
+          {reviews.length > 0 && reviews[currentIndex] && (
+            <motion.div
+              key={currentIndex}
+              ref={cardRef}
+              initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="card p-4 sm:p-6 md:p-8 min-h-[200px] sm:min-h-0"
+              style={{ touchAction: 'pan-y' }}
+            >
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-heading">{reviews[currentIndex].name}</h3>
+                <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
+              </div>
+              <p className="text-sm sm:text-base text-ink leading-relaxed line-clamp-3 sm:line-clamp-none">{reviews[currentIndex].text}</p>
+            </motion.div>
+          )}
         </div>
 
-        {/* Стрелка вправо */}
+        {/* Стрелка вправо - только на desktop */}
         <button
           onClick={goToNext}
-          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
+          className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
           aria-label="Следующий отзыв"
         >
           <ChevronRight className="w-5 h-5" />
@@ -724,11 +1055,11 @@ function ReviewsSection() {
           ))}
         </div>
 
-        {/* Кнопка "Оставить отзыв" */}
-        <div className="flex justify-center mt-8">
+        {/* Кнопка "Оставить отзыв" - на всю ширину на мобильных */}
+        <div className="flex justify-center mt-6 sm:mt-8">
           <button
             onClick={() => setReviewFormOpen(true)}
-            className="px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
+            className="w-full sm:w-auto px-6 py-3 min-h-[48px] sm:min-h-0 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
           >
             Оставить отзыв
           </button>
@@ -797,29 +1128,31 @@ function WhoForCards() {
         className="card pt-4 px-4 pb-4 sm:pt-6 sm:px-6 sm:pb-6 bg-base border border-secondary/40 rounded-xl sm:rounded-2xl overflow-hidden relative flex flex-col"
       >
         {/* Иллюстрация */}
-        <div className="flex items-start justify-center h-[180px] mb-3 sm:mb-4 relative">
+        <div className="flex items-start justify-center h-[140px] sm:h-[180px] mb-3 sm:mb-4 relative">
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-emerald-200/30 blur-xl rounded-full w-24 h-24 sm:w-32 sm:h-32 transform translate-x-1 translate-y-1 sm:translate-x-2 sm:translate-y-2"></div>
+            <div className="bg-emerald-200/30 blur-xl rounded-full w-20 h-20 sm:w-32 sm:h-32 transform translate-x-1 translate-y-1 sm:translate-x-2 sm:translate-y-2"></div>
           </div>
           <img
             src="/komu/students.png"
             alt=""
-            className="h-[180px] w-auto object-contain object-top relative z-10"
+            className="h-[140px] sm:h-[180px] w-auto object-contain object-top relative z-10"
             loading="lazy"
           />
-          {/* Элементы роста */}
-          <Sparkles className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 w-3 h-3 sm:w-4 sm:h-4 text-emerald-400/50 z-10" />
+          {/* Элементы роста - только на desktop */}
+          <Sparkles className="hidden sm:block absolute bottom-2 right-2 w-4 h-4 text-emerald-400/50 z-10" />
         </div>
         
         <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3">Студентам</h3>
         
-        <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4">
+        {/* Desktop: полный текст */}
+        <p className="hidden sm:block text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4">
           В университете нет "правильного пути" — есть твой формат, твой темп роста.
-          <br className="hidden sm:block" />
-          <br className="hidden sm:block" />
+          <br />
+          <br />
           Наш профиль показывает, как раскрыться в реальной практике.
         </p>
         
+        {/* Mobile: только буллеты */}
         <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 list-disc list-inside">
           <li>уточнить специализацию и карьерный трек</li>
           <li>понять, в какой практике вы раскроетесь лучше</li>
@@ -835,11 +1168,11 @@ function WhoForCards() {
         className="card pt-4 px-4 pb-4 sm:pt-6 sm:px-6 sm:pb-6 bg-base border border-secondary/40 rounded-xl sm:rounded-2xl overflow-hidden relative flex flex-col"
       >
         {/* Иллюстрация */}
-        <div className="flex items-start justify-center h-[180px] mb-3 sm:mb-4 relative">
+        <div className="flex items-start justify-center h-[140px] sm:h-[180px] mb-3 sm:mb-4 relative">
           <img
             src="/komu/parents.png"
             alt=""
-            className="h-[180px] w-auto object-contain object-top"
+            className="h-[140px] sm:h-[180px] w-auto object-contain object-top"
             loading="lazy"
           />
           {/* Элементы роста */}
@@ -877,11 +1210,11 @@ function WhoForCards() {
         className="card pt-4 px-4 pb-4 sm:pt-6 sm:px-6 sm:pb-6 bg-base border border-secondary/40 rounded-xl sm:rounded-2xl overflow-hidden relative flex flex-col"
       >
         {/* Иллюстрация */}
-        <div className="flex items-start justify-center h-[180px] mb-3 sm:mb-4 relative">
+        <div className="flex items-start justify-center h-[140px] sm:h-[180px] mb-3 sm:mb-4 relative">
           <img
             src="/komu/vzroslym.png"
             alt=""
-            className="h-[180px] w-auto object-contain object-top"
+            className="h-[140px] sm:h-[180px] w-auto object-contain object-top"
             loading="lazy"
           />
           {/* Элементы роста */}
