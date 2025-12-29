@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import Modal from '../components/Modal';
-import AutoSlider from '../components/AutoSlider';
 import Select from '../components/Select';
 import CountUp from '../components/CountUp';
 import VideoPlayer from '../components/VideoPlayer';
@@ -24,6 +23,69 @@ export default function HomePage() {
   // Состояния для accordion-карточек на мобильных
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Состояния для Hero анимации
+  const [heroStage, setHeroStage] = useState<'pain' | 'transition' | 'solution' | 'complete'>('pain');
+  const [currentPainIndex, setCurrentPainIndex] = useState(0);
+  const [animationSkipped, setAnimationSkipped] = useState(false);
+  
+  const painPhrases = [
+    'Выбери нормальную профессию!',
+    'На этом денег не заработаешь!',
+    'Все идут на экономиста — и ты иди!',
+    'Какие таланты? Главное — диплом!'
+  ];
+
+  // Блокировка скролла во время анимации боли
+  useEffect(() => {
+    if (heroStage === 'pain' || heroStage === 'transition') {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [heroStage]);
+
+  // Управление анимацией фраз боли
+  useEffect(() => {
+    if (animationSkipped || heroStage !== 'pain') return;
+
+    if (currentPainIndex < painPhrases.length) {
+      // Каждая фраза показывается ~2.5 сек (pop-in + shake + показ) + 0.5 сек fade-out = ~3 сек
+      const showTimer = setTimeout(() => {
+        if (currentPainIndex === painPhrases.length - 1) {
+          // Последняя фраза - переход к следующей стадии
+          setTimeout(() => {
+            setHeroStage('transition');
+            setTimeout(() => {
+              setHeroStage('solution');
+            }, 600);
+          }, 500);
+        } else {
+          setCurrentPainIndex(prev => prev + 1);
+        }
+      }, 3000); // 2.5 сек показ + 0.5 сек fade-out
+
+      return () => clearTimeout(showTimer);
+    }
+  }, [currentPainIndex, heroStage, animationSkipped, painPhrases.length]);
+
+  // Пропуск анимации по тапу
+  const skipAnimation = () => {
+    if (heroStage === 'pain' || heroStage === 'transition') {
+      setAnimationSkipped(true);
+      setHeroStage('solution');
+    }
+  };
 
   const videoItems: VideoItem[] = [
     { id: '1', src: '/video_otzyvy/1Аиша.mov', title: 'Аиша' },
@@ -122,39 +184,224 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero */}
-      <section className="container-balanced -mt-8 sm:-mt-12">
-        <div className="grid lg:grid-cols-2 items-center gap-8">
-          <div className="fade-section">
-            {/* Мобильная версия: заголовок в 2 строки */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight">
-              <span className="block lg:inline">Твой путь начинается</span>
-              <span className="block lg:inline lg:ml-1">с понимания себя</span>
-            </h1>
-            {/* Мобильная версия: подзаголовок короче */}
-            <p className="mt-4 text-muted text-base sm:text-lg">
-            Короткий тест, который помогает увидеть свои сильные стороны и роли, в которых тебе естественно и комфортно быть собой.
-            </p>
-            <div className="mt-6 flex gap-3 flex-col sm:flex-row">
-              <button className="btn btn-primary px-5 py-3 w-full sm:w-auto min-h-[48px] sm:min-h-0" onClick={() => openFor('free')}>Начать бесплатное тестирование</button>
-              <Link to="/details" className="btn btn-ghost px-5 py-3 w-full sm:w-auto min-h-[48px] sm:min-h-0 text-center">Подробнее</Link>
+      <section 
+        className={`${heroStage === 'pain' || heroStage === 'transition' ? 'fixed' : 'relative'} inset-0 ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-[100vh] lg:min-h-[80vh] flex flex-col items-center justify-center overflow-hidden transition-all duration-1000 ${
+          heroStage === 'pain' || heroStage === 'transition' 
+            ? 'bg-gray-900' 
+            : 'bg-base'
+        }`}
+        onClick={skipAnimation}
+        style={{ 
+          cursor: heroStage === 'pain' || heroStage === 'transition' ? 'pointer' : 'default',
+        }}
+      >
+        {/* Фоновый узор нейросети (только на светлом фоне) */}
+        {heroStage === 'solution' && (
+          <div 
+            className="absolute inset-0 opacity-[0.05] lg:opacity-[0.08] pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+        )}
+
+        {/* Мобильная версия */}
+        <div className="lg:hidden w-full flex flex-col items-center justify-center px-4 py-8 relative z-10">
+          {/* Стадия 1: Фразы боли */}
+          {heroStage === 'pain' && (
+            <motion.div
+              key={currentPainIndex}
+              className="text-center px-4"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ 
+                opacity: [0, 1, 1, 0],
+                scale: [0.7, 1, 1, 0.8],
+              }}
+              transition={{
+                duration: 3,
+                times: [0, 0.1, 0.83, 1],
+                ease: [0.34, 1.56, 0.64, 1], // pop-in
+              }}
+            >
+              <motion.h2
+                className="text-2xl sm:text-3xl font-bold text-white leading-relaxed"
+                animate={{
+                  x: [0, -4, 4, -3, 3, -2, 2, -1, 1, 0],
+                }}
+                transition={{
+                  duration: 0.4,
+                  delay: 0.1,
+                  ease: 'easeInOut',
+                }}
+              >
+                {painPhrases[currentPainIndex]}
+              </motion.h2>
+              {/* Подсказка о пропуске */}
+              {currentPainIndex === 0 && (
+                <motion.p
+                  className="text-xs text-white/50 mt-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 2.5 }}
+                >
+                  Нажмите, чтобы пропустить
+                </motion.p>
+              )}
+            </motion.div>
+          )}
+
+          {/* Переход: затемнение и переход к свету */}
+          {heroStage === 'transition' && (
+            <motion.div
+              className="absolute inset-0 bg-gray-900"
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.6, ease: 'easeInOut' }}
+            />
+          )}
+
+          {/* Стадия 2: Решение */}
+          {heroStage === 'solution' && (
+            <>
+              <motion.div
+                className="text-center px-4"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
+              >
+                <h1 className="text-2xl sm:text-3xl font-semibold text-heading leading-relaxed">
+                  <span className="block">Узнай себя глубже —</span>
+                  <span className="block">и выбирай путь, который подходит именно тебе.</span>
+                </h1>
+              </motion.div>
+
+              {/* CTA кнопка */}
+              <motion.div
+                className="w-full px-4 mt-6"
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: 0.5,
+                  type: 'spring',
+                  stiffness: 200,
+                  damping: 15,
+                }}
+              >
+                <button 
+                  className="btn btn-primary w-full min-h-[52px] text-base sm:text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFor('free');
+                  }}
+                >
+                  Начать бесплатное тестирование 🚀
+                </button>
+              </motion.div>
+            </>
+          )}
+        </div>
+
+        {/* Desktop версия */}
+        <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center w-full container-balanced relative z-10">
+          {/* Стадия 1: Фразы боли */}
+          {heroStage === 'pain' && (
+            <motion.div
+              key={currentPainIndex}
+              className="text-center px-4"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ 
+                opacity: [0, 1, 1, 0],
+                scale: [0.7, 1, 1, 0.8],
+              }}
+              transition={{
+                duration: 3,
+                times: [0, 0.1, 0.83, 1],
+                ease: [0.34, 1.56, 0.64, 1], // pop-in
+              }}
+            >
+              <motion.h2
+                className="text-4xl lg:text-5xl font-bold text-white leading-relaxed"
+                animate={{
+                  x: [0, -4, 4, -3, 3, -2, 2, -1, 1, 0],
+                }}
+                transition={{
+                  duration: 0.4,
+                  delay: 0.1,
+                  ease: 'easeInOut',
+                }}
+              >
+                {painPhrases[currentPainIndex]}
+              </motion.h2>
+              {/* Подсказка о пропуске */}
+              {currentPainIndex === 0 && (
+                <motion.p
+                  className="text-sm text-white/50 mt-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 2.5 }}
+                >
+                  Нажмите, чтобы пропустить
+                </motion.p>
+              )}
+            </motion.div>
+          )}
+
+          {/* Переход: затемнение и переход к свету */}
+          {heroStage === 'transition' && (
+            <motion.div
+              className="absolute inset-0 bg-gray-900"
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.6, ease: 'easeInOut' }}
+            />
+          )}
+
+          {/* Стадия 2: Решение */}
+          {heroStage === 'solution' && (
+            <div className="grid lg:grid-cols-2 items-center gap-8 w-full">
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <h1 className="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight mb-4">
+                  <span className="block">Узнай себя глубже —</span>
+                  <span className="block">и выбирай путь, который подходит именно тебе.</span>
+                </h1>
+                <p className="mt-4 text-muted text-lg mb-6">
+                  Короткий тест, который помогает увидеть свои сильные стороны и роли, в которых тебе естественно и комфортно быть собой.
+                </p>
+                <div className="flex gap-3">
+                  <button className="btn btn-primary px-5 py-3" onClick={() => openFor('free')}>
+                    Начать бесплатное тестирование 🚀
+                  </button>
+                  <Link to="/details" className="btn btn-ghost px-5 py-3 text-center">
+                    Подробнее
+                  </Link>
+                </div>
+              </motion.div>
+              <div className="flex items-center justify-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                >
+                  <div className="rounded-2xl overflow-visible aspect-square flex items-center justify-center p-3">
+                    <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[120%] h-[120%] object-contain" loading="lazy" />
+                  </div>
+                </motion.div>
+              </div>
             </div>
-          </div>
-          {/* Мобильная версия: иллюстрация меньше (на 20-30%) и ниже */}
-          <div className="lg:hidden fade-section order-first lg:order-none">
-            <div className="rounded-2xl overflow-visible aspect-square mb-4 flex items-center justify-center p-1 sm:p-2">
-              <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[90%] h-[90%] object-contain" loading="lazy" />
-            </div>
-          </div>
-          <div className="hidden lg:block fade-section">
-            <div className="rounded-2xl overflow-visible aspect-square flex items-center justify-center p-3">
-              <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[120%] h-[120%] object-contain" loading="lazy" />
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
-      {/* Formats */}
-      <section id="formats" className="container-balanced mt-4 lg:mt-8">
+      {/* Остальной контент - показывается только после анимации */}
+      {(heroStage === 'solution' || animationSkipped) && (
+        <>
+          {/* Formats */}
+          <section id="formats" className="container-balanced mt-4 lg:mt-8">
         <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* Базовый */}
           <div className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
@@ -595,7 +842,9 @@ export default function HomePage() {
         <WhoForCards />
       </section>
 
-      {/* anchors удалены по просьбе пользователя */}
+          {/* anchors удалены по просьбе пользователя */}
+        </>
+      )}
 
       <Modal
         open={modalOpen}
