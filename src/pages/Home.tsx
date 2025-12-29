@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
@@ -28,6 +28,10 @@ export default function HomePage() {
   const [heroStage, setHeroStage] = useState<'pain' | 'transition' | 'solution' | 'complete'>('pain');
   const [currentPainIndex, setCurrentPainIndex] = useState(-1); // -1 означает задержку перед первой фразой
   const [animationSkipped, setAnimationSkipped] = useState(false);
+  const [showDarkOverlay, setShowDarkOverlay] = useState(false);
+  const [maskRadius, setMaskRadius] = useState(0);
+  const [logoPosition, setLogoPosition] = useState({ x: '75%', y: '50%' }); // Desktop по умолчанию
+  const logoRef = useRef<HTMLImageElement>(null);
   
   const painPhrases = [
     'Выбери нормальную профессию!',
@@ -54,6 +58,62 @@ export default function HomePage() {
       document.body.style.width = '';
     };
   }, [heroStage]);
+
+  // Эффект "выход из тени" - затемнение с расширяющимся светом из лого
+  useEffect(() => {
+    if (heroStage === 'solution' && !animationSkipped) {
+      setShowDarkOverlay(true);
+      setMaskRadius(0);
+      
+      // Анимация расширения mask с плавным easing
+      const startTime = Date.now();
+      const duration = 2000;
+      const keyframes = [0, 0.1, 0.3, 0.6, 1];
+      const radiusValues = [0, 5, 25, 60, 150];
+      
+      const easeOut = (t: number) => {
+        return 1 - Math.pow(1 - t, 3);
+      };
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeOut(progress);
+        
+        // Интерполяция между ключевыми кадрами
+        let radius = 0;
+        if (easedProgress <= keyframes[0]) {
+          radius = radiusValues[0];
+        } else if (easedProgress >= keyframes[keyframes.length - 1]) {
+          radius = radiusValues[radiusValues.length - 1];
+        } else {
+          for (let i = 0; i < keyframes.length - 1; i++) {
+            if (easedProgress >= keyframes[i] && easedProgress <= keyframes[i + 1]) {
+              const localProgress = (easedProgress - keyframes[i]) / (keyframes[i + 1] - keyframes[i]);
+              radius = radiusValues[i] + (radiusValues[i + 1] - radiusValues[i]) * localProgress;
+              break;
+            }
+          }
+        }
+        
+        setMaskRadius(radius);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          setTimeout(() => {
+            setShowDarkOverlay(false);
+            setMaskRadius(0);
+          }, 100);
+        }
+      };
+      
+      requestAnimationFrame(animate);
+    } else {
+      setShowDarkOverlay(false);
+      setMaskRadius(0);
+    }
+  }, [heroStage, animationSkipped]);
 
   // Задержка перед первой фразой (2 секунды)
   useEffect(() => {
@@ -194,6 +254,22 @@ export default function HomePage() {
 
   return (
     <div>
+      {/* Overlay затемнения с расширяющимся светом из лого */}
+      {showDarkOverlay && (
+        <motion.div
+          className="fixed inset-0 pointer-events-none z-[10000]"
+          style={{
+            background: 'rgba(0, 0, 0, 0.85)',
+            maskImage: `radial-gradient(circle at ${logoPosition.x} ${logoPosition.y}, transparent 0%, transparent ${maskRadius}%, black ${maskRadius}%)`,
+            WebkitMaskImage: `radial-gradient(circle at ${logoPosition.x} ${logoPosition.y}, transparent 0%, transparent ${maskRadius}%, black ${maskRadius}%)`,
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 2, times: [0, 0.1, 1], ease: 'easeOut' }}
+          onAnimationComplete={() => setShowDarkOverlay(false)}
+        />
+      )}
+
       {/* Hero */}
       <section 
         className={`${heroStage === 'pain' || heroStage === 'transition' ? 'fixed' : 'relative'} inset-0 ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-[100vh] lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} overflow-hidden transition-all duration-1000 ${
@@ -265,7 +341,7 @@ export default function HomePage() {
           {/* Переход: затемнение и переход к свету */}
           {heroStage === 'transition' && (
             <motion.div
-              className="absolute inset-0 bg-gray-900"
+              className="absolute inset-0 bg-gray-900 z-[100]"
               initial={{ opacity: 1 }}
               animate={{ opacity: 0 }}
               transition={{ duration: 0.6, ease: 'easeInOut' }}
@@ -274,7 +350,7 @@ export default function HomePage() {
 
           {/* Стадия 2: Решение */}
           {heroStage === 'solution' && (
-            <>
+            <div className="relative w-full">
               <motion.div
                 className="text-center px-4"
                 initial={{ opacity: 0, y: 40 }}
@@ -310,7 +386,8 @@ export default function HomePage() {
                   Начать бесплатное тестирование 
                 </button>
               </motion.div>
-            </>
+
+            </div>
           )}
         </div>
 
@@ -366,13 +443,14 @@ export default function HomePage() {
               className="absolute inset-0 bg-gray-900"
               initial={{ opacity: 1 }}
               animate={{ opacity: 0 }}
-              transition={{ duration: 0.6, ease: 'easeInOut' }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
             />
           )}
 
           {/* Стадия 2: Решение */}
           {heroStage === 'solution' && (
-            <div className="grid lg:grid-cols-2 items-center gap-8 w-full">
+            <div className="relative w-full">
+              <div className="grid lg:grid-cols-2 items-center gap-8 w-full">
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -394,17 +472,25 @@ export default function HomePage() {
                   </Link>
                 </div>
               </motion.div>
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center relative">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.8, delay: 0.3 }}
                 >
                   <div className="rounded-2xl overflow-visible flex items-center justify-center">
-                    <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[91%] h-[91%] max-w-[520px] max-h-[520px] object-contain" loading="lazy" />
+                    <img 
+                      ref={logoRef}
+                      src="/logomain.png" 
+                      alt="Логотип Профиль будущего" 
+                      className="w-[91%] h-[91%] max-w-[520px] max-h-[520px] object-contain" 
+                      loading="lazy" 
+                    />
                   </div>
                 </motion.div>
               </div>
+            </div>
+
             </div>
           )}
         </div>
