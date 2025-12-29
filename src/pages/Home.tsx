@@ -132,9 +132,7 @@ export default function HomePage() {
             </h1>
             {/* Мобильная версия: подзаголовок короче */}
             <p className="mt-4 text-muted text-base sm:text-lg">
-            Короткий тест, который помогает увидеть
-            <span className="hidden sm:inline"> свои сильные стороны</span>
-            <span className="hidden md:inline"> и роли, в которых тебе естественно и комфортно быть собой.</span>
+            Короткий тест, который помогает увидеть свои сильные стороны и роли, в которых тебе естественно и комфортно быть собой.
             </p>
             <div className="mt-6 flex gap-3 flex-col sm:flex-row">
               <button className="btn btn-primary px-5 py-3 w-full sm:w-auto min-h-[48px] sm:min-h-0" onClick={() => openFor('free')}>Начать бесплатное тестирование</button>
@@ -143,12 +141,12 @@ export default function HomePage() {
           </div>
           {/* Мобильная версия: иллюстрация меньше (на 20-30%) и ниже */}
           <div className="lg:hidden fade-section order-first lg:order-none">
-            <div className="rounded-2xl overflow-visible aspect-square mb-4 flex items-center justify-center p-4">
+            <div className="rounded-2xl overflow-visible aspect-square mb-4 flex items-center justify-center p-1 sm:p-2">
               <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[90%] h-[90%] object-contain" loading="lazy" />
             </div>
           </div>
           <div className="hidden lg:block fade-section">
-            <div className="rounded-2xl overflow-visible aspect-square flex items-center justify-center p-6">
+            <div className="rounded-2xl overflow-visible aspect-square flex items-center justify-center p-3">
               <img src="/logomain.png" alt="Логотип Профиль будущего" className="w-[120%] h-[120%] object-contain" loading="lazy" />
             </div>
           </div>
@@ -160,7 +158,7 @@ export default function HomePage() {
         <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* Базовый */}
           <div className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
-            ${expandedCard === 'basic' ? 'border-2 border-primary shadow-lg bg-base/30' : ''}
+            ${expandedCard === 'basic' ? 'shadow-lg bg-base/30' : ''}
             lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:group lg:cursor-pointer`}>
             {/* Desktop версия */}
             <div className="hidden lg:flex flex-col h-full justify-between">
@@ -198,8 +196,8 @@ export default function HomePage() {
             <div className={`lg:hidden p-3 sm:p-4 transition-all duration-300 ${expandedCard === 'basic' ? 'bg-base/50' : ''}`}>
               {/* Свернутое состояние */}
               <div className="flex items-start gap-3 mb-2">
-                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <img src="/komu/basic.png" alt="" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" loading="lazy" />
+                <div className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg bg-secondary/20 flex items-center justify-center">
+                  <img src="/komu/basic.png" alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" />
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Название + цена в одной строке */}
@@ -217,14 +215,14 @@ export default function HomePage() {
               {/* CTA с анимированной стрелкой */}
               <button
                 onClick={() => setExpandedCard(expandedCard === 'basic' ? null : 'basic')}
-                className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-secondary/10 rounded-xl hover:bg-secondary/20 transition-colors"
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
               >
-                <span className="text-sm font-medium text-heading">Подробнее</span>
+                <span className="text-sm font-semibold">Подробнее</span>
                 <motion.div
                   animate={{ rotate: expandedCard === 'basic' ? 90 : 0 }}
                   transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                 >
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.div>
               </button>
 
@@ -265,7 +263,7 @@ export default function HomePage() {
 
           {/* Расширенный */}
           <div className={`card flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 transition-all duration-300 relative
-            ${expandedCard === 'extended' ? 'border-2 border-primary shadow-lg bg-base/30' : ''}
+            ${expandedCard === 'extended' ? 'shadow-lg bg-base/30' : ''}
             lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:hover:border-primary/40 lg:group lg:cursor-pointer`}>
             {/* Desktop версия */}
             <div className="hidden lg:flex flex-col h-full justify-between">
@@ -306,8 +304,8 @@ export default function HomePage() {
             {/* Мобильная версия - accordion */}
             <div className={`lg:hidden p-3 sm:p-4 transition-all duration-300 ${expandedCard === 'extended' ? 'bg-base/50' : ''}`}>
               <div className="flex items-start gap-3 mb-2">
-                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <img src="/komu/vip.png" alt="" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" loading="lazy" />
+                <div className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg bg-secondary/20 flex items-center justify-center">
+                  <img src="/komu/vip.png" alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" />
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Название + цена в одной строке */}
@@ -325,22 +323,22 @@ export default function HomePage() {
               {/* CTA с анимированной стрелкой */}
               <button
                 onClick={() => setExpandedCard(expandedCard === 'extended' ? null : 'extended')}
-                className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-secondary/10 rounded-xl hover:bg-secondary/20 transition-colors"
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
               >
-                <span className="text-sm font-medium text-heading">Подробнее</span>
+                <span className="text-sm font-semibold">Подробнее</span>
                 <motion.div
                   animate={{ rotate: expandedCard === 'extended' ? 90 : 0 }}
                   transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                 >
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.div>
               </button>
 
-              {/* Развернутое состояние - сразу список без заголовка */}
+              {/* Развернутое состояние - полный список */}
               <motion.div
                 initial={false}
                 animate={{
-                  maxHeight: expandedCard === 'extended' ? 1000 : 0,
+                  maxHeight: expandedCard === 'extended' ? 1500 : 0,
                   opacity: expandedCard === 'extended' ? 1 : 0,
                 }}
                 transition={{
@@ -351,11 +349,12 @@ export default function HomePage() {
               >
                 <div className="pt-3 pb-2">
                   <ul className="text-sm text-muted space-y-2 list-disc list-inside">
-                    <li>Персональный профиль</li>
-                    <li>Подробный PDF-отчёт</li>
-                    <li>Сильные стороны</li>
-                    <li>Подходящие профессии</li>
-                    <li>Рекомендации по развитию</li>
+                    <li>Персональный профиль, отражающий твой текущий этап жизни</li>
+                    <li>Индивидуальный отчёт с разбором и рекомендациями (PDF)</li>
+                    <li>Сильные стороны и зоны роста</li>
+                    <li>Профессии и направления, где тебе легче быть собой</li>
+                    <li>Формат и условия работы, в которых ты раскрываешься естественно</li>
+                    <li>Рекомендации по развитию и взаимодействию с другими</li>
                   </ul>
                 </div>
               </motion.div>
@@ -374,7 +373,7 @@ export default function HomePage() {
 
           {/* Premium */}
           <div className={`card flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 transition-all duration-300 relative
-            ${expandedCard === 'premium' ? 'border-2 border-primary shadow-lg' : ''}
+            ${expandedCard === 'premium' ? 'shadow-lg' : ''}
             lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:group lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}>
             {/* Баннер сверху */}
             <div className="absolute -top-3 lg:-top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg shadow-md z-10">
@@ -419,15 +418,15 @@ export default function HomePage() {
             </div>
 
             {/* Мобильная версия - accordion */}
-            <div className={`lg:hidden p-3 sm:p-4 bg-primary/5 transition-all duration-300 ${expandedCard === 'premium' ? 'bg-primary/10 border-2 border-primary shadow-lg' : ''}`}>
+            <div className={`lg:hidden p-3 sm:p-4 bg-primary/5 transition-all duration-300 ${expandedCard === 'premium' ? 'bg-primary/10 shadow-lg' : ''}`}>
               <div className="flex items-start gap-3 mb-2">
-                <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <img src="/komu/PREMIUM .png" alt="" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" loading="lazy" />
+                <div className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg flex items-center justify-center">
+                  <img src="/komu/PREMIUM .png" alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" />
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Название + цена в одной строке */}
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-heading">Premium для родителей</h3>
+                    <h3 className="text-base sm:text-lg font-semibold text-heading">Premium</h3>
                     <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
                       14 990 тг
                     </span>
@@ -440,22 +439,22 @@ export default function HomePage() {
               {/* CTA с анимированной стрелкой */}
               <button
                 onClick={() => setExpandedCard(expandedCard === 'premium' ? null : 'premium')}
-                className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-secondary/10 rounded-xl hover:bg-secondary/20 transition-colors"
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
               >
-                <span className="text-sm font-medium text-heading">Подробнее</span>
+                <span className="text-sm font-semibold">Подробнее</span>
                 <motion.div
                   animate={{ rotate: expandedCard === 'premium' ? 90 : 0 }}
                   transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                 >
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.div>
               </button>
 
-              {/* Развернутое состояние - сразу список без заголовка */}
+              {/* Развернутое состояние - полный текст с описаниями */}
               <motion.div
                 initial={false}
                 animate={{
-                  maxHeight: expandedCard === 'premium' ? 1000 : 0,
+                  maxHeight: expandedCard === 'premium' ? 2000 : 0,
                   opacity: expandedCard === 'premium' ? 1 : 0,
                 }}
                 transition={{
@@ -464,13 +463,19 @@ export default function HomePage() {
                 }}
                 style={{ overflow: 'hidden' }}
               >
-                <div className="pt-3 pb-2">
-                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
-                    <li>Персональный отчёт для ребёнка</li>
-                    <li>Отдельный отчёт для родителя на e-mail</li>
-                    <li>Как общаться с ребёнком так, чтобы мотивировать</li>
-                    <li>Какие слова и подходы работают</li>
-                    <li>На что можно опираться в диалоге</li>
+                <div className="pt-3 pb-2 text-sm text-muted space-y-2">
+                  <p className="mb-2 px-3 py-2 bg-primary/10 rounded-lg text-ink font-medium border-l-2 border-primary">
+                    Ребёнок проходит расширенный тест и получает свой персональный отчёт.
+                  </p>
+                  <p className="mb-2 px-3 py-2 bg-primary/10 rounded-lg text-ink font-medium border-l-2 border-primary">
+                    Родитель получает отдельный отчёт с рекомендациями по взаимодействию.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Персональный отчёт для ребёнка — без изменений</li>
+                    <li>Отдельный отчёт для родителя, который приходит на e-mail</li>
+                    <li>Как общаться с ребёнком так, чтобы мотивировать, а не загонять в угол</li>
+                    <li>Какие слова и подходы работают, а какие вызывают сопротивление</li>
+                    <li>На что можно опираться в диалоге, а где лучше не давить</li>
                   </ul>
                 </div>
               </motion.div>
@@ -941,10 +946,16 @@ function ReviewsSection() {
         e.preventDefault();
         e.stopPropagation();
         
+        // Пауза автопереключения при свайпе
+        setIsPaused(true);
+        setTimeout(() => setIsPaused(false), 4000);
+        
         if (deltaX > 0) {
+          // Свайп вправо - предыдущий отзыв
           setDirection(-1);
           setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
         } else {
+          // Свайп влево - следующий отзыв
           setDirection(1);
           setCurrentIndex((prev) => (prev + 1) % reviews.length);
         }
@@ -963,7 +974,7 @@ function ReviewsSection() {
       cardElement.removeEventListener('touchmove', handleTouchMove);
       cardElement.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [reviews.length]);
+  }, [reviews.length, currentIndex]);
 
   if (reviews.length === 0) {
     return (
@@ -1018,14 +1029,14 @@ function ReviewsSection() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="card p-4 sm:p-6 md:p-8 min-h-[200px] sm:min-h-0"
-              style={{ touchAction: 'pan-y' }}
+              className="bg-white rounded-xl shadow-soft p-4 sm:p-6 md:p-8 min-h-[200px] sm:min-h-0 cursor-grab active:cursor-grabbing"
+              style={{ touchAction: 'pan-x pinch-zoom', color: '#2B2B2B' }}
             >
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <h3 className="text-base sm:text-lg font-semibold text-heading">{reviews[currentIndex].name}</h3>
                 <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
               </div>
-              <p className="text-sm sm:text-base text-ink leading-relaxed line-clamp-3 sm:line-clamp-none">{reviews[currentIndex].text}</p>
+              <p className="text-sm sm:text-base leading-relaxed line-clamp-3 sm:line-clamp-none" style={{ color: '#2B2B2B' }}>{reviews[currentIndex].text}</p>
             </motion.div>
           )}
         </div>
