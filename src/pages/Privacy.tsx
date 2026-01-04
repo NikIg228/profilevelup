@@ -1,16 +1,37 @@
+import { motion } from 'framer-motion';
+
 export default function PrivacyPage() {
   return (
     <section className="container-balanced mt-10 mb-16">
-      <div className="card p-6 md:p-8 grid gap-5">
-        <div className="grid gap-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold">Политика конфиденциальности</h1>
-          <div className="text-muted">           
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="card p-6 md:p-8 grid gap-5"
+      >
+        <div className="grid gap-4 relative">
+          {/* Верхняя золотая полоса */}
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-1 bg-primary rounded-full opacity-60"></div>
+          
+          {/* Заголовок между полосами */}
+          <div className="relative flex flex-col items-center gap-2 mb-2">
+            <h1 className="text-3xl font-semibold relative z-10">Политика конфиденциальности</h1>
+            {/* Нижняя золотая полоса */}
+            <div className="w-16 h-0.5 bg-primary/40"></div>
           </div>
-          <p className="text-muted">
-            Настоящая Политика конфиденциальности регулирует порядок обработки и защиты персональных данных пользователей сервиса
-            ProfiLevelUp, расположенного на сайте <a href="https://profilevelup.com" className="text-primary underline">https://profilevelup.com</a> (далее — «Сервис»).
-          </p>
-          <p className="text-muted">Используя Сервис, вы подтверждаете, что прочитали и согласны с настоящей Политикой.</p>
+          
+          {/* Подзаголовок с декоративными элементами */}
+          <div className="relative max-w-3xl mx-auto">
+            <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary/30 rounded-full opacity-60"></div>
+            <div className="pl-6 relative">
+              <p className="text-muted">
+                Настоящая Политика конфиденциальности регулирует порядок обработки и защиты персональных данных пользователей сервиса
+                ProfiLevelUp, расположенного на сайте <a href="https://profilevelup.com" className="text-primary underline">https://profilevelup.com</a> (далее — «Сервис»).
+              </p>
+              <p className="text-muted mt-2">Используя Сервис, вы подтверждаете, что прочитали и согласны с настоящей Политикой.</p>
+            </div>
+            <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary/30 rounded-full opacity-60"></div>
+          </div>
         </div>
 
         <section className="grid gap-2">
@@ -107,7 +128,7 @@ export default function PrivacyPage() {
             📧 <a href="mailto:support@profilevelup.com" className="text-primary underline">support@profilevelup.com</a>
           </p>
         </section>
-      </div>
+      </motion.div>
     </section>
   );
 }

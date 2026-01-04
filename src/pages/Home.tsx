@@ -10,12 +10,12 @@ import ReviewForm from '../components/ReviewForm';
 import { getReviews } from '../utils/reviewsStorage';
 import type { VideoItem } from '../hooks/useVideoController';
 
-type FormErrorKey = 'name' | 'age' | 'gender' | 'testType' | 'email' | 'emailConfirm' | 'consent';
+type FormErrorKey = 'name' | 'age' | 'gender' | 'testType' | 'email' | 'emailConfirm' | 'parentEmail' | 'parentEmailConfirm' | 'consent';
 
 export default function HomePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [plan, setPlan] = useState<'free'|'pro'|null>(null);
-  const [form, setForm] = useState({ name: '', age: '', gender: '', testType: '', email: '', emailConfirm: '', consent: false });
+  const [form, setForm] = useState({ name: '', age: '', gender: '', testType: '', email: '', emailConfirm: '', parentEmail: '', parentEmailConfirm: '', consent: false });
   const [errors, setErrors] = useState<Partial<Record<FormErrorKey, string>>>({});
   const [previewOpen, setPreviewOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
@@ -25,9 +25,15 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   // Состояния для Hero анимации
-  const [heroStage, setHeroStage] = useState<'pain' | 'transition' | 'solution' | 'complete'>('pain');
+  // Проверяем, была ли уже показана анимация при первом заходе на сайт
+  const hasSeenAnimation = typeof window !== 'undefined' && localStorage.getItem('heroAnimationSeen') === 'true';
+  
+  const [heroStage, setHeroStage] = useState<'pain' | 'transition' | 'solution' | 'complete'>(() => {
+    // Если анимация уже была показана, сразу показываем финальный контент
+    return hasSeenAnimation ? 'solution' : 'pain';
+  });
   const [currentPainIndex, setCurrentPainIndex] = useState(-1); // -1 означает задержку перед первой фразой
-  const [animationSkipped, setAnimationSkipped] = useState(false);
+  const [animationSkipped, setAnimationSkipped] = useState(hasSeenAnimation);
   const [showDarkOverlay, setShowDarkOverlay] = useState(false);
   const [maskRadius, setMaskRadius] = useState(0);
   const [logoPosition, setLogoPosition] = useState({ x: '75%', y: '50%' }); // Desktop по умолчанию
@@ -36,7 +42,6 @@ export default function HomePage() {
   const painPhrases = [
     'Выбери нормальную профессию!',
     'На этом денег не заработаешь!',
-    'Все идут на экономиста — и ты иди!',
     'Какие таланты? Главное — диплом!'
   ];
 
@@ -59,61 +64,85 @@ export default function HomePage() {
     };
   }, [heroStage]);
 
+  // Получение позиции существующего логотипа в hero (мобильная и desktop версии)
+  useLayoutEffect(() => {
+    if (heroStage === 'solution' && logoRef.current && !animationSkipped) {
+      const logo = logoRef.current;
+      const rect = logo.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // Вычисляем позицию в процентах от viewport
+      const xPercent = ((rect.left + rect.width / 2) / viewportWidth) * 100;
+      const yPercent = ((rect.top + rect.height / 2) / viewportHeight) * 100;
+      
+      setLogoPosition({ 
+        x: `${xPercent}%`, 
+        y: `${yPercent}%` 
+      });
+    }
+  }, [heroStage, animationSkipped]);
+
   // Эффект "выход из тени" - затемнение с расширяющимся светом из лого
-  useEffect(() => {
-    if (heroStage === 'solution' && !animationSkipped) {
-      setShowDarkOverlay(true);
-      setMaskRadius(0);
-      
-      // Анимация расширения mask с плавным easing
-      const startTime = Date.now();
-      const duration = 2000;
-      const keyframes = [0, 0.1, 0.3, 0.6, 1];
-      const radiusValues = [0, 5, 25, 60, 150];
-      
-      const easeOut = (t: number) => {
-        return 1 - Math.pow(1 - t, 3);
-      };
-      
-      const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = easeOut(progress);
+  useLayoutEffect(() => {
+    if (heroStage === 'solution' && !animationSkipped && logoRef.current) {
+      // Небольшая задержка, чтобы убедиться, что логотип в DOM
+      const timer = setTimeout(() => {
+        setShowDarkOverlay(true);
+        setMaskRadius(0);
         
-        // Интерполяция между ключевыми кадрами
-        let radius = 0;
-        if (easedProgress <= keyframes[0]) {
-          radius = radiusValues[0];
-        } else if (easedProgress >= keyframes[keyframes.length - 1]) {
-          radius = radiusValues[radiusValues.length - 1];
-        } else {
-          for (let i = 0; i < keyframes.length - 1; i++) {
-            if (easedProgress >= keyframes[i] && easedProgress <= keyframes[i + 1]) {
-              const localProgress = (easedProgress - keyframes[i]) / (keyframes[i + 1] - keyframes[i]);
-              radius = radiusValues[i] + (radiusValues[i + 1] - radiusValues[i]) * localProgress;
-              break;
+        // Анимация расширения mask с плавным easing
+        const startTime = Date.now();
+        const duration = 2000;
+        const keyframes = [0, 0.1, 0.3, 0.6, 1];
+        const radiusValues = [0, 5, 25, 60, 150];
+        
+        const easeOut = (t: number) => {
+          return 1 - Math.pow(1 - t, 3);
+        };
+        
+        const animate = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeOut(progress);
+          
+          // Интерполяция между ключевыми кадрами
+          let radius = 0;
+          if (easedProgress <= keyframes[0]) {
+            radius = radiusValues[0];
+          } else if (easedProgress >= keyframes[keyframes.length - 1]) {
+            radius = radiusValues[radiusValues.length - 1];
+          } else {
+            for (let i = 0; i < keyframes.length - 1; i++) {
+              if (easedProgress >= keyframes[i] && easedProgress <= keyframes[i + 1]) {
+                const localProgress = (easedProgress - keyframes[i]) / (keyframes[i + 1] - keyframes[i]);
+                radius = radiusValues[i] + (radiusValues[i + 1] - radiusValues[i]) * localProgress;
+                break;
+              }
             }
           }
-        }
+          
+          setMaskRadius(radius);
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            setTimeout(() => {
+              setShowDarkOverlay(false);
+              setMaskRadius(0);
+            }, 100);
+          }
+        };
         
-        setMaskRadius(radius);
-        
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          setTimeout(() => {
-            setShowDarkOverlay(false);
-            setMaskRadius(0);
-          }, 100);
-        }
-      };
+        requestAnimationFrame(animate);
+      }, 50);
       
-      requestAnimationFrame(animate);
+      return () => clearTimeout(timer);
     } else {
       setShowDarkOverlay(false);
       setMaskRadius(0);
     }
-  }, [heroStage, animationSkipped]);
+  }, [heroStage, animationSkipped, logoPosition]);
 
   // Задержка перед первой фразой (2 секунды)
   useEffect(() => {
@@ -131,7 +160,7 @@ export default function HomePage() {
     if (animationSkipped || heroStage !== 'pain' || currentPainIndex < 0) return;
 
     if (currentPainIndex < painPhrases.length) {
-      // Каждая фраза показывается 2 сек + интервал 1.5 сек = 3.5 сек
+      // Каждая фраза показывается 2 сек + интервал 0.8 сек = 2.8 сек
       const showTimer = setTimeout(() => {
         if (currentPainIndex === painPhrases.length - 1) {
           // Последняя фраза - переход к следующей стадии
@@ -139,12 +168,14 @@ export default function HomePage() {
             setHeroStage('transition');
             setTimeout(() => {
               setHeroStage('solution');
-            }, 600);
-          }, 500);
+              // Сохраняем, что анимация была показана
+              localStorage.setItem('heroAnimationSeen', 'true');
+            }, 33);
+          }, 27);
         } else {
           setCurrentPainIndex(prev => prev + 1);
         }
-      }, 3500); // 2 сек показ + 1.5 сек интервал
+      }, 2800); // 2 сек показ + 0.8 сек интервал
 
       return () => clearTimeout(showTimer);
     }
@@ -155,6 +186,8 @@ export default function HomePage() {
     if (heroStage === 'pain' || heroStage === 'transition') {
       setAnimationSkipped(true);
       setHeroStage('solution');
+      // Сохраняем, что анимация была показана (даже если пропущена)
+      localStorage.setItem('heroAnimationSeen', 'true');
     }
   };
 
@@ -175,8 +208,12 @@ export default function HomePage() {
 
   const trimmedEmail = form.email.trim();
   const trimmedEmailConfirm = form.emailConfirm.trim();
+  const trimmedParentEmail = form.parentEmail.trim();
+  const trimmedParentEmailConfirm = form.parentEmailConfirm.trim();
   const isBasicTest = plan === 'free' || form.testType === 'Базовый';
+  const isPremiumTest = form.testType === 'Premium';
   const emailsMatch = trimmedEmail && trimmedEmailConfirm && trimmedEmail === trimmedEmailConfirm;
+  const parentEmailsMatch = trimmedParentEmail && trimmedParentEmailConfirm && trimmedParentEmail === trimmedParentEmailConfirm;
   const isFormComplete = Boolean(
     form.name.trim() &&
     form.age.trim() &&
@@ -184,6 +221,7 @@ export default function HomePage() {
     form.testType &&
     trimmedEmail &&
     (isBasicTest || (trimmedEmailConfirm && emailsMatch)) &&
+    (!isPremiumTest || (trimmedParentEmail && trimmedParentEmailConfirm && parentEmailsMatch)) &&
     form.consent
   );
 
@@ -199,14 +237,17 @@ export default function HomePage() {
   const openFor = (p: 'free'|'pro', testTypeValue?: string) => {
     setPlan(p);
     // Сбрасываем форму и ошибки при открытии
-    setForm({ name: '', age: '', gender: '', testType: testTypeValue || '', email: '', emailConfirm: '', consent: false });
+    setForm({ name: '', age: '', gender: '', testType: testTypeValue || '', email: '', emailConfirm: '', parentEmail: '', parentEmailConfirm: '', consent: false });
     setErrors({});
     setModalOpen(true);
   };
   const startTest = () => {
     const emailValue = form.email.trim();
     const emailConfirmValue = form.emailConfirm.trim();
+    const parentEmailValue = form.parentEmail.trim();
+    const parentEmailConfirmValue = form.parentEmailConfirm.trim();
     const isBasicTest = plan === 'free' || form.testType === 'Базовый';
+    const isPremiumTest = form.testType === 'Premium';
     const newErrors: Partial<Record<FormErrorKey, string>> = {};
 
     if (!form.name.trim()) newErrors.name = 'Укажите имя';
@@ -239,6 +280,21 @@ export default function HomePage() {
       }
     }
     
+    // Email родителя только для Premium теста
+    if (isPremiumTest) {
+      if (!parentEmailValue) {
+        newErrors.parentEmail = 'Укажите email родителя';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmailValue)) {
+        newErrors.parentEmail = 'Введите корректный email';
+      }
+      
+      if (!parentEmailConfirmValue) {
+        newErrors.parentEmailConfirm = 'Повторите email родителя';
+      } else if (parentEmailConfirmValue !== parentEmailValue) {
+        newErrors.parentEmailConfirm = 'Email родителя не совпадает';
+      }
+    }
+    
     if (!form.consent) newErrors.consent = 'Необходимо подтвердить согласие';
 
     if (Object.keys(newErrors).length) {
@@ -247,8 +303,13 @@ export default function HomePage() {
     }
 
     setErrors({});
-    const { emailConfirm, ...formWithoutConfirm } = form;
-    sessionStorage.setItem('profi.user', JSON.stringify({ ...formWithoutConfirm, email: emailValue, plan }));
+    const { emailConfirm, parentEmailConfirm, ...formWithoutConfirm } = form;
+    sessionStorage.setItem('profi.user', JSON.stringify({ 
+      ...formWithoutConfirm, 
+      email: emailValue, 
+      parentEmail: isPremiumTest ? parentEmailValue : undefined,
+      plan 
+    }));
     navigate('/test');
   };
 
@@ -293,7 +354,7 @@ export default function HomePage() {
         )}
 
         {/* Мобильная версия */}
-        <div className="lg:hidden w-full flex flex-col items-center justify-center px-4 py-8 relative z-10">
+        <div className="lg:hidden w-full flex flex-col items-center justify-center px-4 py-2 relative z-10">
           {/* Стадия 1: Фразы боли */}
           {heroStage === 'pain' && currentPainIndex >= 0 && (
             <motion.div
@@ -305,8 +366,8 @@ export default function HomePage() {
                 scale: [0.7, 1, 1, 0.8],
               }}
               transition={{
-                duration: 3.5,
-                times: [0, 0.143, 0.714, 1], // pop-in 0.5 сек, показ 2 сек, fade-out 1.5 сек
+                duration: 2.8,
+                times: [0, 0.179, 0.714, 1], // pop-in 0.5 сек, показ 2 сек, fade-out 0.8 сек
                 ease: [0.34, 1.56, 0.64, 1], // pop-in
               }}
             >
@@ -350,12 +411,30 @@ export default function HomePage() {
 
           {/* Стадия 2: Решение */}
           {heroStage === 'solution' && (
-            <div className="relative w-full">
+            <div className="relative w-full flex flex-col items-center">
+              {/* Логотип в центре */}
+              <motion.div
+                className="flex items-center justify-center mb-4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+              >
+                <div className="rounded-2xl overflow-visible flex items-center justify-center">
+                  <img 
+                    ref={logoRef}
+                    src="/logomain.png" 
+                    alt="Логотип Профиль будущего" 
+                    className="w-48 h-48 sm:w-56 sm:h-56 object-contain" 
+                    loading="lazy" 
+                  />
+                </div>
+              </motion.div>
+
               <motion.div
                 className="text-center px-4"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
+                transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
               >
                 <h1 className="text-2xl sm:text-3xl font-semibold text-heading leading-relaxed">
                   <span className="block">Узнай себя глубже —</span>
@@ -365,12 +444,12 @@ export default function HomePage() {
 
               {/* CTA кнопка */}
               <motion.div
-                className="flex justify-center mt-6"
+                className="flex justify-center mt-4"
                 initial={{ opacity: 0, y: 20, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ 
                   duration: 0.6, 
-                  delay: 0.5,
+                  delay: 0.6,
                   type: 'spring',
                   stiffness: 200,
                   damping: 15,
@@ -404,8 +483,8 @@ export default function HomePage() {
                 scale: [0.7, 1, 1, 0.8],
               }}
               transition={{
-                duration: 3.5,
-                times: [0, 0.143, 0.714, 1], // pop-in 0.5 сек, показ 2 сек, fade-out 1.5 сек
+                duration: 2.8,
+                times: [0, 0.179, 0.714, 1], // pop-in 0.5 сек, показ 2 сек, fade-out 0.8 сек
                 ease: [0.34, 1.56, 0.64, 1], // pop-in
               }}
             >
@@ -500,8 +579,18 @@ export default function HomePage() {
       {(heroStage === 'solution' || animationSkipped) && (
         <>
           {/* Formats */}
-          <section id="formats" className="container-balanced mt-12 lg:mt-16">
-            <h2 className="text-3xl lg:text-4xl font-semibold text-heading mb-8 lg:mb-12 text-center lg:text-left">Наши тесты</h2>
+          <section id="formats" className="container-balanced mt-2 lg:mt-16">
+            <div className="relative mb-8 lg:mb-12">
+              {/* Верхняя золотая полоса */}
+              <div className="absolute -top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-24 h-1 bg-primary rounded-full opacity-60"></div>
+              
+              {/* Заголовок между полосами */}
+              <div className="relative flex flex-col items-center lg:items-start gap-2">
+                <h2 className="text-3xl font-semibold text-heading relative z-10">Наши тесты</h2>
+                {/* Нижняя золотая полоса */}
+                <div className="w-16 h-0.5 bg-primary/40"></div>
+              </div>
+            </div>
             <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* Базовый */}
           <div className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
@@ -938,7 +1027,17 @@ export default function HomePage() {
 
       {/* Who for */}
       <section className="container-balanced mt-12 lg:mt-16">
-        <h2 className="text-2xl font-semibold">Кому подойдёт</h2>
+        <div className="relative mb-6">
+          {/* Верхняя золотая полоса */}
+          <div className="absolute -top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-24 h-1 bg-primary rounded-full opacity-60"></div>
+          
+          {/* Заголовок между полосами */}
+          <div className="relative flex flex-col items-center lg:items-start gap-2">
+            <h2 className="text-2xl font-semibold relative z-10">Кому подойдёт</h2>
+            {/* Нижняя золотая полоса */}
+            <div className="w-16 h-0.5 bg-primary/40"></div>
+          </div>
+        </div>
         <WhoForCards />
       </section>
 
@@ -950,7 +1049,7 @@ export default function HomePage() {
         open={modalOpen}
         onClose={() => {
           setModalOpen(false);
-          setForm({ name: '', age: '', gender: '', testType: '', email: '', emailConfirm: '', consent: false });
+          setForm({ name: '', age: '', gender: '', testType: '', email: '', emailConfirm: '', parentEmail: '', parentEmailConfirm: '', consent: false });
           setErrors({});
         }}
         hideScrollbar={Object.keys(errors).length === 0}
@@ -1121,6 +1220,84 @@ export default function HomePage() {
                 >
                   <AlertCircle className="w-3 h-3" />
                   {errors.emailConfirm}
+                </motion.p>
+              )}
+            </div>
+          )}
+          {isPremiumTest && (
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-heading mb-1 text-center">
+                Email родителя для получения отчёта
+              </label>
+              <input
+                type="email"
+                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                  errors.parentEmail 
+                    ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                    : 'border-black/10 focus:border-primary'
+                } focus:outline-none focus:ring-2 focus:ring-primary/20`}
+                placeholder="Email родителя"
+                value={form.parentEmail}
+                onChange={(e) => {
+                  setForm({ ...form, parentEmail: e.target.value });
+                  clearError('parentEmail');
+                }}
+                onBlur={() => {
+                  const parentEmailValue = form.parentEmail.trim();
+                  if (!parentEmailValue) {
+                    setErrors(prev => ({ ...prev, parentEmail: 'Укажите email родителя' }));
+                  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmailValue)) {
+                    setErrors(prev => ({ ...prev, parentEmail: 'Введите корректный email' }));
+                  }
+                }}
+                aria-invalid={Boolean(errors.parentEmail)}
+              />
+              {errors.parentEmail && (
+                <motion.p 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-red-500 flex items-center gap-1"
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.parentEmail}
+                </motion.p>
+              )}
+            </div>
+          )}
+          {isPremiumTest && (
+            <div className="space-y-1">
+              <input
+                type="email"
+                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                  errors.parentEmailConfirm 
+                    ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                    : 'border-black/10 focus:border-primary'
+                } focus:outline-none focus:ring-2 focus:ring-primary/20`}
+                placeholder="Подтвердите email родителя"
+                value={form.parentEmailConfirm}
+                onChange={(e) => {
+                  setForm({ ...form, parentEmailConfirm: e.target.value });
+                  clearError('parentEmailConfirm');
+                }}
+                onBlur={() => {
+                  const parentEmailValue = form.parentEmail.trim();
+                  const parentEmailConfirmValue = form.parentEmailConfirm.trim();
+                  if (!parentEmailConfirmValue) {
+                    setErrors(prev => ({ ...prev, parentEmailConfirm: 'Повторите email родителя' }));
+                  } else if (parentEmailConfirmValue !== parentEmailValue) {
+                    setErrors(prev => ({ ...prev, parentEmailConfirm: 'Email родителя не совпадает' }));
+                  }
+                }}
+                aria-invalid={Boolean(errors.parentEmailConfirm)}
+              />
+              {errors.parentEmailConfirm && (
+                <motion.p 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-red-500 flex items-center gap-1"
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.parentEmailConfirm}
                 </motion.p>
               )}
             </div>
@@ -1352,52 +1529,65 @@ function ReviewsSection() {
 
   return (
     <section className="container-balanced mt-12 lg:mt-16">
-      <h2 className="text-2xl font-semibold mb-6">Отзывы</h2>
+      <div className="relative mb-6">
+        {/* Верхняя золотая полоса */}
+        <div className="absolute -top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-24 h-1 bg-primary rounded-full opacity-60"></div>
+        
+        {/* Заголовок между полосами */}
+        <div className="relative flex flex-col items-center lg:items-start gap-2">
+          <h2 className="text-2xl font-semibold relative z-10">Отзывы</h2>
+          {/* Нижняя золотая полоса */}
+          <div className="w-16 h-0.5 bg-primary/40"></div>
+        </div>
+      </div>
       
       <div 
         className="relative"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Стрелка влево - только на desktop */}
-        <button
-          onClick={goToPrev}
-          className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
-          aria-label="Предыдущий отзыв"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
+        {/* Контейнер слайдера с относительным позиционированием для стрелок */}
+        <div className="relative sm:px-12 md:px-16">
+          {/* Стрелка влево - только на desktop */}
+          <button
+            onClick={goToPrev}
+            className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
+            aria-label="Предыдущий отзыв"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
 
-        {/* Слайдер */}
-        <div className="overflow-hidden">
-          {reviews.length > 0 && reviews[currentIndex] && (
-            <motion.div
-              key={currentIndex}
-              ref={cardRef}
-              initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="bg-white rounded-xl shadow-soft p-4 sm:p-6 md:p-8 min-h-[200px] sm:min-h-0 cursor-grab active:cursor-grabbing"
-              style={{ touchAction: 'pan-x pinch-zoom', color: '#2B2B2B' }}
-            >
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <h3 className="text-base sm:text-lg font-semibold text-heading">{reviews[currentIndex].name}</h3>
-                <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
-              </div>
-              <p className="text-sm sm:text-base leading-relaxed line-clamp-3 sm:line-clamp-none" style={{ color: '#2B2B2B' }}>{reviews[currentIndex].text}</p>
-            </motion.div>
-          )}
+          {/* Слайдер */}
+          <div className="overflow-hidden">
+            {reviews.length > 0 && reviews[currentIndex] && (
+              <motion.div
+                key={currentIndex}
+                ref={cardRef}
+                initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="bg-white rounded-xl shadow-soft p-4 sm:p-6 md:p-8 min-h-[200px] sm:min-h-0 cursor-grab active:cursor-grabbing"
+                style={{ touchAction: 'pan-x pinch-zoom', color: '#2B2B2B' }}
+              >
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-heading">{reviews[currentIndex].name.split(' ')[0]}</h3>
+                  <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
+                </div>
+                <p className="text-sm sm:text-base leading-relaxed line-clamp-3 sm:line-clamp-none" style={{ color: '#2B2B2B' }}>{reviews[currentIndex].text}</p>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Стрелка вправо - только на desktop */}
+          <button
+            onClick={goToNext}
+            className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
+            aria-label="Следующий отзыв"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
-
-        {/* Стрелка вправо - только на desktop */}
-        <button
-          onClick={goToNext}
-          className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
-          aria-label="Следующий отзыв"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
 
         {/* Индикаторы */}
         <div className="flex justify-center gap-2 mt-6">

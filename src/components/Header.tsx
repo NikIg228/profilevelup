@@ -27,7 +27,7 @@ export default function Header() {
           <NavLink to="/" className={navLinkClass}>Главная</NavLink>
           <NavLink to="/reviews" className={navLinkClass}>Отзывы</NavLink>
           <NavLink to="/about" className={navLinkClass}>О нас</NavLink>
-          <NavLink to="/help" className={navLinkClass}>Помощь</NavLink>
+          <NavLink to="/help" className={navLinkClass}>Поддержка</NavLink>
         </nav>
 
         <button
@@ -50,7 +50,7 @@ export default function Header() {
             <NavLink to="/" onClick={() => setOpen(false)} className={navLinkClass}>Главная</NavLink>
             <NavLink to="/reviews" onClick={() => setOpen(false)} className={navLinkClass}>Отзывы</NavLink>
             <NavLink to="/about" onClick={() => setOpen(false)} className={navLinkClass}>О нас</NavLink>
-            <NavLink to="/help" onClick={() => setOpen(false)} className={navLinkClass}>Помощь</NavLink>
+            <NavLink to="/help" onClick={() => setOpen(false)} className={navLinkClass}>Поддержка</NavLink>
           </div>
         </div>
       )}

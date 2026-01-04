@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { 
   Compass, 
   FlaskConical, 
@@ -14,7 +15,12 @@ import {
 export default function DetailsPage() {
   return (
     <section className="container-balanced mt-10">
-      <div className="max-w-4xl mx-auto space-y-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-4xl mx-auto space-y-12"
+      >
         {/* Зачем это нужно */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -190,7 +196,7 @@ export default function DetailsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

@@ -1,15 +1,34 @@
+import { motion } from 'framer-motion';
+
 export default function TermsPage() {
   return (
     <section className="container-balanced mt-10 mb-16">
-      <div className="card p-6 md:p-8 grid gap-5">
-        <div className="grid gap-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold"> Пользовательское соглашение</h1>
-          <div className="text-muted">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="card p-6 md:p-8 grid gap-5"
+      >
+        <div className="grid gap-4 relative">
+          {/* Верхняя золотая полоса */}
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-1 bg-primary rounded-full opacity-60"></div>
+          
+          {/* Заголовок между полосами */}
+          <div className="relative flex flex-col items-center gap-2 mb-2">
+            <h1 className="text-3xl font-semibold relative z-10">Пользовательское соглашение</h1>
+            {/* Нижняя золотая полоса */}
+            <div className="w-16 h-0.5 bg-primary/40"></div>
           </div>
-          <p className="text-muted">
-            Настоящее Пользовательское соглашение (далее — «Соглашение») регулирует условия использования онлайн-сервиса
-            ProfiLevelUp (далее — «Сервис»).
-          </p>
+          
+          {/* Подзаголовок с декоративными элементами */}
+          <div className="relative max-w-3xl mx-auto">
+            <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary/30 rounded-full opacity-60"></div>
+            <p className="text-muted pl-6 relative">
+              Настоящее Пользовательское соглашение (далее — «Соглашение») регулирует условия использования онлайн-сервиса
+              ProfiLevelUp (далее — «Сервис»).
+            </p>
+            <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-1 h-12 bg-primary/30 rounded-full opacity-60"></div>
+          </div>
         </div>
 
         <section className="grid gap-2">
@@ -79,7 +98,7 @@ export default function TermsPage() {
             <li>точность данных, введённых пользователем.</li>
           </ul>
         </section>
-      </div>
+      </motion.div>
     </section>
   );
 }
