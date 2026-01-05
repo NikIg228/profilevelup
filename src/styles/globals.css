@@ -341,6 +341,22 @@ header {
   .hero-section {
     min-height: auto !important;
     height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Гарантируем правильную высоту секции "Кому подойдёт" */
+  section.container-balanced {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Гарантируем отображение секции с заголовком "Кому подойдёт" */
+  section.container-balanced:has(h2) {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   /* Уменьшаем отступы внутри hero на мобильных */
@@ -403,6 +419,9 @@ header {
     opacity: 1 !important;
     height: auto !important;
     min-height: 200px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
   }
 
   /* Гарантируем отображение Swiper в WhoForCards на мобильных */
@@ -412,8 +431,11 @@ header {
     visibility: visible !important;
     opacity: 1 !important;
     width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
     min-height: 400px !important;
+    overflow: visible !important;
+    position: relative !important;
   }
 
   /* Гарантируем отображение SwiperWrapper в WhoForCards на мобильных */
@@ -421,6 +443,9 @@ header {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    transform: translate3d(0, 0, 0) !important;
   }
 
   /* Гарантируем отображение SwiperSlide в WhoForCards на мобильных */
@@ -429,8 +454,18 @@ header {
     visibility: visible !important;
     opacity: 1 !important;
     width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
     min-height: 400px !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Убеждаемся, что контент внутри слайдов виден */
+  div.md\\:hidden .swiper-slide > * {
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
   }
 }
 

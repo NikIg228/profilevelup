@@ -159,6 +159,44 @@ export default function HomePage() {
     }
   }, [heroStage, animationSkipped, logoPosition]);
 
+  // Принудительный пересчёт layout при загрузке страницы для мобильных устройств
+  useEffect(() => {
+    // Флаг для предотвращения рекурсии
+    let isResizing = false;
+
+    // Триггерим resize для пересчёта размеров всех компонентов
+    const triggerResize = () => {
+      if (isResizing) return;
+      isResizing = true;
+      window.dispatchEvent(new Event('resize'));
+      setTimeout(() => {
+        isResizing = false;
+      }, 100);
+    };
+
+    // Выполняем после полной загрузки страницы
+    if (document.readyState === 'complete') {
+      setTimeout(triggerResize, 100);
+      setTimeout(triggerResize, 300);
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(triggerResize, 100);
+        setTimeout(triggerResize, 300);
+      }, { once: true });
+    }
+
+    // Также триггерим при изменении ориентации
+    const handleOrientationChange = () => {
+      setTimeout(triggerResize, 200);
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
+
   // Задержка перед первой фразой (2 секунды)
   useEffect(() => {
     if (animationSkipped || heroStage !== 'pain' || currentPainIndex !== -1) return;
@@ -2005,6 +2043,48 @@ function WhoForCards() {
     }
   }, [isPaused]);
 
+  // Принудительный пересчёт layout при монтировании компонента
+  useEffect(() => {
+    // Обновляем Swiper после монтирования с задержкой
+    const updateSwiper = () => {
+      if (swiperRef.current) {
+        try {
+          // Проверяем, что Swiper полностью инициализирован
+          if (swiperRef.current.el && swiperRef.current.wrapperEl) {
+            const elRect = swiperRef.current.el.getBoundingClientRect();
+            if (elRect.width > 0) {
+              swiperRef.current.update();
+              // Проверяем наличие слайдов перед обновлением
+              if (swiperRef.current.slides && swiperRef.current.slides.length > 0) {
+                swiperRef.current.updateSlides();
+                swiperRef.current.updateSlidesClasses();
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('Swiper update error:', error);
+        }
+      }
+    };
+
+    // Обновляем с задержками для надёжности
+    const timer1 = setTimeout(updateSwiper, 500);
+    const timer2 = setTimeout(updateSwiper, 1000);
+
+    // Также обновляем при изменении ориентации
+    const handleOrientationChange = () => {
+      setTimeout(updateSwiper, 300);
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
+
   return (
     <>
       {/* Desktop версия - grid */}
@@ -2205,6 +2285,27 @@ function WhoForCards() {
           onSwiper={(swiper) => {
             swiperRef.current = swiper;
           }}
+          onInit={(swiper) => {
+            // Swiper полностью инициализирован, обновляем только при необходимости
+            setTimeout(() => {
+              try {
+                if (swiper && swiper.el && swiper.wrapperEl) {
+                  // Проверяем, что элементы имеют размеры
+                  const elRect = swiper.el.getBoundingClientRect();
+                  if (elRect.width > 0) {
+                    // Обновляем только если нужно, Swiper сам управляет размерами при инициализации
+                    swiper.update();
+                    if (swiper.slides && swiper.slides.length > 0) {
+                      swiper.updateSlides();
+                      swiper.updateSlidesClasses();
+                    }
+                  }
+                }
+              } catch (error) {
+                console.warn('Swiper init update error:', error);
+              }
+            }, 300);
+          }}
           onTouchStart={handleTouchStart}
           className="!pb-12"
         >
@@ -2212,7 +2313,7 @@ function WhoForCards() {
           <SwiperSlide>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="card pt-4 px-4 pb-4 bg-base border border-secondary/40 rounded-xl overflow-hidden relative flex flex-col h-full"
             >
@@ -2257,7 +2358,7 @@ function WhoForCards() {
           <SwiperSlide>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="card pt-4 px-4 pb-4 bg-base border border-secondary/40 rounded-xl overflow-hidden relative flex flex-col h-full"
             >
@@ -2302,7 +2403,7 @@ function WhoForCards() {
           <SwiperSlide>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
               className="card pt-4 px-4 pb-4 bg-base border border-secondary/40 rounded-xl overflow-hidden relative flex flex-col h-full"
             >
@@ -2346,7 +2447,7 @@ function WhoForCards() {
           <SwiperSlide>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
               className="card pt-4 px-4 pb-4 bg-base border border-secondary/40 rounded-xl overflow-hidden relative flex flex-col h-full"
             >
