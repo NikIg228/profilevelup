@@ -57,7 +57,7 @@ export default function Footer() {
           <Link className="text-section-bg hover:text-primary transition-colors" to="/terms">Пользовательское соглашение</Link>
         </nav>
         <div className="text-center text-sm text-section-bg pt-4 border-t border-secondary/20 md:col-span-2">
-          © 2025 «ProfiLevelUp». Все права защищены.
+          © 2026 «ProfiLevelUp». Все права защищены.
         </div>
       </div>
     </footer>

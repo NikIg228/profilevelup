@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination } from 'swiper/modules';
+import { Pagination, Autoplay } from 'swiper/modules';
+import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import Modal from '../components/Modal';
@@ -225,7 +226,7 @@ export default function HomePage() {
   const trimmedParentEmail = form.parentEmail.trim();
   const trimmedParentEmailConfirm = form.parentEmailConfirm.trim();
   const isBasicTest = plan === 'free' || form.testType === 'Базовый';
-  const isPremiumTest = form.testType === 'Premium';
+  const isPremiumTest = form.testType === 'Premium' || form.testType === 'Подросток и родитель';
   const emailsMatch = trimmedEmail && trimmedEmailConfirm && trimmedEmail === trimmedEmailConfirm;
   const parentEmailsMatch = trimmedParentEmail && trimmedParentEmailConfirm && trimmedParentEmail === trimmedParentEmailConfirm;
   const isFormComplete = Boolean(
@@ -261,7 +262,7 @@ export default function HomePage() {
     const parentEmailValue = form.parentEmail.trim();
     const parentEmailConfirmValue = form.parentEmailConfirm.trim();
     const isBasicTest = plan === 'free' || form.testType === 'Базовый';
-    const isPremiumTest = form.testType === 'Premium';
+    const isPremiumTest = form.testType === 'Premium' || form.testType === 'Подросток и родитель';
     const newErrors: Partial<Record<FormErrorKey, string>> = {};
 
     if (!form.name.trim()) newErrors.name = 'Укажите имя';
@@ -347,7 +348,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <section 
-        className={`${heroStage === 'pain' || heroStage === 'transition' ? 'fixed' : 'relative'} inset-0 ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-[100vh] lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} overflow-hidden transition-all duration-1000 ${
+        className={`hero-section ${heroStage === 'pain' || heroStage === 'transition' ? 'fixed' : 'relative'} inset-0 ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-[100vh] lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} overflow-hidden transition-all duration-1000 ${
           heroStage === 'pain' || heroStage === 'transition' 
             ? 'bg-gray-900' 
             : 'bg-base'
@@ -436,7 +437,7 @@ export default function HomePage() {
                 <div className="rounded-2xl overflow-visible flex items-center justify-center">
                   <img 
                     ref={logoRef}
-                    src="/logomain.png" 
+                    src="/logo-hero-mobile.png" 
                     alt="Логотип Профиль будущего" 
                     className="w-48 h-48 sm:w-56 sm:h-56 object-contain" 
                     loading="lazy" 
@@ -456,9 +457,9 @@ export default function HomePage() {
             </h1>
               </motion.div>
 
-              {/* CTA кнопка */}
+              {/* CTA кнопки */}
               <motion.div
-                className="flex justify-center mt-4"
+                className="flex justify-center gap-3 mt-4"
                 initial={{ opacity: 0, y: 20, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ 
@@ -470,14 +471,20 @@ export default function HomePage() {
                 }}
               >
                 <button 
-                  className="btn btn-primary px-6 py-3 min-h-[52px] text-base sm:text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="btn btn-primary px-5 py-3 text-base sm:text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                   onClick={(e) => {
                     e.stopPropagation();
                     openFor('free');
                   }}
                 >
-                  Начать бесплатное тестирование 
+                  Начать
                 </button>
+                <Link 
+                  to="/details" 
+                  className="btn btn-ghost px-5 py-3 text-center text-base sm:text-lg font-bold rounded-xl transition-all duration-300"
+                >
+                  Подробнее
+                </Link>
               </motion.div>
 
             </div>
@@ -558,7 +565,7 @@ export default function HomePage() {
             </p>
                 <div className="flex gap-3">
                   <button className="btn btn-primary px-5 py-3" onClick={() => openFor('free')}>
-                    Начать бесплатное тестирование 
+                    Начать    
                   </button>
                   <Link to="/details" className="btn btn-ghost px-5 py-3 text-center">
                     Подробнее
@@ -593,7 +600,7 @@ export default function HomePage() {
       {(heroStage === 'solution' || animationSkipped) && (
         <>
       {/* Formats */}
-          <section id="formats" className="container-balanced mt-2 lg:mt-16">
+          <section id="formats" className="container-balanced mt-12 lg:mt-16">
             <div className="relative mb-6 sm:mb-8 lg:mb-12">
               {/* Верхняя золотая полоса */}
               <div className="absolute -top-3 sm:-top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-20 sm:w-24 h-0.5 sm:h-1 bg-primary rounded-full opacity-60"></div>
@@ -603,7 +610,8 @@ export default function HomePage() {
                 <h2 className="text-2xl sm:text-3xl font-semibold text-heading relative z-10">Уровни навигации</h2>
                 {/* Нижняя золотая полоса */}
                 <div className="w-12 sm:w-16 h-0.5 bg-primary/40 mt-2 mb-2"></div>
-                <p className="text-sm sm:text-base text-muted">От первого понимания — к глубокой работе с собой и отношениями</p>
+                {/* Подзаголовок скрыт на мобильных, так как он теперь в каждой карточке Swiper */}
+                <p className="hidden lg:block text-sm sm:text-base text-muted">От первого понимания — к глубокой работе с собой и отношениями</p>
               </div>
             </div>
             
@@ -636,7 +644,7 @@ export default function HomePage() {
                     </div>
                     <h3 className="text-xl font-semibold text-heading mb-1">Первичное понимание</h3>
                   </div>
-                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-base font-semibold rounded-lg whitespace-nowrap">
                     Бесплатно
                   </span>
                 </div>
@@ -684,7 +692,7 @@ export default function HomePage() {
                     </div>
                     <h3 className="text-xl font-semibold text-heading mb-1">Личный разбор</h3>
                   </div>
-                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-base font-semibold rounded-lg whitespace-nowrap">
                     14 990 ₸
                   </span>
                 </div>
@@ -831,7 +839,7 @@ export default function HomePage() {
                     </div>
                     <h3 className="text-xl font-semibold text-heading mb-1">Подросток и родитель</h3>
                   </div>
-                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-base font-semibold rounded-lg whitespace-nowrap">
                     34 990 ₸
                   </span>
                 </div>
@@ -1073,22 +1081,12 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Mobile версия - Swiper */}
-        <div className="levels-mobile lg:hidden">
-          <Swiper
-            modules={[Pagination]}
-            spaceBetween={20}
-            slidesPerView={1}
-            pagination={{
-              clickable: true,
-              bulletClass: 'swiper-pagination-bullet !bg-primary/30 !w-2 !h-2 !rounded-full',
-              bulletActiveClass: 'swiper-pagination-bullet-active !bg-primary !w-6',
-            }}
-            className="!pb-12"
-          >
+        {/* Mobile версия - CSS Scroll Snap */}
+        <div className="levels-mobile lg:hidden w-full">
+          <div className="levels-mobile-scroll">
             {/* Карточка 1: Первичное понимание */}
-            <SwiperSlide>
-              <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col h-full">
+            <div className="level-card-snap">
+              <div className="level-card-mobile bg-white rounded-2xl shadow-md p-6 flex flex-col h-full w-full">
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4">
                   <img
@@ -1100,12 +1098,15 @@ export default function HomePage() {
                 </div>
                 
                 {/* Заголовок и цена */}
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <h3 className="text-xl font-semibold text-heading flex-1">Первичное понимание</h3>
                   <span className="px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
                     Бесплатно
                   </span>
                 </div>
+                
+                {/* Подзаголовок */}
+                <p className="text-base font-medium text-heading mb-4 px-3 py-2 bg-primary/10 rounded-lg border-l-4 border-primary">Мягкий вход, чтобы увидеть себя со стороны</p>
                 
                 {/* Список пунктов */}
                 <ul className="text-sm text-muted space-y-2 list-disc list-inside mb-6 flex-1">
@@ -1123,11 +1124,11 @@ export default function HomePage() {
                   Начать
                 </button>
               </div>
-            </SwiperSlide>
+            </div>
 
             {/* Карточка 2: Личный разбор */}
-            <SwiperSlide>
-              <div className="bg-white rounded-2xl shadow-md border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-white p-6 flex flex-col h-full">
+            <div className="level-card-snap">
+              <div className="level-card-mobile bg-white rounded-2xl shadow-md border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-white p-6 flex flex-col h-full w-full">
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4">
                   <img
@@ -1139,12 +1140,15 @@ export default function HomePage() {
                 </div>
                 
                 {/* Заголовок и цена */}
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <h3 className="text-xl font-semibold text-heading flex-1">Личный разбор</h3>
-                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap flex-shrink-0">
+                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
                     14 990 ₸
                   </span>
                 </div>
+                
+                {/* Подзаголовок */}
+                <p className="text-base font-medium text-heading mb-4 px-3 py-2 bg-primary/10 rounded-lg border-l-4 border-primary">Глубокое понимание себя и своих особенностей</p>
                 
                 {/* Список пунктов */}
                 <ul className="text-sm text-muted space-y-2 list-disc list-inside border-l-2 border-primary/30 pl-4 mb-6 flex-1">
@@ -1164,18 +1168,13 @@ export default function HomePage() {
                   Получить личный разбор
                 </button>
               </div>
-            </SwiperSlide>
+            </div>
 
             {/* Карточка 3: Подросток и родитель */}
-            <SwiperSlide>
-              <div className="bg-white rounded-2xl shadow-xl bg-card-recommend p-6 flex flex-col h-full relative border-2 border-primary">
-                {/* Баннер сверху */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1.5 rounded-lg shadow-md z-10">
-                  <p className="text-sm font-semibold whitespace-nowrap">Для родителей</p>
-                </div>
-                
+            <div className="level-card-snap">
+              <div className="level-card-mobile bg-white rounded-2xl shadow-xl bg-card-recommend p-6 flex flex-col h-full relative border-2 border-primary w-full">
                 {/* Иллюстрация */}
-                <div className="flex justify-center mb-4 mt-2">
+                <div className="flex justify-center mb-4">
                   <img
                     src="/komu/PREMIUM .png"
                     alt=""
@@ -1185,42 +1184,86 @@ export default function HomePage() {
                 </div>
                 
                 {/* Заголовок и цена */}
-                <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <h3 className="text-xl font-semibold text-heading flex-1">Подросток и родитель</h3>
-                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap flex-shrink-0">
+                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
                     34 990 ₸
                   </span>
                 </div>
                 
-                {/* Контент с разделением на подростка и родителя */}
-                <div className="mb-6 flex-1 space-y-4">
-                  {/* Что получает подросток */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-heading mb-2 flex items-center gap-2">
-                      <Users className="w-4 h-4 text-primary" />
-                      Что получает подросток
-                    </h4>
-                    <ul className="text-sm text-muted space-y-1.5 list-disc list-inside pl-2">
-                      <li>Расширенный тест</li>
-                      <li>Личный навигационный отчёт</li>
-                      <li>Понимание своего характера, сильных сторон и особенностей</li>
-                      <li>В каких условиях ему легче учиться, общаться и развиваться</li>
-                      <li>Навигационный «компас», а не оценка и не приговор</li>
-                    </ul>
+                {/* Подзаголовок */}
+                <p className="text-base font-medium text-heading mb-4 px-3 py-2 bg-primary/10 rounded-lg border-l-4 border-primary">Чтобы подросток понял себя, а родитель — понял своего ребёнка</p>
+                
+                {/* Слайдер с переключателями */}
+                <div className="mb-6 flex-1">
+                  {/* Кнопки переключения */}
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPremiumSlideIndex(0);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                        premiumSlideIndex === 0
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-primary/10 text-heading hover:bg-primary/20'
+                      }`}
+                    >
+                      <Users className="w-4 h-4" />
+                      Подросток
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPremiumSlideIndex(1);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                        premiumSlideIndex === 1
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-primary/10 text-heading hover:bg-primary/20'
+                      }`}
+                    >
+                      <Heart className="w-4 h-4" />
+                      Родитель
+                    </button>
                   </div>
-                  
-                  {/* Что получает родитель */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-heading mb-2 flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-primary" />
-                      Что получает родитель
-                    </h4>
-                    <ul className="text-sm text-muted space-y-1.5 list-disc list-inside pl-2">
-                      <li>Отдельный персональный отчёт о ребёнке (PDF)</li>
-                      <li>Как ребёнок чувствует, думает и воспринимает мир</li>
-                      <li>Как с ним лучше общаться, чтобы поддерживать, а не давить</li>
-                      <li>Какие слова и подходы мотивируют, а какие вызывают сопротивление</li>
-                    </ul>
+
+                  {/* Контейнер слайдера */}
+                  <div className="relative overflow-hidden rounded-lg">
+                    <motion.div
+                      className="flex"
+                      animate={{ x: `-${premiumSlideIndex * 100}%` }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    >
+                      {/* Слайд 1: Что получает подросток */}
+                      <div className="min-w-full bg-primary/5 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-heading mb-3 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-primary" />
+                          Что получает подросток
+                        </h4>
+                        <ul className="text-sm text-muted space-y-1.5 list-disc list-inside">
+                          <li>Расширенный тест</li>
+                          <li>Личный навигационный отчёт</li>
+                          <li>Понимание своего характера, сильных сторон и особенностей</li>
+                          <li>В каких условиях ему легче учиться, общаться и развиваться</li>
+                          <li>Навигационный «компас», а не оценка и не приговор</li>
+                        </ul>
+                      </div>
+
+                      {/* Слайд 2: Что получает родитель */}
+                      <div className="min-w-full bg-primary/5 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-heading mb-3 flex items-center gap-2">
+                          <Heart className="w-4 h-4 text-primary" />
+                          Что получает родитель
+                        </h4>
+                        <ul className="text-sm text-muted space-y-1.5 list-disc list-inside">
+                          <li>Отдельный персональный отчёт о ребёнке (PDF)</li>
+                          <li>Как ребёнок чувствует, думает и воспринимает мир</li>
+                          <li>Как с ним лучше общаться, чтобы поддерживать, а не давить</li>
+                          <li>Какие слова и подходы мотивируют, а какие вызывают сопротивление</li>
+                        </ul>
+                      </div>
+                    </motion.div>
                   </div>
                 </div>
                 
@@ -1232,8 +1275,8 @@ export default function HomePage() {
                   Начать навигацию
                 </button>
               </div>
-            </SwiperSlide>
-          </Swiper>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1679,7 +1722,7 @@ export default function HomePage() {
             }`}
             onClick={startTest}
           >
-            Начать бесплатное тестирование
+            Начать   
           </button>
         </div>
       </Modal>
@@ -1938,9 +1981,34 @@ function ReviewsSection() {
 function WhoForCards() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const swiperRef = useRef<SwiperType | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Обработчик тапа для паузы
+  const handleTouchStart = () => {
+    if (swiperRef.current?.autoplay) {
+      swiperRef.current.autoplay.pause();
+      setIsPaused(true);
+    }
+  };
+
+  // Возобновление автоплея через 5 секунд после паузы
+  useEffect(() => {
+    if (isPaused) {
+      const timer = setTimeout(() => {
+        if (swiperRef.current?.autoplay) {
+          swiperRef.current.autoplay.resume();
+          setIsPaused(false);
+        }
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isPaused]);
 
   return (
-    <div ref={ref} className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6">
+    <>
+      {/* Desktop версия - grid */}
+      <div ref={ref} className="hidden md:grid mt-6 grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6">
       {/* 1. Ученикам старших классов */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -1961,9 +2029,9 @@ function WhoForCards() {
           <Sparkles className="absolute top-2 left-1 sm:top-4 sm:left-2 w-3 h-3 sm:w-4 sm:h-4 text-blue-300/50" />
         </div>
         
-        <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3">Ученикам старших классов</h3>
+        <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3 text-center">Ученикам старших классов</h3>
         
-        <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4">
+        <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4 text-center">
           Когда ты стоишь на пороге выбора — важно увидеть себя не через оценки, а через склонности.
           <br className="hidden sm:block" />
           <br className="hidden sm:block" />
@@ -1975,6 +2043,13 @@ function WhoForCards() {
           <li>сверить интересы с реальными склонностями</li>
           <li>выбрать среду, где учёба будет естественной</li>
         </ul>
+        
+        {/* Плашка снизу */}
+        <div className="mt-auto pt-3 sm:pt-4 border-t border-secondary/40">
+          <div className="bg-primary/5 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-center">
+            <p className="text-xs sm:text-sm text-primary font-medium italic">"Выбор направления — это не про правильность, а про соответствие себе"</p>
+          </div>
+        </div>
       </motion.div>
 
       {/* 2. Студентам */}
@@ -1999,10 +2074,10 @@ function WhoForCards() {
           <Sparkles className="hidden sm:block absolute bottom-2 right-2 w-4 h-4 text-emerald-400/50 z-10" />
         </div>
         
-        <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3">Студентам</h3>
+        <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3 text-center">Студентам</h3>
         
         {/* Desktop: полный текст */}
-        <p className="hidden sm:block text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4">
+        <p className="hidden sm:block text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4 text-center">
           В университете нет "правильного пути" — есть твой формат, твой темп роста.
           <br />
           <br />
@@ -2015,6 +2090,13 @@ function WhoForCards() {
           <li>понять, в какой практике вы раскроетесь лучше</li>
           <li>скорректировать учебную траекторию</li>
         </ul>
+        
+        {/* Плашка снизу */}
+        <div className="mt-auto pt-3 sm:pt-4 border-t border-secondary/40">
+          <div className="bg-primary/5 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-center">
+            <p className="text-xs sm:text-sm text-primary font-medium italic">"Практика показывает, кто ты на самом деле, а не диплом"</p>
+          </div>
+        </div>
       </motion.div>
 
       {/* 3. Родителям подростков */}
@@ -2036,9 +2118,9 @@ function WhoForCards() {
           <Sparkles className="absolute top-1 left-1 sm:top-2 sm:left-2 w-3 h-3 sm:w-4 sm:h-4 text-amber-400/50" />
         </div>
         
-        <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3">Родителям подростков</h3>
+        <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3 text-center">Родителям подростков</h3>
         
-        <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4">
+        <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4 text-center">
           Подростковый возраст — это поиск своего голоса.
           <br className="hidden sm:block" />
           <br className="hidden sm:block" />
@@ -2102,7 +2184,212 @@ function WhoForCards() {
           </div>
         </div>
       </motion.div>
-    </div>
+      </div>
+
+      {/* Mobile версия - Swiper с авто-свайпом */}
+      <div className="md:hidden mt-6">
+        <Swiper
+          modules={[Autoplay, Pagination]}
+          spaceBetween={16}
+          slidesPerView={1}
+          autoplay={{
+            delay: 5000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: false,
+          }}
+          pagination={{
+            clickable: true,
+            bulletClass: 'swiper-pagination-bullet !bg-primary/30 !w-2 !h-2 !rounded-full',
+            bulletActiveClass: 'swiper-pagination-bullet-active !bg-primary !w-6',
+          }}
+          onSwiper={(swiper) => {
+            swiperRef.current = swiper;
+          }}
+          onTouchStart={handleTouchStart}
+          className="!pb-12"
+        >
+          {/* Карточка 1: Ученикам старших классов */}
+          <SwiperSlide>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="card pt-4 px-4 pb-4 bg-base border border-secondary/40 rounded-xl overflow-hidden relative flex flex-col h-full"
+            >
+              {/* Иллюстрация */}
+              <div className="flex items-start justify-center h-[180px] mb-3 relative">
+                <img
+                  src="/komu/okushylar.png"
+                  alt=""
+                  className="h-[180px] w-auto object-contain object-top"
+                  loading="lazy"
+                />
+                {/* Элементы роста */}
+                <Sparkles className="absolute top-1 right-1 w-4 h-4 text-blue-400/60" />
+                <Sparkles className="absolute top-2 left-1 w-3 h-3 text-blue-300/50" />
+              </div>
+              
+              <h3 className="text-lg font-semibold text-heading mb-2 text-center">Ученикам старших классов</h3>
+              
+              <p className="text-xs text-muted leading-relaxed mb-3 text-center">
+                Когда ты стоишь на пороге выбора — важно увидеть себя не через оценки, а через склонности.
+                <br />
+                <br />
+                Здесь ты находишь направление, в котором чувствуешь себя естественно.
+              </p>
+              
+              <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
+                <li>понять своё направление перед выбором вуза</li>
+                <li>сверить интересы с реальными склонностями</li>
+                <li>выбрать среду, где учёба будет естественной</li>
+              </ul>
+              
+              {/* Плашка снизу */}
+              <div className="mt-auto pt-3 border-t border-secondary/40">
+                <div className="bg-primary/5 rounded-full px-3 py-1.5 text-center">
+                  <p className="text-xs text-primary font-medium italic">"Выбор направления — это не про правильность, а про соответствие себе"</p>
+                </div>
+              </div>
+            </motion.div>
+          </SwiperSlide>
+
+          {/* Карточка 2: Студентам */}
+          <SwiperSlide>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="card pt-4 px-4 pb-4 bg-base border border-secondary/40 rounded-xl overflow-hidden relative flex flex-col h-full"
+            >
+              {/* Иллюстрация */}
+              <div className="flex items-start justify-center h-[140px] mb-3 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-emerald-200/30 blur-xl rounded-full w-20 h-20 transform translate-x-1 translate-y-1"></div>
+                </div>
+                <img
+                  src="/komu/students.png"
+                  alt=""
+                  className="h-[140px] w-auto object-contain object-top relative z-10"
+                  loading="lazy"
+                />
+              </div>
+              
+              <h3 className="text-lg font-semibold text-heading mb-2 text-center">Студентам</h3>
+              
+              <p className="text-xs text-muted leading-relaxed mb-3 text-center">
+                В университете нет "правильного пути" — есть твой формат, твой темп роста.
+                <br />
+                <br />
+                Наш профиль показывает, как раскрыться в реальной практике.
+              </p>
+              
+              <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
+                <li>уточнить специализацию и карьерный трек</li>
+                <li>понять, в какой практике вы раскроетесь лучше</li>
+                <li>скорректировать учебную траекторию</li>
+              </ul>
+              
+              {/* Плашка снизу */}
+              <div className="mt-auto pt-3 border-t border-secondary/40">
+                <div className="bg-primary/5 rounded-full px-3 py-1.5 text-center">
+                  <p className="text-xs text-primary font-medium italic">"Практика показывает, кто ты на самом деле, а не диплом"</p>
+                </div>
+              </div>
+            </motion.div>
+          </SwiperSlide>
+
+          {/* Карточка 3: Родителям подростков */}
+          <SwiperSlide>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="card pt-4 px-4 pb-4 bg-base border border-secondary/40 rounded-xl overflow-hidden relative flex flex-col h-full"
+            >
+              {/* Иллюстрация */}
+              <div className="flex items-start justify-center h-[140px] mb-3 relative">
+                <img
+                  src="/komu/parents.png"
+                  alt=""
+                  className="h-[140px] w-auto object-contain object-top"
+                  loading="lazy"
+                />
+                {/* Элементы роста */}
+                <Sparkles className="absolute top-1 left-1 w-3 h-3 text-amber-400/50" />
+              </div>
+              
+              <h3 className="text-lg font-semibold text-heading mb-2 text-center">Родителям подростков</h3>
+              
+              <p className="text-xs text-muted leading-relaxed mb-3 text-center">
+                Подростковый возраст — это поиск своего голоса.
+                <br />
+                <br />
+                Профиль помогает родителям увидеть сильные стороны ребёнка и говорить с ним на одном языке.
+              </p>
+              
+              <ul className="text-xs text-muted space-y-1.5 mb-3 list-disc list-inside">
+                <li>глубже понять характер и мышление ребёнка</li>
+                <li>увидеть, как с ним говорить и мотивировать</li>
+                <li>найти баланс между поддержкой и свободой</li>
+              </ul>
+              
+              {/* Плашка снизу */}
+              <div className="mt-auto pt-3 border-t border-secondary/40">
+                <div className="bg-primary/5 rounded-full px-3 py-1.5 text-center">
+                  <p className="text-xs text-primary font-medium italic">"Поддержка семьи — основа роста"</p>
+                </div>
+              </div>
+            </motion.div>
+          </SwiperSlide>
+
+          {/* Карточка 4: Взрослым */}
+          <SwiperSlide>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="card pt-4 px-4 pb-4 bg-base border border-secondary/40 rounded-xl overflow-hidden relative flex flex-col h-full"
+            >
+              {/* Иллюстрация */}
+              <div className="flex items-start justify-center h-[140px] mb-3 relative">
+                <img
+                  src="/komu/vzroslym.png"
+                  alt=""
+                  className="h-[140px] w-auto object-contain object-top"
+                  loading="lazy"
+                />
+                {/* Элементы роста */}
+                <Sparkles className="absolute bottom-1 right-1 w-4 h-4 text-primary/40" />
+                <Sparkles className="absolute top-1 left-1 w-3 h-3 text-primary/30" />
+              </div>
+              
+              <h3 className="text-lg font-semibold text-heading mb-2 text-center">Взрослым</h3>
+              
+              <p className="text-xs text-muted leading-relaxed mb-3 text-center">
+                Порой мы оказываемся "не на своём месте" не потому, что ошиблись,
+                а потому что пришло время обновиться.
+                <br />
+                <br />
+                Профиль помогает взрослому увидеть, где его энергия естественна.
+              </p>
+              
+              <ul className="text-xs text-muted space-y-1.5 mb-3 list-disc list-inside">
+                <li>переосмыслить профессию, если "не на своём месте"</li>
+                <li>понять, где комфортнее реализовывать себя</li>
+                <li>восстановить ясность в том, чего вы хотите</li>
+              </ul>
+              
+              {/* Плашка снизу */}
+              <div className="mt-auto pt-3 border-t border-secondary/40">
+                <div className="bg-primary/5 rounded-full px-3 py-1.5 text-center">
+                  <p className="text-xs text-primary font-medium italic">"Обновление — это не отказ от прошлого, а возврат к себе"</p>
+                </div>
+              </div>
+            </motion.div>
+          </SwiperSlide>
+        </Swiper>
+      </div>
+    </>
   );
 }
 
