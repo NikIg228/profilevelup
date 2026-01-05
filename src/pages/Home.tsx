@@ -2,6 +2,10 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 import Modal from '../components/Modal';
 import Select from '../components/Select';
 import CountUp from '../components/CountUp';
@@ -22,6 +26,16 @@ export default function HomePage() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   // Состояния для accordion-карточек на мобильных
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [premiumSlideIndex, setPremiumSlideIndex] = useState(0); // 0 - подросток, 1 - родитель
+  
+  // Обработчик раскрытия mobile-extra блока
+  const handleMobileExtraToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const card = e.currentTarget.closest('.card');
+    if (card) {
+      card.classList.toggle('is-open');
+    }
+  };
+  
   const navigate = useNavigate();
 
   // Состояния для Hero анимации
@@ -439,7 +453,7 @@ export default function HomePage() {
                 <h1 className="text-2xl sm:text-3xl font-semibold text-heading leading-relaxed">
                   <span className="block">Узнай себя глубже —</span>
                   <span className="block">и выбирай путь, который подходит именно тебе.</span>
-                </h1>
+            </h1>
               </motion.div>
 
               {/* CTA кнопка */}
@@ -540,8 +554,8 @@ export default function HomePage() {
                   <span className="block">и выбирай путь, который подходит именно тебе.</span>
                 </h1>
                 <p className="mt-4 text-muted text-lg mb-6">
-                  Короткий тест, который помогает увидеть свои сильные стороны и роли, в которых тебе естественно и комфортно быть собой.
-                </p>
+            Короткий тест, который помогает увидеть свои сильные стороны и роли, в которых тебе естественно и комфортно быть собой.
+            </p>
                 <div className="flex gap-3">
                   <button className="btn btn-primary px-5 py-3" onClick={() => openFor('free')}>
                     Начать бесплатное тестирование 
@@ -549,7 +563,7 @@ export default function HomePage() {
                   <Link to="/details" className="btn btn-ghost px-5 py-3 text-center">
                     Подробнее
                   </Link>
-                </div>
+            </div>
               </motion.div>
               <div className="flex items-center justify-center relative">
                 <motion.div
@@ -565,10 +579,10 @@ export default function HomePage() {
                       className="w-[91%] h-[91%] max-w-[520px] max-h-[520px] object-contain" 
                       loading="lazy" 
                     />
-                  </div>
+          </div>
                 </motion.div>
-              </div>
             </div>
+          </div>
 
             </div>
           )}
@@ -578,26 +592,29 @@ export default function HomePage() {
       {/* Остальной контент - показывается только после анимации */}
       {(heroStage === 'solution' || animationSkipped) && (
         <>
-          {/* Formats */}
+      {/* Formats */}
           <section id="formats" className="container-balanced mt-2 lg:mt-16">
-            <div className="relative mb-8 lg:mb-12">
+            <div className="relative mb-6 sm:mb-8 lg:mb-12">
               {/* Верхняя золотая полоса */}
-              <div className="absolute -top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-24 h-1 bg-primary rounded-full opacity-60"></div>
+              <div className="absolute -top-3 sm:-top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-20 sm:w-24 h-0.5 sm:h-1 bg-primary rounded-full opacity-60"></div>
               
               {/* Заголовок между полосами */}
-              <div className="relative flex flex-col items-center lg:items-start gap-2">
-                <h2 className="text-3xl font-semibold text-heading relative z-10">Наши тесты</h2>
+              <div className="relative flex flex-col items-center lg:items-start">
+                <h2 className="text-2xl sm:text-3xl font-semibold text-heading relative z-10">Уровни навигации</h2>
                 {/* Нижняя золотая полоса */}
-                <div className="w-16 h-0.5 bg-primary/40"></div>
+                <div className="w-12 sm:w-16 h-0.5 bg-primary/40 mt-2 mb-2"></div>
+                <p className="text-sm sm:text-base text-muted">От первого понимания — к глубокой работе с собой и отношениями</p>
               </div>
             </div>
-            <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
-          {/* Базовый */}
+            
+            {/* Desktop версия - grid */}
+            <div className="levels-desktop hidden lg:grid gap-6 lg:grid-cols-3 lg:items-stretch">
+          {/* Первичное понимание */}
           <div className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
             ${expandedCard === 'basic' ? 'shadow-lg bg-base/30' : ''}
-            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:group lg:cursor-pointer`}>
-            {/* Desktop версия */}
-            <div className="hidden lg:flex flex-col h-full justify-between">
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:cursor-pointer`}>
+            {/* Desktop версия - ТОЛЬКО для desktop */}
+            <div className="hidden lg:flex flex-col h-full justify-between group">
               <div>
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
@@ -607,102 +624,45 @@ export default function HomePage() {
                     loading="lazy"
                   />
                 </div>
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <h3 className="text-xl font-semibold text-heading">Базовый</h3>
-                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex-1 relative">
+                    <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 pointer-events-none">
+                      <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] max-w-[320px] relative">
+                        <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
+                        <p className="text-sm font-medium text-heading leading-relaxed">
+                          Мягкий вход, чтобы увидеть себя со стороны
+                        </p>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-heading mb-1">Первичное понимание</h3>
+                  </div>
+                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg whitespace-nowrap">
                     Бесплатно
                   </span>
                 </div>
                 <ul className="mt-6 text-sm text-muted space-y-2 list-disc list-inside">
                   <li>Короткий вводный тест</li>
                   <li>Первичное понимание своего стиля мышления и действий</li>
-                  <li>Краткое описание твоего стиля мышления и поведения</li>
-                  <li>Помогает понять, откликается ли тебе этот формат</li>
+                  <li>Краткий навигационный ориентир (1 страница)</li>
+                  <li>Помогает почувствовать, откликается ли тебе этот формат</li>
                 </ul>
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('free', 'Базовый')}
+                onClick={() => openFor('free', 'Первичное понимание')}
               >
                 Начать
               </button>
             </div>
 
-            {/* Мобильная версия - accordion */}
-            <div className={`lg:hidden p-3 sm:p-4 transition-all duration-300 ${expandedCard === 'basic' ? 'bg-base/50' : ''}`}>
-              {/* Свернутое состояние */}
-              <div className="flex items-start gap-3 mb-2">
-                <div className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <img src="/komu/basic.png" alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  {/* Название + цена в одной строке */}
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-heading">Базовый</h3>
-                    <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
-                      Бесплатно
-                    </span>
-                  </div>
-                  {/* Подзаголовок = 1 строка смысла */}
-                  <p className="text-sm text-muted">Мягкий формат для начала</p>
-                </div>
-              </div>
-
-              {/* CTA с анимированной стрелкой */}
-              <button
-                onClick={() => setExpandedCard(expandedCard === 'basic' ? null : 'basic')}
-                className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-              >
-                <span className="text-sm font-semibold">Подробнее</span>
-                <motion.div
-                  animate={{ rotate: expandedCard === 'basic' ? 90 : 0 }}
-                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                >
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                </motion.div>
-              </button>
-
-              {/* Развернутое состояние - сразу список без заголовка */}
-              <motion.div
-                initial={false}
-                animate={{
-                  maxHeight: expandedCard === 'basic' ? 1000 : 0,
-                  opacity: expandedCard === 'basic' ? 1 : 0,
-                }}
-                transition={{
-                  duration: 0.3,
-                  ease: [0.4, 0, 0.2, 1],
-                }}
-                style={{ overflow: 'hidden' }}
-              >
-                <div className="pt-3 pb-2">
-                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
-                    <li>Короткий вводный тест</li>
-                    <li>Первичное понимание своего стиля мышления и действий</li>
-                    <li>Краткое описание твоего стиля мышления и поведения</li>
-                    <li>Помогает понять, откликается ли тебе этот формат</li>
-                  </ul>
-                </div>
-              </motion.div>
-
-              {/* CTA кнопка - единственный главный CTA */}
-              {expandedCard === 'basic' && (
-                <button
-                  onClick={() => openFor('free', 'Базовый')}
-                  className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
-                >
-                  Начать тест
-                </button>
-              )}
-            </div>
           </div>
 
-          {/* Расширенный */}
+          {/* Личный разбор */}
           <div className={`card flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 transition-all duration-300 relative
             ${expandedCard === 'extended' ? 'shadow-lg bg-base/30' : ''}
-            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:hover:border-primary/40 lg:group lg:cursor-pointer`}>
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:hover:border-primary/40 lg:cursor-pointer`}>
             {/* Desktop версия */}
-            <div className="hidden lg:flex flex-col h-full justify-between">
+            <div className="hidden lg:flex flex-col h-full justify-between group">
               <div>
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
@@ -712,47 +672,79 @@ export default function HomePage() {
                     loading="lazy"
                   />
                 </div>
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <h3 className="text-xl font-semibold text-heading">Расширенный</h3>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex-1 relative">
+                    <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 pointer-events-none">
+                      <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] max-w-[320px] relative">
+                        <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
+                        <p className="text-sm font-medium text-heading leading-relaxed">
+                          Глубокое понимание себя и своих особенностей
+                        </p>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-heading mb-1">Личный разбор</h3>
+                  </div>
                   <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
-                    6 990 тг
+                    14 990 ₸
                   </span>
                 </div>
                 <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-primary/30 pl-4">
                   <ul className="list-disc list-inside space-y-2">
-                    <li>Персональный профиль, отражающий твой текущий этап жизни</li>
-                    <li>Индивидуальный отчёт с разбором и рекомендациями (PDF)</li>
-                    <li>Сильные стороны и зоны роста</li>
-                    <li>Профессии и направления, где тебе легче быть собой</li>
-                    <li>Формат и условия работы, в которых ты раскрываешься естественно</li>
+                    <li>Расширенный тест</li>
+                    <li>Персональный навигационный отчёт (5–6 страниц, PDF)</li>
+                    <li>Как ты думаешь, принимаешь решения и реагируешь</li>
+                    <li>Твои сильные стороны и зоны роста</li>
+                    <li>Среды и форматы, где тебе легче быть собой</li>
                     <li>Рекомендации по развитию и взаимодействию с другими</li>
                   </ul>
                 </div>
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('pro', 'Расширенный')}
+                onClick={() => openFor('pro', 'Личный разбор')}
               >
-                Начать
+                Получить личный разбор
               </button>
             </div>
 
-            {/* Мобильная версия - accordion */}
-            <div className={`lg:hidden p-3 sm:p-4 transition-all duration-300 ${expandedCard === 'extended' ? 'bg-base/50' : ''}`}>
+            {/* Старая мобильная версия - accordion (ПОЛНОСТЬЮ СКРЫТА, используется только новый свайпер) */}
+            <div 
+              className="hidden"
+              aria-hidden="true"
+              style={{ display: 'none !important' }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget || (e.target as HTMLElement).closest('button')) return;
+                const subtitle = e.currentTarget.querySelector('.subtitle-tooltip') as HTMLElement;
+                if (subtitle) {
+                  subtitle.classList.toggle('opacity-100');
+                  subtitle.classList.toggle('opacity-0');
+                }
+              }}
+            >
               <div className="flex items-start gap-3 mb-2">
                 <div className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg bg-secondary/20 flex items-center justify-center">
                   <img src="/komu/vip.png" alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" />
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Название + цена в одной строке */}
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-heading">Расширенный</h3>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex-1 relative">
+                      <div className="subtitle-tooltip absolute bottom-full left-0 mb-2 opacity-0 transition-all duration-300 z-30 pointer-events-none">
+                        <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[240px] max-w-[280px] relative">
+                          <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
+                          <p className="text-sm font-medium text-heading leading-relaxed">
+                            Глубокое понимание себя и своих особенностей
+                          </p>
+                        </div>
+                      </div>
+                      <h3 className="text-base sm:text-lg font-semibold text-heading">
+                        Личный разбор
+                      </h3>
+                    </div>
                     <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
-                      6 990 тг
+                      14 990 ₸
                     </span>
                   </div>
-                  {/* Подзаголовок = 1 строка смысла */}
-                  <p className="text-sm text-muted">Понимание себя в деталях</p>
                 </div>
               </div>
 
@@ -785,11 +777,11 @@ export default function HomePage() {
               >
                 <div className="pt-3 pb-2">
                   <ul className="text-sm text-muted space-y-2 list-disc list-inside">
-                    <li>Персональный профиль, отражающий твой текущий этап жизни</li>
-                    <li>Индивидуальный отчёт с разбором и рекомендациями (PDF)</li>
-                    <li>Сильные стороны и зоны роста</li>
-                    <li>Профессии и направления, где тебе легче быть собой</li>
-                    <li>Формат и условия работы, в которых ты раскрываешься естественно</li>
+                    <li>Расширенный тест</li>
+                    <li>Персональный навигационный отчёт (5–6 страниц, PDF)</li>
+                    <li>Как ты думаешь, принимаешь решения и реагируешь</li>
+                    <li>Твои сильные стороны и зоны роста</li>
+                    <li>Среды и форматы, где тебе легче быть собой</li>
                     <li>Рекомендации по развитию и взаимодействию с другими</li>
                   </ul>
                 </div>
@@ -798,26 +790,26 @@ export default function HomePage() {
               {/* CTA кнопка - единственный главный CTA */}
               {expandedCard === 'extended' && (
                 <button
-                  onClick={() => openFor('pro', 'Расширенный')}
+                  onClick={() => openFor('pro', 'Личный разбор')}
                   className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                 >
-                  Начать тест
+                  Получить личный разбор
                 </button>
               )}
             </div>
           </div>
 
-          {/* Premium */}
+          {/* Подросток и родитель */}
           <div className={`card flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 transition-all duration-300 relative
             ${expandedCard === 'premium' ? 'shadow-lg' : ''}
-            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:group lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}>
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}>
             {/* Баннер сверху */}
             <div className="absolute -top-3 lg:-top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg shadow-md z-10">
               <p className="text-xs lg:text-sm font-semibold whitespace-nowrap">Для родителей</p>
             </div>
             
             {/* Desktop версия */}
-            <div className="hidden lg:flex flex-col h-full justify-between">
+            <div className="hidden lg:flex flex-col h-full justify-between group">
               <div>
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
@@ -827,48 +819,143 @@ export default function HomePage() {
                     loading="lazy"
                   />
                 </div>
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <h3 className="text-xl font-semibold text-heading">Premium</h3>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1 relative">
+                    <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 pointer-events-none">
+                      <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] max-w-[320px] relative">
+                        <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
+                        <p className="text-sm font-medium text-heading leading-relaxed">
+                          Чтобы подросток понял себя, а родитель — понял своего ребёнка
+                        </p>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-heading mb-1">Подросток и родитель</h3>
+                  </div>
                   <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap">
-                    14 990 тг
+                    34 990 ₸
                   </span>
                 </div>
-                <div className="mt-6 text-sm text-muted space-y-2">
-                  <p className="mb-2 px-3 py-2 bg-primary/10 rounded-lg text-ink font-medium border-l-2 border-primary">Ребёнок проходит расширенный тест и получает свой персональный отчёт.</p>
-                  <p className="mb-2 px-3 py-2 bg-primary/10 rounded-lg text-ink font-medium border-l-2 border-primary">Родитель получает отдельный отчёт с рекомендациями по взаимодействию.</p>
-                  <ul className="list-disc list-inside space-y-1 mb-8">
-                    <li>Персональный отчёт для ребёнка — без изменений</li>
-                    <li>Отдельный отчёт для родителя, который приходит на e-mail</li>
-                    <li>Как общаться с ребёнком так, чтобы мотивировать, а не загонять в угол</li>
-                    <li>Какие слова и подходы работают, а какие вызывают сопротивление</li>
-                    <li>На что можно опираться в диалоге, а где лучше не давить</li>
+
+                {/* Слайдер с переключателями */}
+                <div className="mt-4">
+                  {/* Кнопки переключения */}
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPremiumSlideIndex(0);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                        premiumSlideIndex === 0
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-primary/10 text-heading hover:bg-primary/20'
+                      }`}
+                    >
+                      <Users className="w-4 h-4" />
+                      Подросток
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPremiumSlideIndex(1);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                        premiumSlideIndex === 1
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-primary/10 text-heading hover:bg-primary/20'
+                      }`}
+                    >
+                      <Heart className="w-4 h-4" />
+                      Родитель
+                    </button>
+                  </div>
+
+                  {/* Контейнер слайдера */}
+                  <div className="relative overflow-hidden rounded-lg">
+                    <motion.div
+                      className="flex"
+                      animate={{ x: `-${premiumSlideIndex * 100}%` }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    >
+                      {/* Слайд 1: Что получает подросток */}
+                      <div className="min-w-full bg-primary/5 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-heading mb-3 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-primary" />
+                          Что получает подросток
+                        </h4>
+                        <ul className="text-sm text-muted space-y-1.5 list-disc list-inside">
+                          <li>Расширенный тест</li>
+                          <li>Личный навигационный отчёт</li>
+                          <li>Понимание своего характера, сильных сторон и особенностей</li>
+                          <li>В каких условиях ему легче учиться, общаться и развиваться</li>
+                          <li>Навигационный «компас», а не оценка и не приговор</li>
                   </ul>
+                      </div>
+
+                      {/* Слайд 2: Что получает родитель */}
+                      <div className="min-w-full bg-primary/5 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-heading mb-3 flex items-center gap-2">
+                          <Heart className="w-4 h-4 text-primary" />
+                          Что получает родитель
+                        </h4>
+                        <ul className="text-sm text-muted space-y-1.5 list-disc list-inside">
+                          <li>Отдельный персональный отчёт о ребёнке (PDF)</li>
+                          <li>Как ребёнок чувствует, думает и воспринимает мир</li>
+                          <li>Как с ним лучше общаться, чтобы поддерживать, а не давить</li>
+                          <li>Какие слова и подходы мотивируют, а какие вызывают сопротивление</li>
+            
+                        </ul>
+                      </div>
+                    </motion.div>
+                  </div>
                 </div>
               </div>
               <button
-                className="mt-auto mt-6 px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('pro', 'Premium')}
+                className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
+                onClick={() => openFor('pro', 'Подросток и родитель')}
               >
-                Начать
+                Начать навигацию
               </button>
             </div>
 
-            {/* Мобильная версия - accordion */}
-            <div className={`lg:hidden p-3 sm:p-4 bg-primary/5 transition-all duration-300 ${expandedCard === 'premium' ? 'bg-primary/10 shadow-lg' : ''}`}>
+            {/* Старая мобильная версия - accordion (ПОЛНОСТЬЮ СКРЫТА, используется только новый свайпер) */}
+            <div 
+              className="hidden"
+              aria-hidden="true"
+              style={{ display: 'none !important' }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget || (e.target as HTMLElement).closest('button')) return;
+                const subtitle = e.currentTarget.querySelector('.subtitle-tooltip') as HTMLElement;
+                if (subtitle) {
+                  subtitle.classList.toggle('opacity-100');
+                  subtitle.classList.toggle('opacity-0');
+                }
+              }}
+            >
               <div className="flex items-start gap-3 mb-2">
                 <div className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg flex items-center justify-center">
                   <img src="/komu/PREMIUM .png" alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" />
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Название + цена в одной строке */}
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-heading">Premium</h3>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex-1 relative">
+                      <div className="subtitle-tooltip absolute bottom-full left-0 mb-2 opacity-0 transition-all duration-300 z-30 pointer-events-none">
+                        <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[240px] max-w-[280px] relative">
+                          <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
+                          <p className="text-sm font-medium text-heading leading-relaxed">
+                            Чтобы подросток понял себя, а родитель — понял своего ребёнка
+                          </p>
+                        </div>
+                      </div>
+                      <h3 className="text-base sm:text-lg font-semibold text-heading">
+                        Подросток и родитель
+                      </h3>
+                    </div>
                     <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
-                      14 990 тг
+                      34 990 ₸
                     </span>
                   </div>
-                  {/* Подзаголовок с акцентом */}
-                  <p className="text-sm text-muted font-medium">Помогает понять ребёнка и выстроить доверительный диалог</p>
                 </div>
               </div>
 
@@ -886,7 +973,7 @@ export default function HomePage() {
                 </motion.div>
               </button>
 
-              {/* Развернутое состояние - полный текст с описаниями */}
+              {/* Развернутое состояние - слайдер */}
               <motion.div
                 initial={false}
                 animate={{
@@ -899,34 +986,254 @@ export default function HomePage() {
                 }}
                 style={{ overflow: 'hidden' }}
               >
-                <div className="pt-3 pb-2 text-sm text-muted space-y-2">
-                  <p className="mb-2 px-3 py-2 bg-primary/10 rounded-lg text-ink font-medium border-l-2 border-primary">
-                    Ребёнок проходит расширенный тест и получает свой персональный отчёт.
-                  </p>
-                  <p className="mb-2 px-3 py-2 bg-primary/10 rounded-lg text-ink font-medium border-l-2 border-primary">
-                    Родитель получает отдельный отчёт с рекомендациями по взаимодействию.
-                  </p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Персональный отчёт для ребёнка — без изменений</li>
-                    <li>Отдельный отчёт для родителя, который приходит на e-mail</li>
-                    <li>Как общаться с ребёнком так, чтобы мотивировать, а не загонять в угол</li>
-                    <li>Какие слова и подходы работают, а какие вызывают сопротивление</li>
-                    <li>На что можно опираться в диалоге, а где лучше не давить</li>
+                <div className="pt-3 pb-2">
+                  {/* Кнопки переключения для мобильной версии */}
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPremiumSlideIndex(0);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 ${
+                        premiumSlideIndex === 0
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-primary/10 text-heading hover:bg-primary/20'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      Подросток
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPremiumSlideIndex(1);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-1.5 ${
+                        premiumSlideIndex === 1
+                          ? 'bg-primary text-white shadow-md'
+                          : 'bg-primary/10 text-heading hover:bg-primary/20'
+                      }`}
+                    >
+                      <Heart className="w-3.5 h-3.5" />
+                      Родитель
+                    </button>
+                  </div>
+
+                  {/* Контейнер слайдера для мобильной версии */}
+                  <div className="relative overflow-hidden rounded-lg">
+                    <motion.div
+                      className="flex"
+                      animate={{ x: `-${premiumSlideIndex * 100}%` }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    >
+                      {/* Слайд 1: Что получает подросток */}
+                      <div className="min-w-full bg-primary/10 rounded-lg p-3">
+                        <h4 className="text-sm font-semibold text-heading mb-2 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-primary" />
+                          Что получает подросток
+                        </h4>
+                        <ul className="text-sm text-muted space-y-1 list-disc list-inside">
+                          <li>Расширенный тест</li>
+                          <li>Личный навигационный отчёт</li>
+                          <li>Понимание своего характера, сильных сторон и особенностей</li>
+                          <li>В каких условиях ему легче учиться, общаться и развиваться</li>
+                          <li>Навигационный «компас», а не оценка и не приговор</li>
+                        </ul>
+                      </div>
+
+                      {/* Слайд 2: Что получает родитель */}
+                      <div className="min-w-full bg-primary/10 rounded-lg p-3">
+                        <h4 className="text-sm font-semibold text-heading mb-2 flex items-center gap-2">
+                          <Heart className="w-4 h-4 text-primary" />
+                          Что получает родитель
+                        </h4>
+                        <ul className="text-sm text-muted space-y-1 list-disc list-inside">
+                          <li>Отдельный персональный отчёт о ребёнке (PDF)</li>
+                          <li>Как ребёнок чувствует, думает и воспринимает мир</li>
+                          <li>Как с ним лучше общаться, чтобы поддерживать, а не давить</li>
+                          <li>Какие слова и подходы мотивируют, а какие вызывают сопротивление</li>
+                          <li>На что можно опираться в диалоге, а где лучше снизить давление</li>
                   </ul>
+                      </div>
+                    </motion.div>
+                  </div>
                 </div>
               </motion.div>
 
               {/* CTA кнопка - единственный главный CTA */}
               {expandedCard === 'premium' && (
                 <button
-                  onClick={() => openFor('pro', 'Premium')}
+                  onClick={() => openFor('pro', 'Подросток и родитель')}
                   className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                 >
-                  Начать тест
+                  Начать навигацию
                 </button>
               )}
             </div>
           </div>
+        </div>
+
+        {/* Mobile версия - Swiper */}
+        <div className="levels-mobile lg:hidden">
+          <Swiper
+            modules={[Pagination]}
+            spaceBetween={20}
+            slidesPerView={1}
+            pagination={{
+              clickable: true,
+              bulletClass: 'swiper-pagination-bullet !bg-primary/30 !w-2 !h-2 !rounded-full',
+              bulletActiveClass: 'swiper-pagination-bullet-active !bg-primary !w-6',
+            }}
+            className="!pb-12"
+          >
+            {/* Карточка 1: Первичное понимание */}
+            <SwiperSlide>
+              <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col h-full">
+                {/* Иллюстрация */}
+                <div className="flex justify-center mb-4">
+                  <img
+                    src="/komu/basic.png"
+                    alt=""
+                    className="h-32 opacity-90 object-contain"
+                    loading="lazy"
+                  />
+                </div>
+                
+                {/* Заголовок и цена */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <h3 className="text-xl font-semibold text-heading flex-1">Первичное понимание</h3>
+                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
+                    Бесплатно
+                  </span>
+                </div>
+                
+                {/* Список пунктов */}
+                <ul className="text-sm text-muted space-y-2 list-disc list-inside mb-6 flex-1">
+                  <li>Короткий вводный тест</li>
+                  <li>Первичное понимание своего стиля мышления и действий</li>
+                  <li>Краткий навигационный ориентир (1 страница)</li>
+                  <li>Помогает почувствовать, откликается ли тебе этот формат</li>
+                </ul>
+                
+                {/* Кнопка */}
+                <button
+                  className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
+                  onClick={() => openFor('free', 'Первичное понимание')}
+                >
+                  Начать
+                </button>
+              </div>
+            </SwiperSlide>
+
+            {/* Карточка 2: Личный разбор */}
+            <SwiperSlide>
+              <div className="bg-white rounded-2xl shadow-md border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-white p-6 flex flex-col h-full">
+                {/* Иллюстрация */}
+                <div className="flex justify-center mb-4">
+                  <img
+                    src="/komu/vip.png"
+                    alt=""
+                    className="h-32 opacity-90 object-contain"
+                    loading="lazy"
+                  />
+                </div>
+                
+                {/* Заголовок и цена */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <h3 className="text-xl font-semibold text-heading flex-1">Личный разбор</h3>
+                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap flex-shrink-0">
+                    14 990 ₸
+                  </span>
+                </div>
+                
+                {/* Список пунктов */}
+                <ul className="text-sm text-muted space-y-2 list-disc list-inside border-l-2 border-primary/30 pl-4 mb-6 flex-1">
+                  <li>Расширенный тест</li>
+                  <li>Персональный навигационный отчёт (5–6 страниц, PDF)</li>
+                  <li>Как ты думаешь, принимаешь решения и реагируешь</li>
+                  <li>Твои сильные стороны и зоны роста</li>
+                  <li>Среды и форматы, где тебе легче быть собой</li>
+                  <li>Рекомендации по развитию и взаимодействию с другими</li>
+                </ul>
+                
+                {/* Кнопка */}
+                <button
+                  className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
+                  onClick={() => openFor('pro', 'Личный разбор')}
+                >
+                  Получить личный разбор
+                </button>
+              </div>
+            </SwiperSlide>
+
+            {/* Карточка 3: Подросток и родитель */}
+            <SwiperSlide>
+              <div className="bg-white rounded-2xl shadow-xl bg-card-recommend p-6 flex flex-col h-full relative border-2 border-primary">
+                {/* Баннер сверху */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1.5 rounded-lg shadow-md z-10">
+                  <p className="text-sm font-semibold whitespace-nowrap">Для родителей</p>
+                </div>
+                
+                {/* Иллюстрация */}
+                <div className="flex justify-center mb-4 mt-2">
+                  <img
+                    src="/komu/PREMIUM .png"
+                    alt=""
+                    className="h-32 opacity-90 object-contain"
+                    loading="lazy"
+                  />
+                </div>
+                
+                {/* Заголовок и цена */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <h3 className="text-xl font-semibold text-heading flex-1">Подросток и родитель</h3>
+                  <span className="px-4 py-1.5 bg-primary text-white font-bold text-lg rounded-lg shadow-md whitespace-nowrap flex-shrink-0">
+                    34 990 ₸
+                  </span>
+                </div>
+                
+                {/* Контент с разделением на подростка и родителя */}
+                <div className="mb-6 flex-1 space-y-4">
+                  {/* Что получает подросток */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-heading mb-2 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-primary" />
+                      Что получает подросток
+                    </h4>
+                    <ul className="text-sm text-muted space-y-1.5 list-disc list-inside pl-2">
+                      <li>Расширенный тест</li>
+                      <li>Личный навигационный отчёт</li>
+                      <li>Понимание своего характера, сильных сторон и особенностей</li>
+                      <li>В каких условиях ему легче учиться, общаться и развиваться</li>
+                      <li>Навигационный «компас», а не оценка и не приговор</li>
+                    </ul>
+                  </div>
+                  
+                  {/* Что получает родитель */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-heading mb-2 flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-primary" />
+                      Что получает родитель
+                    </h4>
+                    <ul className="text-sm text-muted space-y-1.5 list-disc list-inside pl-2">
+                      <li>Отдельный персональный отчёт о ребёнке (PDF)</li>
+                      <li>Как ребёнок чувствует, думает и воспринимает мир</li>
+                      <li>Как с ним лучше общаться, чтобы поддерживать, а не давить</li>
+                      <li>Какие слова и подходы мотивируют, а какие вызывают сопротивление</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                {/* Кнопка */}
+                <button
+                  className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
+                  onClick={() => openFor('pro', 'Подросток и родитель')}
+                >
+                  Начать навигацию
+                </button>
+              </div>
+            </SwiperSlide>
+          </Swiper>
         </div>
       </section>
 
@@ -1027,21 +1334,21 @@ export default function HomePage() {
 
       {/* Who for */}
       <section className="container-balanced mt-12 lg:mt-16">
-        <div className="relative mb-6">
+        <div className="relative mb-4 sm:mb-6">
           {/* Верхняя золотая полоса */}
-          <div className="absolute -top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-24 h-1 bg-primary rounded-full opacity-60"></div>
+          <div className="absolute -top-3 sm:-top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-20 sm:w-24 h-0.5 sm:h-1 bg-primary rounded-full opacity-60"></div>
           
           {/* Заголовок между полосами */}
-          <div className="relative flex flex-col items-center lg:items-start gap-2">
-            <h2 className="text-2xl font-semibold relative z-10">Кому подойдёт</h2>
+          <div className="relative flex flex-col items-center lg:items-start gap-1.5 sm:gap-2">
+            <h2 className="text-xl sm:text-2xl font-semibold relative z-10">Кому подойдёт</h2>
             {/* Нижняя золотая полоса */}
-            <div className="w-16 h-0.5 bg-primary/40"></div>
+            <div className="w-12 sm:w-16 h-0.5 bg-primary/40"></div>
           </div>
         </div>
         <WhoForCards />
       </section>
 
-          {/* anchors удалены по просьбе пользователя */}
+      {/* anchors удалены по просьбе пользователя */}
         </>
       )}
 
@@ -1529,15 +1836,15 @@ function ReviewsSection() {
 
   return (
     <section className="container-balanced mt-12 lg:mt-16">
-      <div className="relative mb-6">
+      <div className="relative mb-4 sm:mb-6">
         {/* Верхняя золотая полоса */}
-        <div className="absolute -top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-24 h-1 bg-primary rounded-full opacity-60"></div>
+        <div className="absolute -top-3 sm:-top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-20 sm:w-24 h-0.5 sm:h-1 bg-primary rounded-full opacity-60"></div>
         
         {/* Заголовок между полосами */}
-        <div className="relative flex flex-col items-center lg:items-start gap-2">
-          <h2 className="text-2xl font-semibold relative z-10">Отзывы</h2>
+        <div className="relative flex flex-col items-center lg:items-start gap-1.5 sm:gap-2">
+          <h2 className="text-xl sm:text-2xl font-semibold relative z-10">Отзывы</h2>
           {/* Нижняя золотая полоса */}
-          <div className="w-16 h-0.5 bg-primary/40"></div>
+          <div className="w-12 sm:w-16 h-0.5 bg-primary/40"></div>
         </div>
       </div>
       
@@ -1548,45 +1855,45 @@ function ReviewsSection() {
       >
         {/* Контейнер слайдера с относительным позиционированием для стрелок */}
         <div className="relative sm:px-12 md:px-16">
-          {/* Стрелка влево - только на desktop */}
-          <button
-            onClick={goToPrev}
+        {/* Стрелка влево - только на desktop */}
+        <button
+          onClick={goToPrev}
             className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
-            aria-label="Предыдущий отзыв"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+          aria-label="Предыдущий отзыв"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
 
-          {/* Слайдер */}
-          <div className="overflow-hidden">
-            {reviews.length > 0 && reviews[currentIndex] && (
-              <motion.div
-                key={currentIndex}
-                ref={cardRef}
-                initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="bg-white rounded-xl shadow-soft p-4 sm:p-6 md:p-8 min-h-[200px] sm:min-h-0 cursor-grab active:cursor-grabbing"
-                style={{ touchAction: 'pan-x pinch-zoom', color: '#2B2B2B' }}
-              >
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
+        {/* Слайдер */}
+        <div className="overflow-hidden">
+          {reviews.length > 0 && reviews[currentIndex] && (
+            <motion.div
+              key={currentIndex}
+              ref={cardRef}
+              initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="bg-white rounded-xl shadow-soft p-4 sm:p-6 md:p-8 min-h-[200px] sm:min-h-0 cursor-grab active:cursor-grabbing"
+              style={{ touchAction: 'pan-x pinch-zoom', color: '#2B2B2B' }}
+            >
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <h3 className="text-base sm:text-lg font-semibold text-heading">{reviews[currentIndex].name.split(' ')[0]}</h3>
-                  <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
-                </div>
-                <p className="text-sm sm:text-base leading-relaxed line-clamp-3 sm:line-clamp-none" style={{ color: '#2B2B2B' }}>{reviews[currentIndex].text}</p>
-              </motion.div>
-            )}
-          </div>
+                <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
+              </div>
+              <p className="text-sm sm:text-base leading-relaxed line-clamp-3 sm:line-clamp-none" style={{ color: '#2B2B2B' }}>{reviews[currentIndex].text}</p>
+            </motion.div>
+          )}
+        </div>
 
-          {/* Стрелка вправо - только на desktop */}
-          <button
-            onClick={goToNext}
+        {/* Стрелка вправо - только на desktop */}
+        <button
+          onClick={goToNext}
             className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16 z-10 bg-card rounded-full p-2 shadow-md hover:shadow-lg transition-all hover:bg-primary hover:text-white text-heading border border-secondary"
-            aria-label="Следующий отзыв"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+          aria-label="Следующий отзыв"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
         </div>
 
         {/* Индикаторы */}

@@ -77,4 +77,207 @@ h1, h2, h3, h4 {
   animation: soft-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Горизонтальный свайпер с центрированием (Scroll Snap) */
+.test-cards-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 0 24px;
+  gap: 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.test-cards-container::-webkit-scrollbar {
+  display: none;
+}
+
+.test-card-slide {
+  min-width: 85%;
+  scroll-snap-align: center;
+  flex-shrink: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.test-card-slide:not(.active) {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.test-card-slide.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Разделение desktop и mobile логики для карточек */
+@media (max-width: 1023px) {
+  /* Mobile: скрываем desktop-блоки полностью для ВСЕХ карточек */
+  .test-cards-container .card-desktop-full,
+  .test-card-slide .card-desktop-full,
+  .card-desktop-full {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+  
+  /* Mobile: КРИТИЧЕСКИ ВАЖНО - скрываем desktop-версию карточек полностью */
+  /* Используем более специфичный селектор для гарантированного скрытия */
+  div[class*="hidden"][class*="lg:grid"],
+  div.hidden.lg\\:grid,
+  .hidden.lg\\:grid,
+  div[class*="hidden lg:grid"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+  
+  /* Mobile: скрываем все карточки внутри desktop-версии */
+  div[class*="hidden"][class*="lg:grid"] > div,
+  div[class*="hidden lg:grid"] > div,
+  .hidden.lg\\:grid > div,
+  .hidden.lg\\:grid > div.card {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Mobile: скрываем старые мобильные версии-accordion внутри desktop-карточек */
+  .hidden.lg\\:grid [class*="hidden"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Mobile: показываем только mobile-блоки из нового свайпера */
+  .test-cards-container {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  
+  .test-cards-container .card-mobile-header,
+  .test-cards-container .card-mobile-summary,
+  .test-cards-container .card-mobile-toggle {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Mobile: гарантируем, что мобильная версия видна */
+  div.lg\\:hidden[class*="lg:hidden"],
+  .lg\\:hidden {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Mobile-extra блок: скрыт по умолчанию */
+  .card-mobile-extra {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.3s ease;
+  }
+  
+  /* Mobile-extra блок: раскрыт при .is-open */
+  .card.is-open .card-mobile-extra {
+    max-height: 2000px;
+    opacity: 1;
+  }
+  
+  /* Стрелка в кнопке поворачивается при раскрытии */
+  .card.is-open .card-mobile-toggle svg,
+  .card.is-open .card-mobile-toggle .w-4 {
+    transform: rotate(180deg);
+  }
+  
+  /* Улучшение читаемости */
+  .test-card-slide .card {
+    height: auto;
+    overflow: visible;
+  }
+  
+  .card-mobile-header {
+    margin-bottom: 16px;
+  }
+  
+  .card-mobile-summary {
+    margin-bottom: 12px;
+  }
+  
+  .card li {
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+  
+  .card-action {
+    padding: 16px;
+    font-size: 16px;
+  }
+}
+
+/* Desktop: показываем только desktop-блоки */
+@media (min-width: 1024px) {
+  .test-cards-container .card-mobile-header,
+  .test-cards-container .card-mobile-summary,
+  .test-cards-container .card-mobile-toggle,
+  .test-cards-container .card-mobile-extra {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  .test-cards-container .card-desktop-full {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* На desktop показываем desktop-full, переопределяя inline style */
+  .test-cards-container .card-desktop-full[style*="display: none"] {
+    display: block !important;
+  }
+}
+
+/* Swiper pagination стили для мобильной версии уровней навигации */
+.levels-mobile .swiper-pagination {
+  position: relative !important;
+  margin-top: 1rem;
+  bottom: 0 !important;
+}
+
+.levels-mobile .swiper-pagination-bullet {
+  background-color: rgba(201, 162, 77, 0.3) !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+}
+
+.levels-mobile .swiper-pagination-bullet-active {
+  background-color: #C9A24D !important;
+  width: 24px !important;
+  border-radius: 4px !important;
+}
+
 
