@@ -4,6 +4,7 @@ import PlayerControls from './PlayerControls';
 import PlayerProgressBar from './PlayerProgressBar';
 import VideoNavigation from './VideoNavigation';
 import SwipeLayer from './SwipeLayer';
+import { useLenis } from '../contexts/LenisContext';
 
 type VideoPlayerProps = {
   videos: VideoItem[];
@@ -18,6 +19,7 @@ export default function VideoPlayer({ videos, startIndex, onClose, onIndexChange
   const [isMobile, setIsMobile] = useState(false);
   const [isVideoHovered, setIsVideoHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lenis = useLenis();
   const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastMouseMoveRef = useRef<number>(Date.now());
 
@@ -150,7 +152,12 @@ export default function VideoPlayer({ videos, startIndex, onClose, onIndexChange
       document.body.style.top = '';
       document.body.style.overflowY = '';
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        const scrollPosition = parseInt(scrollY || '0') * -1;
+        if (lenis) {
+          lenis.scrollTo(scrollPosition, { immediate: false });
+        } else {
+          window.scrollTo(0, scrollPosition);
+        }
       }
     };
   }, []);

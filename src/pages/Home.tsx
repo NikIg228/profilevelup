@@ -14,6 +14,7 @@ import VideoPlayer from '../components/VideoPlayer';
 import ReviewForm from '../components/ReviewForm';
 import { getReviews } from '../utils/reviewsStorage';
 import type { VideoItem } from '../hooks/useVideoController';
+import { useLenis } from '../contexts/LenisContext';
 
 type FormErrorKey = 'name' | 'age' | 'gender' | 'testType' | 'email' | 'emailConfirm' | 'parentEmail' | 'parentEmailConfirm' | 'consent';
 
@@ -39,6 +40,7 @@ export default function HomePage() {
   
   const navigate = useNavigate();
   const location = useLocation();
+  const lenis = useLenis();
 
   // Состояния для Hero анимации
   // Логика:
@@ -148,7 +150,12 @@ export default function HomePage() {
       document.body.style.width = '';
       document.body.style.top = '';
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        const scrollPosition = parseInt(scrollY || '0') * -1;
+        if (lenis) {
+          lenis.scrollTo(scrollPosition, { immediate: false });
+        } else {
+          window.scrollTo(0, scrollPosition);
+        }
       }
     }
     
@@ -2249,7 +2256,6 @@ function ReviewsSection() {
                     </div>
                   )}
                 </div>
-                <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
               </div>
               <p className="text-sm sm:text-base leading-relaxed line-clamp-3 sm:line-clamp-none" style={{ color: '#2B2B2B' }}>{reviews[currentIndex].text}</p>
             </motion.div>

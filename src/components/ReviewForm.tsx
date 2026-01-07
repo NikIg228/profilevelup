@@ -36,16 +36,9 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
     setIsSubmitting(true);
     
     try {
-      const date = new Date().toLocaleDateString('ru-RU', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-      });
-
       addReview({
         name: form.name.trim(),
         text: form.text.trim(),
-        date,
       });
 
       setIsSuccess(true);

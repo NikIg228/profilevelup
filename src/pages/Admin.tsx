@@ -151,7 +151,6 @@ export default function AdminPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-heading">{review.name}</h3>
-                    <span className="text-xs text-muted">{review.date}</span>
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${
                         review.status === 'approved'
@@ -173,11 +172,6 @@ export default function AdminPage() {
                       {review.age && <span>Возраст: {review.age} лет</span>}
                       {review.age && review.testType && <span> • </span>}
                       {review.testType && <span>Тест: {review.testType}</span>}
-                    </p>
-                  )}
-                  {review.result && (
-                    <p className="text-sm text-muted mb-2">
-                      Результат: <span className="font-medium">{review.result}</span>
                     </p>
                   )}
                   <p className="text-ink leading-relaxed">{review.text}</p>

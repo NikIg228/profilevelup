@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLenis } from '../contexts/LenisContext';
 
 type ModalProps = {
   open: boolean;
@@ -9,6 +10,7 @@ type ModalProps = {
 };
 
 export default function Modal({ open, onClose, children, hideScrollbar = false }: ModalProps) {
+  const lenis = useLenis();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -32,7 +34,12 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
       document.body.style.top = '';
       document.body.style.overflowY = '';
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        const scrollPosition = parseInt(scrollY || '0') * -1;
+        if (lenis) {
+          lenis.scrollTo(scrollPosition, { immediate: false });
+        } else {
+          window.scrollTo(0, scrollPosition);
+        }
       }
     }
     return () => {

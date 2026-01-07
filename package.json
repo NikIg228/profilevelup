@@ -9,6 +9,7 @@
     "preview": "vite preview --port 5173"
   },
   "dependencies": {
+    "@studio-freight/lenis": "^1.0.42",
     "framer-motion": "^11.5.4",
     "gsap": "^3.13.0",
     "lucide-react": "^0.553.0",

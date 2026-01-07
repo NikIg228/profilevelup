@@ -65,7 +65,6 @@ export default function ReviewsPage() {
                     </div>
                   )}
                 </div>
-                <span className="text-xs text-muted">{r.date}</span>
               </div>
               <p className="leading-relaxed relative z-10">{r.text}</p>
             </motion.article>
