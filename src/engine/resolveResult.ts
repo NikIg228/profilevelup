@@ -1,8 +1,16 @@
-import type { Answers, ResultIndex, TestConfig } from './types';
+import type { Answers, ExtendedAnswers, ResultIndex, TestConfig, FreeTestConfig, ExtendedTestConfig } from './types';
 import { resolveJPW } from './resolveJPW';
+import { resolveExtendedResult } from './resolveExtendedResult';
 
 /**
- * Вычисляет финальный результат теста из ответов пользователя
+ * Проверяет, является ли конфигурация FREE тестом
+ */
+function isFreeTest(config: TestConfig): config is FreeTestConfig {
+  return 'position1' in config.resultMapping;
+}
+
+/**
+ * Вычисляет финальный результат FREE теста из ответов пользователя
  * 
  * Порядок букв в результате:
  * [E/I] – [N/S] – [T/F] – [J/P/W]
@@ -14,10 +22,10 @@ import { resolveJPW } from './resolveJPW';
  * - position4 → из вопросов указанных в resultMapping.position4.from (J/P/W логика)
  * 
  * @param answers Ответы пользователя на все 5 вопросов
- * @param config Конфигурация теста с позиционным маппингом
+ * @param config Конфигурация FREE теста с позиционным маппингом
  * @returns Финальный результат как ResultIndex (string)
  */
-export function resolveResult(answers: Answers, config: TestConfig): ResultIndex {
+function resolveFreeResult(answers: Answers, config: FreeTestConfig): ResultIndex {
   const { resultMapping } = config;
   
   // Позиция 1: из вопроса указанного в resultMapping.position1.from
@@ -43,4 +51,26 @@ export function resolveResult(answers: Answers, config: TestConfig): ResultIndex
   const resultIndex = (pos1Letter + pos2Letter + pos3Letter + pos4Letter) as ResultIndex;
   
   return resultIndex;
+}
+
+/**
+ * Вычисляет финальный результат теста из ответов пользователя
+ * 
+ * Автоматически определяет тип теста (FREE или EXTENDED/PREMIUM) и использует соответствующую логику
+ * 
+ * @param answers Ответы пользователя (Answers для FREE, ExtendedAnswers для EXTENDED/PREMIUM)
+ * @param config Конфигурация теста
+ * @returns Финальный результат как ResultIndex (string)
+ */
+export function resolveResult(
+  answers: Answers | ExtendedAnswers,
+  config: TestConfig
+): ResultIndex {
+  if (isFreeTest(config)) {
+    // FREE тест - используем позиционную логику
+    return resolveFreeResult(answers as Answers, config);
+  } else {
+    // EXTENDED/PREMIUM тест - используем блочную логику
+    return resolveExtendedResult(answers as ExtendedAnswers, config as ExtendedTestConfig);
+  }
 }

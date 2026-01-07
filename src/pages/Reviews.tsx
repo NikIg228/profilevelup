@@ -55,7 +55,16 @@ export default function ReviewsPage() {
               <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               
               <div className="flex items-center justify-between mb-3 relative z-10">
-                <h3 className="font-semibold group-hover:text-primary transition-colors duration-300">{r.name.split(' ')[0]}</h3>
+                <div>
+                  <h3 className="font-semibold group-hover:text-primary transition-colors duration-300">{r.name.split(' ')[0]}</h3>
+                  {(r.age || r.testType) && (
+                    <div className="text-xs text-muted mt-0.5">
+                      {r.age && <span>{r.age} лет</span>}
+                      {r.age && r.testType && <span> • </span>}
+                      {r.testType && <span>{r.testType}</span>}
+                    </div>
+                  )}
+                </div>
                 <span className="text-xs text-muted">{r.date}</span>
               </div>
               <p className="leading-relaxed relative z-10">{r.text}</p>

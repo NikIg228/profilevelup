@@ -15,6 +15,7 @@ import DetailsPage from './pages/Details';
 import AdminPage from './pages/Admin';
 import NotFoundPage from './pages/NotFound';
 import PublicOfferPage from './pages/PublicOffer';
+import TestRecordsPage from './pages/TestRecords';
 import { initializeDefaultReviews } from './utils/reviewsStorage';
 
 const router = createBrowserRouter([
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
       { path: 'help', element: <HelpPage /> },
       { path: 'details', element: <DetailsPage /> },
       { path: 'admin', element: <AdminPage /> },
+      { path: 'test-records', element: <TestRecordsPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

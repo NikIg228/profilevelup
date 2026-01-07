@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -38,17 +38,89 @@ export default function HomePage() {
   };
   
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Состояния для Hero анимации
-  // Проверяем, была ли уже показана анимация при первом заходе на сайт
-  const hasSeenAnimation = typeof window !== 'undefined' && localStorage.getItem('heroAnimationSeen') === 'true';
+  // Логика:
+  // - При первом входе на сайт (нет флага) - показываем анимацию, устанавливаем флаг
+  // - При закрытии вкладки и повторном открытии (sessionStorage очищается) - показываем анимацию
+  // - При переходе через роутинг (флаг уже есть) - НЕ показываем анимацию
+  // - При перезагрузке страницы (F5) - показываем анимацию, но флаг устанавливается после завершения
+  const [shouldShowAnimation] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    
+    // Сначала проверяем флаг в sessionStorage
+    // Если флаг есть - пользователь уже был на главной в этой сессии, не показываем анимацию
+    // Это предотвратит показ анимации при переходах через роутинг
+    const hasSeenInSession = sessionStorage.getItem('heroAnimationSeenInSession') === 'true';
+    
+    // Если флаг есть - это переход через роутинг, не показываем анимацию
+    if (hasSeenInSession) {
+      return false;
+    }
+    
+    // Если флага нет - проверяем тип навигации
+    // При перезагрузке страницы (F5) - всегда показываем анимацию
+    let isReload = false;
+    try {
+      const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      isReload = navigationEntry?.type === 'reload';
+    } catch {
+      // Если не удалось определить тип навигации, считаем что это не перезагрузка
+    }
+    
+    // Показываем анимацию если:
+    // 1. Это перезагрузка страницы (F5)
+    // 2. ИЛИ это первое открытие (флага нет)
+    return isReload || !hasSeenInSession;
+  });
   
+  // Устанавливаем флаг при посещении главной страницы
+  // Используем useRef для отслеживания, был ли флаг установлен при этом монтировании компонента
+  const flagSetThisMountRef = useRef(false);
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Проверяем, находимся ли мы на главной странице
+    if (location.pathname !== '/') {
+      // При уходе с главной страницы сбрасываем флаг для следующего возврата
+      flagSetThisMountRef.current = false;
+      return;
+    }
+    
+    // Если флаг уже установлен при этом монтировании, не устанавливаем его повторно
+    if (flagSetThisMountRef.current) return;
+    
+    // Проверяем тип навигации только при первом монтировании на главной
+    let isReload = false;
+    try {
+      const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      isReload = navigationEntry?.type === 'reload';
+    } catch {
+      // Если не удалось определить тип навигации, считаем что это не перезагрузка
+    }
+    
+    const hasSeenInSession = sessionStorage.getItem('heroAnimationSeenInSession') === 'true';
+    
+    // Устанавливаем флаг в двух случаях:
+    // 1. При перезагрузке страницы (F5) - устанавливаем сразу, чтобы при следующем переходе через роутинг анимация не показывалась
+    // 2. При первом посещении главной (если это не перезагрузка и флага нет)
+    // Это предотвратит показ анимации при переходах через роутинг после перезагрузки
+    if (isReload || !hasSeenInSession) {
+      // Устанавливаем флаг сразу при посещении главной
+      // При перезагрузке это предотвратит показ анимации при следующем переходе через роутинг
+      sessionStorage.setItem('heroAnimationSeenInSession', 'true');
+      flagSetThisMountRef.current = true;
+    }
+  }, [location.pathname]); // При изменении пути
+
   const [heroStage, setHeroStage] = useState<'pain' | 'transition' | 'solution' | 'complete'>(() => {
-    // Если анимация уже была показана, сразу показываем финальный контент
-    return hasSeenAnimation ? 'solution' : 'pain';
+    // Если нужно показать анимацию, начинаем с 'pain', иначе сразу 'solution'
+    return shouldShowAnimation ? 'pain' : 'solution';
   });
   const [currentPainIndex, setCurrentPainIndex] = useState(-1); // -1 означает задержку перед первой фразой
-  const [animationSkipped, setAnimationSkipped] = useState(hasSeenAnimation);
+  const [animationSkipped, setAnimationSkipped] = useState(!shouldShowAnimation);
   const [showDarkOverlay, setShowDarkOverlay] = useState(false);
   const [maskRadius, setMaskRadius] = useState(0);
   const [logoPosition, setLogoPosition] = useState({ x: '75%', y: '50%' }); // Desktop по умолчанию
@@ -221,8 +293,8 @@ export default function HomePage() {
             setHeroStage('transition');
             setTimeout(() => {
               setHeroStage('solution');
-              // Сохраняем, что анимация была показана
-              localStorage.setItem('heroAnimationSeen', 'true');
+              // Сохраняем, что анимация была показана в этой сессии
+              sessionStorage.setItem('heroAnimationSeenInSession', 'true');
             }, 33);
           }, 27);
         } else {
@@ -239,8 +311,8 @@ export default function HomePage() {
     if (heroStage === 'pain' || heroStage === 'transition') {
       setAnimationSkipped(true);
       setHeroStage('solution');
-      // Сохраняем, что анимация была показана (даже если пропущена)
-      localStorage.setItem('heroAnimationSeen', 'true');
+      // Сохраняем, что анимация была показана в этой сессии (даже если пропущена)
+      sessionStorage.setItem('heroAnimationSeenInSession', 'true');
     }
   };
 
@@ -263,8 +335,8 @@ export default function HomePage() {
   const trimmedEmailConfirm = form.emailConfirm.trim();
   const trimmedParentEmail = form.parentEmail.trim();
   const trimmedParentEmailConfirm = form.parentEmailConfirm.trim();
-  const isBasicTest = plan === 'free' || form.testType === 'Базовый';
-  const isPremiumTest = form.testType === 'Premium' || form.testType === 'Подросток и родитель';
+  const isBasicTest = plan === 'free' || form.testType === 'Первичное понимание';
+  const isPremiumTest = form.testType === 'Подросток и родитель';
   const emailsMatch = trimmedEmail && trimmedEmailConfirm && trimmedEmail === trimmedEmailConfirm;
   const parentEmailsMatch = trimmedParentEmail && trimmedParentEmailConfirm && trimmedParentEmail === trimmedParentEmailConfirm;
   const isFormComplete = Boolean(
@@ -324,12 +396,93 @@ export default function HomePage() {
     }
     
     // Устанавливаем тестовые данные для FREE теста
+    // ⚠️ ВРЕМЕННОЕ РЕШЕНИЕ: При клике на кнопку "Тест" начинается запись данных теста в localStorage
     sessionStorage.setItem('profi.user', JSON.stringify({ 
       plan: 'free',
       name: 'Тестовый пользователь',
-      age: ageGroup,
+      ageGroup: ageGroup, // Используем ageGroup вместо age
       gender: 'male',
       testType: 'Первичное понимание',
+      email: 'test@test.com'
+    }));
+    navigate('/test');
+  };
+
+  const startTestQuickExtended = () => {
+    // Запрашиваем возраст у пользователя
+    const ageInput = prompt('Введите возраст (от 13 до 45):');
+    
+    if (!ageInput) {
+      return; // Пользователь отменил ввод
+    }
+    
+    const ageNum = parseInt(ageInput.trim(), 10);
+    
+    // Валидация возраста
+    if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
+      alert('Возраст должен быть от 13 до 45 лет');
+      return;
+    }
+    
+    // Определяем возрастную группу
+    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
+    if (ageNum >= 13 && ageNum <= 17) {
+      ageGroup = '13-17';
+    } else if (ageNum >= 18 && ageNum <= 24) {
+      ageGroup = '18-24';
+    } else if (ageNum >= 25 && ageNum <= 34) {
+      ageGroup = '25-34';
+    } else {
+      ageGroup = '35-45';
+    }
+    
+    // Устанавливаем тестовые данные для EXTENDED теста
+    sessionStorage.setItem('profi.user', JSON.stringify({ 
+      plan: 'extended',
+      name: 'Тестовый пользователь',
+      ageGroup: ageGroup,
+      gender: 'male',
+      testType: 'Личный разбор',
+      email: 'test@test.com'
+    }));
+    navigate('/test');
+  };
+
+  const startTestQuickPremium = () => {
+    // Запрашиваем возраст у пользователя
+    const ageInput = prompt('Введите возраст (от 13 до 45):');
+    
+    if (!ageInput) {
+      return; // Пользователь отменил ввод
+    }
+    
+    const ageNum = parseInt(ageInput.trim(), 10);
+    
+    // Валидация возраста
+    if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
+      alert('Возраст должен быть от 13 до 45 лет');
+      return;
+    }
+    
+    // Определяем возрастную группу
+    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
+    if (ageNum >= 13 && ageNum <= 17) {
+      ageGroup = '13-17';
+    } else if (ageNum >= 18 && ageNum <= 24) {
+      ageGroup = '18-24';
+    } else if (ageNum >= 25 && ageNum <= 34) {
+      ageGroup = '25-34';
+    } else {
+      ageGroup = '35-45';
+    }
+    
+    // Устанавливаем тестовые данные для PREMIUM теста
+    sessionStorage.setItem('profi.user', JSON.stringify({ 
+      plan: 'premium',
+      name: 'Тестовый пользователь',
+      ageGroup: ageGroup,
+      gender: 'male',
+      testType: 'Подросток и родитель',
       email: 'test@test.com'
     }));
     navigate('/test');
@@ -341,8 +494,8 @@ export default function HomePage() {
     const emailConfirmValue = form.emailConfirm.trim();
     const parentEmailValue = form.parentEmail.trim();
     const parentEmailConfirmValue = form.parentEmailConfirm.trim();
-    const isBasicTest = plan === 'free' || form.testType === 'Базовый';
-    const isPremiumTest = form.testType === 'Premium' || form.testType === 'Подросток и родитель';
+    const isBasicTest = plan === 'free' || form.testType === 'Первичное понимание';
+    const isPremiumTest = form.testType === 'Подросток и родитель';
     const newErrors: Partial<Record<FormErrorKey, string>> = {};
 
     if (!form.name.trim()) newErrors.name = 'Укажите имя';
@@ -352,13 +505,13 @@ export default function HomePage() {
       newErrors.age = 'Укажите возраст';
     } else {
       const ageNum = parseInt(form.age, 10);
-      if (isNaN(ageNum) || ageNum < 10 || ageNum > 70) {
-        newErrors.age = 'Возраст должен быть от 10 до 70 лет';
+      if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
+        newErrors.age = 'Возраст должен быть от 13 до 45 лет';
       }
     }
     
     if (!form.gender) newErrors.gender = 'Выберите пол';
-    if (!form.testType) newErrors.testType = 'Выберите вид теста';
+    if (!form.testType) newErrors.testType = 'Выберите навигацию';
     
     if (!emailValue) {
       newErrors.email = 'Укажите email';
@@ -398,12 +551,40 @@ export default function HomePage() {
     }
 
     setErrors({});
-    const { emailConfirm, parentEmailConfirm, ...formWithoutConfirm } = form;
+    
+    // Преобразуем возраст в возрастную группу
+    const ageNum = parseInt(form.age, 10);
+    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
+    if (ageNum >= 13 && ageNum <= 17) {
+      ageGroup = '13-17';
+    } else if (ageNum >= 18 && ageNum <= 24) {
+      ageGroup = '18-24';
+    } else if (ageNum >= 25 && ageNum <= 34) {
+      ageGroup = '25-34';
+    } else {
+      ageGroup = '35-45';
+    }
+    
+    // Определяем plan на основе testType
+    let finalPlan: 'free' | 'extended' | 'premium';
+    if (form.testType === 'Первичное понимание') {
+      finalPlan = 'free';
+    } else if (form.testType === 'Личный разбор') {
+      finalPlan = 'extended';
+    } else if (form.testType === 'Подросток и родитель') {
+      finalPlan = 'premium';
+    } else {
+      // Fallback: используем plan из state или по умолчанию 'free'
+      finalPlan = plan === 'pro' ? 'extended' : 'free';
+    }
+    
+    const { emailConfirm, parentEmailConfirm, age, ...formWithoutConfirm } = form;
     sessionStorage.setItem('profi.user', JSON.stringify({ 
       ...formWithoutConfirm, 
       email: emailValue, 
       parentEmail: isPremiumTest ? parentEmailValue : undefined,
-      plan 
+      ageGroup, // Сохраняем возрастную группу вместо возраста
+      plan: finalPlan 
     }));
     navigate('/test');
   };
@@ -1746,6 +1927,7 @@ export default function HomePage() {
               )}
             </div>
           )}
+          {/* Селектор показывается только если тип теста не выбран (форма открыта через кнопку "Начать" в hero) */}
           {!form.testType && (
             <div className="space-y-1">
               <Select
@@ -1756,11 +1938,11 @@ export default function HomePage() {
                   setForm({ ...form, testType: v });
                   clearError('testType');
                 }}
-                placeholder="Вид теста"
+                placeholder="Вид навигации"
                 options={[
-                  { value: 'Базовый', label: 'Базовый' },
-                  { value: 'Расширенный', label: 'Расширенный' },
-                  { value: 'Premium', label: 'Premium' },
+                  { value: 'Первичное понимание', label: 'Первичное понимание — Бесплатно' },
+                  { value: 'Личный разбор', label: 'Личный разбор — 14 990 ₸' },
+                  { value: 'Подросток и родитель', label: 'Подросток и родитель — 34 990 ₸' },
                 ]}
                 error={Boolean(errors.testType)}
               />
@@ -1813,14 +1995,32 @@ export default function HomePage() {
               </motion.p>
             )}
           </div>
-          {/* TEMPORARY TESTING: Кнопка для быстрого тестирования */}
+          {/* TEMPORARY TESTING: Кнопки для быстрого тестирования */}
           {plan === 'free' && form.testType === 'Первичное понимание' && (
             <button
               type="button"
               className="px-5 py-3 transition border-2 border-primary/30 text-primary hover:bg-primary hover:text-white rounded-lg font-semibold"
               onClick={startTestQuick}
             >
-              🧪 Тест (пропустить форму)
+               Тест 
+            </button>
+          )}
+          {plan === 'pro' && form.testType === 'Личный разбор' && (
+            <button
+              type="button"
+              className="px-5 py-3 transition border-2 border-primary/30 text-primary hover:bg-primary hover:text-white rounded-lg font-semibold"
+              onClick={startTestQuickExtended}
+            >
+               Тест 
+            </button>
+          )}
+          {plan === 'pro' && form.testType === 'Подросток и родитель' && (
+            <button
+              type="button"
+              className="px-5 py-3 transition border-2 border-primary/30 text-primary hover:bg-primary hover:text-white rounded-lg font-semibold"
+              onClick={startTestQuickPremium}
+            >
+               Тест 
             </button>
           )}
           {/* END TEMPORARY TESTING */}
@@ -2030,7 +2230,16 @@ function ReviewsSection() {
               style={{ touchAction: 'pan-x pinch-zoom', color: '#2B2B2B' }}
             >
               <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div>
                   <h3 className="text-base sm:text-lg font-semibold text-heading">{reviews[currentIndex].name.split(' ')[0]}</h3>
+                  {(reviews[currentIndex].age || reviews[currentIndex].testType) && (
+                    <div className="text-xs text-muted mt-0.5">
+                      {reviews[currentIndex].age && <span>{reviews[currentIndex].age} лет</span>}
+                      {reviews[currentIndex].age && reviews[currentIndex].testType && <span> • </span>}
+                      {reviews[currentIndex].testType && <span>{reviews[currentIndex].testType}</span>}
+                    </div>
+                  )}
+                </div>
                 <span className="text-xs text-muted">{reviews[currentIndex].date}</span>
               </div>
               <p className="text-sm sm:text-base leading-relaxed line-clamp-3 sm:line-clamp-none" style={{ color: '#2B2B2B' }}>{reviews[currentIndex].text}</p>

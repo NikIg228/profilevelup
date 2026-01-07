@@ -8,7 +8,7 @@ import type { TestConfig } from '../../../engine/types';
 const testConfig: TestConfig = {
   meta: {
     tariff: 'FREE',
-    age: '18-24',
+    ageGroup: '18-24',
   },
 
   questions: [

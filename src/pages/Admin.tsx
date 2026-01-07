@@ -168,6 +168,13 @@ export default function AdminPage() {
                         : 'На модерации'}
                     </span>
                   </div>
+                  {(review.age || review.testType) && (
+                    <p className="text-sm text-muted mb-2">
+                      {review.age && <span>Возраст: {review.age} лет</span>}
+                      {review.age && review.testType && <span> • </span>}
+                      {review.testType && <span>Тест: {review.testType}</span>}
+                    </p>
+                  )}
                   {review.result && (
                     <p className="text-sm text-muted mb-2">
                       Результат: <span className="font-medium">{review.result}</span>

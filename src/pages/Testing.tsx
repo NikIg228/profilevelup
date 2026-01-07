@@ -6,15 +6,16 @@ import QuestionCard from '../components/QuestionCard';
 import { getTestConfig } from '../engine/getTestConfig';
 import { resolveResult } from '../engine/resolveResult';
 import { sendResultToBackend } from '../utils/sendResult';
-import type { TestConfig, Answers, ResultIndex, Tariff, AgeGroup, Gender } from '../engine/types';
+import { startTestRecording, recordAnswer, finishTestRecording } from '../utils/testRecorder';
+import type { TestConfig, Answers, ExtendedAnswers, ResultIndex, Tariff, AgeGroup, Gender, FreeTestConfig, ExtendedTestConfig } from '../engine/types';
 
 export default function TestingPage() {
   const user = useMemo(() => {
     const raw = sessionStorage.getItem('profi.user');
     return raw ? JSON.parse(raw) as { 
-      plan: 'free'|'pro';
+      plan: 'free'|'pro'|'extended'|'premium';
       name?: string;
-      age?: string;
+      ageGroup?: AgeGroup; // Используем ageGroup вместо age
       gender?: string;
       testType?: string;
       email?: string;
@@ -24,7 +25,7 @@ export default function TestingPage() {
   const [testConfig, setTestConfig] = useState<TestConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
-  const [answers, setAnswers] = useState<Answers>({} as Answers);
+  const [answers, setAnswers] = useState<Answers | ExtendedAnswers>({} as Answers | ExtendedAnswers);
   const [done, setDone] = useState(false);
   const [resultIndex, setResultIndex] = useState<ResultIndex | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -36,18 +37,34 @@ export default function TestingPage() {
       setLoading(true);
       
       // Определяем параметры теста из user данных
-      const tariff: Tariff = user.plan === 'free' ? 'FREE' : 'FREE'; // Пока только FREE
-      const age: AgeGroup = (user.age as AgeGroup) || '18-24'; // Дефолтное значение
+      let tariff: Tariff;
+      if (user.plan === 'free') {
+        tariff = 'FREE';
+      } else if (user.plan === 'extended') {
+        tariff = 'EXTENDED';
+      } else if (user.plan === 'premium') {
+        tariff = 'PREMIUM';
+      } else {
+        tariff = 'FREE'; // По умолчанию FREE
+      }
+      
+      const ageGroup: AgeGroup = user.ageGroup || '18-24'; // Дефолтное значение
 
-      const config = getTestConfig(tariff, age);
+      const config = getTestConfig(tariff, ageGroup);
       setTestConfig(config);
+
+      // ⚠️ ВРЕМЕННОЕ РЕШЕНИЕ: Начинаем запись теста для всех типов тестов
+      if (user.testType) {
+        startTestRecording(tariff, ageGroup, user.testType);
+        console.log('Начата запись теста в localStorage');
+      }
     } catch (error) {
       console.error('Ошибка загрузки теста:', error);
       alert('Не удалось загрузить тест. Пожалуйста, обновите страницу.');
     } finally {
       setLoading(false);
     }
-  }, [user.age, user.plan]);
+  }, [user.ageGroup, user.plan, user.testType]);
 
   const total = testConfig?.questions.length ?? 0;
   const currentQuestion = testConfig?.questions[step - 1];
@@ -55,7 +72,14 @@ export default function TestingPage() {
   // Проверка, что все вопросы отвечены (config-driven)
   const allAnswered = useMemo(() => {
     if (!testConfig) return false;
-    return testConfig.questions.every(q => answers[q.id as keyof Answers]);
+    const isExtendedTest = 'EI' in testConfig.resultMapping;
+    return testConfig.questions.every(q => {
+      if (isExtendedTest) {
+        return (answers as ExtendedAnswers)[q.id] !== undefined;
+      } else {
+        return (answers as Answers)[q.id as keyof Answers] !== undefined;
+      }
+    });
   }, [answers, testConfig]);
 
   useEffect(() => {
@@ -65,27 +89,78 @@ export default function TestingPage() {
   }, [step, total]);
 
   // Вычисляем результат только когда тест завершён, конфиг загружен и все вопросы отвечены
+  // ⚠️ ВАЖНО: resultIndex используется для отладки, передачи на бэкенд и генерации отчётов.
+  // В продакшене НЕ должен отображаться пользователю напрямую как финальный результат.
   useEffect(() => {
     if (done && testConfig && allAnswered && !resultIndex) {
       try {
         const result = resolveResult(answers, testConfig);
         setResultIndex(result);
         console.log('Результат теста:', result);
+
+        // ⚠️ ВРЕМЕННОЕ РЕШЕНИЕ: Завершаем запись теста для всех типов тестов
+        if (user.testType) {
+          finishTestRecording(result);
+          console.log('Запись теста завершена и сохранена в localStorage');
+        }
       } catch (error) {
         console.error('Ошибка вычисления результата:', error);
       }
     }
-  }, [done, answers, testConfig, allAnswered, resultIndex]);
+  }, [done, answers, testConfig, allAnswered, resultIndex, user.testType]);
 
   const onSelect = (value: string) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || !testConfig) return;
     
-    // Сохраняем букву ответа
-    const questionId = currentQuestion.id as keyof Answers;
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: value as Answers[typeof questionId],
-    }));
+    // Определяем тип теста для правильной обработки ответов
+    const isExtendedTest = 'EI' in testConfig.resultMapping;
+    
+    if (isExtendedTest) {
+      // EXTENDED/PREMIUM тест - сохраняем A или B
+      setAnswers((prev) => {
+        const extendedAnswers = prev as ExtendedAnswers;
+        return {
+          ...extendedAnswers,
+          [currentQuestion.id]: value as 'A' | 'B',
+        } as ExtendedAnswers;
+      });
+    } else {
+      // FREE тест - сохраняем букву ответа
+      const questionId = currentQuestion.id as keyof Answers;
+      setAnswers((prev) => {
+        const freeAnswers = prev as Answers;
+        return {
+          ...freeAnswers,
+          [questionId]: value as Answers[typeof questionId],
+        } as Answers;
+      });
+    }
+
+    // ⚠️ ВРЕМЕННОЕ РЕШЕНИЕ: Записываем ответ в localStorage для всех типов тестов
+    if (user.testType) {
+      // Для EXTENDED/PREMIUM тестов преобразуем A/B в конкретные буквы для удобства просмотра
+      let answerToRecord = value;
+      if (isExtendedTest && testConfig && 'EI' in testConfig.resultMapping) {
+        // Находим, к какой дихотомии относится вопрос
+        const questionId = currentQuestion.id;
+        const mapping = testConfig.resultMapping;
+        
+        if (mapping.EI.questions.includes(questionId)) {
+          // E/I дихотомия: A -> E, B -> I
+          answerToRecord = value === 'A' ? 'E' : 'I';
+        } else if (mapping.SN.questions.includes(questionId)) {
+          // S/N дихотомия: A -> S, B -> N
+          answerToRecord = value === 'A' ? 'S' : 'N';
+        } else if (mapping.TF.questions.includes(questionId)) {
+          // T/F дихотомия: A -> T, B -> F
+          answerToRecord = value === 'A' ? 'T' : 'F';
+        } else if (mapping.JP.questions.includes(questionId)) {
+          // J/P дихотомия: A -> J, B -> P
+          answerToRecord = value === 'A' ? 'J' : 'P';
+        }
+      }
+      recordAnswer(currentQuestion.id, answerToRecord);
+    }
   };
 
   const handleSendResult = async () => {
@@ -175,6 +250,7 @@ export default function TestingPage() {
             className="mt-4 p-5 bg-gradient-to-br from-primary-50 to-white rounded-xl border-2 border-primary-200"
           >
             <p className="text-sm text-muted mb-1">Ваш тип личности</p>
+            {/* ⚠️ ВРЕМЕННО: resultIndex отображается для тестирования. В продакшене должен быть заменен на пользовательский формат результата */}
             <p className="text-2xl font-bold text-primary mb-2">{resultIndex}</p>
             <p className="text-sm text-muted mt-2">Результат отправлен на сервер для обработки</p>
           </motion.div>
@@ -254,7 +330,11 @@ export default function TestingPage() {
             <QuestionCard
               question={currentQuestion.text}
               options={questionCardOptions}
-              value={answers[currentQuestion.id as keyof Answers]}
+              value={
+                testConfig && 'EI' in testConfig.resultMapping
+                  ? (answers as ExtendedAnswers)[currentQuestion.id]
+                  : (answers as Answers)[currentQuestion.id as keyof Answers]
+              }
               onChange={onSelect}
             />
           </div>
@@ -269,7 +349,12 @@ export default function TestingPage() {
             <button
               className="btn btn-primary px-4 py-2 w-full text-sm"
               onClick={() => setStep((s) => s + 1)}
-              disabled={!currentQuestion || !answers[currentQuestion.id as keyof Answers]}
+              disabled={
+                !currentQuestion || 
+                (testConfig && 'block1' in testConfig.resultMapping
+                  ? !(answers as ExtendedAnswers)[currentQuestion.id]
+                  : !(answers as Answers)[currentQuestion.id as keyof Answers])
+              }
             >Далее</button>
           </div>
         </div>
