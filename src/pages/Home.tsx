@@ -132,22 +132,31 @@ export default function HomePage() {
     'Какие таланты? Главное — диплом!'
   ];
 
-  // Блокировка скролла во время анимации боли
+  // Блокировка скролла во время анимации боли (только для анимации, не влияет на основной scroll)
   useEffect(() => {
     if (heroStage === 'pain' || heroStage === 'transition') {
-      document.body.style.overflow = 'hidden';
+      // Сохраняем позицию скролла
+      const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
+      document.body.style.top = `-${scrollY}px`;
+      // НЕ меняем overflow-y, чтобы не создавать конфликты
     } else {
-      document.body.style.overflow = '';
+      // Восстанавливаем скролл
+      const scrollY = document.body.style.top;
       document.body.style.position = '';
       document.body.style.width = '';
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
     
     return () => {
-      document.body.style.overflow = '';
+      // Cleanup
       document.body.style.position = '';
       document.body.style.width = '';
+      document.body.style.top = '';
     };
   }, [heroStage]);
 
@@ -609,7 +618,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <section 
-        className={`hero-section ${heroStage === 'pain' || heroStage === 'transition' ? 'fixed' : 'relative'} inset-0 ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-[100vh] lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} overflow-hidden transition-all duration-1000 ${
+        className={`hero-section ${heroStage === 'pain' || heroStage === 'transition' ? 'fixed inset-0' : 'relative'} ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-screen lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} ${heroStage === 'pain' || heroStage === 'transition' ? 'overflow-hidden' : ''} transition-all duration-1000 ${
           heroStage === 'pain' || heroStage === 'transition' 
             ? 'bg-gray-900' 
             : 'bg-base'

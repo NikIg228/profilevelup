@@ -208,7 +208,7 @@ export default function TestingPage() {
 
   if (done && resultIndex) {
     return (
-      <section className="container-balanced mt-10 relative min-h-[calc(100vh-5rem)]">
+      <section className="container-balanced mt-10 relative min-h-screen">
         {/* Полупрозрачный фон с логотипом */}
         <div 
           className="fixed inset-0 -z-10 opacity-10 pointer-events-none"
@@ -308,7 +308,7 @@ export default function TestingPage() {
   }
 
   return (
-    <section className="container-balanced mt-10 relative min-h-[calc(100vh-5rem)]">
+    <section className="container-balanced mt-10 relative min-h-screen">
       {/* Полупрозрачный фон с логотипом */}
       <div 
         className="fixed inset-0 -z-10 opacity-10 pointer-events-none"

@@ -18,12 +18,29 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
 
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = 'hidden';
+      // Блокируем скролл body при открытии модального окна
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.overflowY = 'hidden';
     } else {
-      document.body.style.overflow = '';
+      // Восстанавливаем скролл
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      document.body.style.overflowY = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
     return () => {
-      document.body.style.overflow = '';
+      // Cleanup
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      document.body.style.overflowY = '';
     };
   }, [open]);
 
@@ -35,7 +52,7 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/30 overflow-y-auto scrollbar-hide"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30"
           onClick={onClose}
         >
           <motion.div
