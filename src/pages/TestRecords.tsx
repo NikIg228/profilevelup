@@ -109,7 +109,7 @@ export default function TestRecordsPage() {
         {records.length === 0 ? (
           <div className="text-center py-12 text-muted">
             <p>Записей тестов пока нет.</p>
-            <p className="text-sm mt-2">Записи появятся после прохождения теста "Первичное понимание".</p>
+            <p className="text-sm mt-2">Записи появятся после прохождения тестов.</p>
           </div>
         ) : (
           <div className="space-y-4">
