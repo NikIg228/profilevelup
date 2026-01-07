@@ -22,9 +22,16 @@ export default function AppLayout() {
         if (root) {
           root.style.overflow = 'visible';
         }
-        // Убеждаемся, что html и body имеют overflow: hidden для Lenis
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
+        // Убеждаемся, что html и body имеют overflow: hidden для Lenis (только на desktop)
+        const isMobile = window.innerWidth < 768 || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (!isMobile) {
+          document.documentElement.style.overflow = 'hidden';
+          document.body.style.overflow = 'hidden';
+        } else {
+          // На мобильных оставляем нативный скролл
+          document.documentElement.style.overflow = '';
+          document.body.style.overflow = '';
+        }
       });
     };
 

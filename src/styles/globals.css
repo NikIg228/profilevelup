@@ -21,7 +21,20 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Lenis управляет скроллом, скрываем нативный scrollbar */
+  /* overflow управляется Lenis на desktop, на мобильных - нативный */
+}
+
+/* На мобильных оставляем нативный скролл для работы Swiper */
+@media (max-width: 767px) {
+  body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+  
+  html {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
 }
 
 #root {
@@ -457,6 +470,7 @@ header {
     min-height: 400px !important;
     overflow: visible !important;
     position: relative !important;
+    touch-action: pan-y pinch-zoom !important;
   }
 
   /* Гарантируем отображение SwiperWrapper в WhoForCards на мобильных */
@@ -467,6 +481,7 @@ header {
     width: 100% !important;
     height: auto !important;
     transform: translate3d(0, 0, 0) !important;
+    touch-action: pan-y pinch-zoom !important;
   }
 
   /* Гарантируем отображение SwiperSlide в WhoForCards на мобильных */

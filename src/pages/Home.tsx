@@ -10,10 +10,8 @@ import 'swiper/css/pagination';
 import Modal from '../components/Modal';
 import Select from '../components/Select';
 import CountUp from '../components/CountUp';
-import VideoPlayer from '../components/VideoPlayer';
 import ReviewForm from '../components/ReviewForm';
 import { getReviews } from '../utils/reviewsStorage';
-import type { VideoItem } from '../hooks/useVideoController';
 import { useLenis } from '../contexts/LenisContext';
 
 type FormErrorKey = 'name' | 'age' | 'gender' | 'testType' | 'email' | 'emailConfirm' | 'parentEmail' | 'parentEmailConfirm' | 'consent';
@@ -24,8 +22,6 @@ export default function HomePage() {
   const [form, setForm] = useState({ name: '', age: '', gender: '', testType: '', email: '', emailConfirm: '', parentEmail: '', parentEmailConfirm: '', consent: false });
   const [errors, setErrors] = useState<Partial<Record<FormErrorKey, string>>>({});
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [videoModalOpen, setVideoModalOpen] = useState(false);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   // Состояния для accordion-карточек на мобильных
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [premiumSlideIndex, setPremiumSlideIndex] = useState(0); // 0 - подросток, 1 - родитель
@@ -332,20 +328,6 @@ export default function HomePage() {
     }
   };
 
-  const videoItems: VideoItem[] = [
-    { id: '1', src: '/video_otzyvy/1Аиша.mov', title: 'Аиша' },
-    { id: '2', src: '/video_otzyvy/2Инкар.mov', title: 'Инкар' },
-    { id: '3', src: '/video_otzyvy/3Дима.mp4', title: 'Дима' },
-    { id: '4', src: '/video_otzyvy/4Индира.mp4', title: 'Индира' },
-    { id: '5', src: '/video_otzyvy/5Альбина.mov', title: 'Альбина' },
-    { id: '6', src: '/video_otzyvy/6ноунейм.mp4', title: 'Отзыв' },
-    { id: '7', src: '/video_otzyvy/7ноунейм.mp4', title: 'Отзыв' },
-  ];
-
-  const handleVideoClick = (index: number) => {
-    setCurrentVideoIndex(index);
-    setVideoModalOpen(true);
-  };
 
   const trimmedEmail = form.email.trim();
   const trimmedEmailConfirm = form.emailConfirm.trim();
@@ -2577,6 +2559,15 @@ function WhoForCards() {
             bulletClass: 'swiper-pagination-bullet !bg-primary/30 !w-2 !h-2 !rounded-full',
             bulletActiveClass: 'swiper-pagination-bullet-active !bg-primary !w-6',
           }}
+          // Настройки для мобильных touch-событий
+          touchEventsTarget="container"
+          allowTouchMove={true}
+          simulateTouch={true}
+          touchRatio={1}
+          touchAngle={45}
+          threshold={5}
+          longSwipesRatio={0.5}
+          longSwipesMs={300}
           onSwiper={(swiper) => {
             swiperRef.current = swiper;
           }}
@@ -2603,6 +2594,7 @@ function WhoForCards() {
           }}
           onTouchStart={handleTouchStart}
           className="!pb-12"
+          style={{ touchAction: 'pan-y pinch-zoom' }}
         >
           {/* Карточка 1: Ученикам старших классов */}
           <SwiperSlide>

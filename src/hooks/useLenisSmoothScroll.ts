@@ -5,6 +5,12 @@ export function useLenisSmoothScroll() {
   const [lenis, setLenis] = useState<Lenis | null>(null);
 
   useEffect(() => {
+    // Отключаем Lenis на мобильных устройствах для корректной работы Swiper
+    const isMobile = window.innerWidth < 768 || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isMobile) {
+      return;
+    }
+
     const lenisInstance = new Lenis({
       duration: 1.4,
       easing: (t) => 1 - Math.pow(1 - t, 5),
@@ -15,9 +21,12 @@ export function useLenisSmoothScroll() {
     setLenis(lenisInstance);
 
     // Убеждаемся, что overflow скрыт для html и body (Lenis управляет скроллом)
+    // НО только на desktop, на мобильных оставляем нативный скролл
     requestAnimationFrame(() => {
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
+      if (!isMobile) {
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      }
     });
 
     // Обработчик событий скролла для отладки
