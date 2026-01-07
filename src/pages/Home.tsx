@@ -294,6 +294,48 @@ export default function HomePage() {
     setErrors({});
     setModalOpen(true);
   };
+  // TEMPORARY TESTING: Быстрый переход к тесту без заполнения формы
+  const startTestQuick = () => {
+    // Запрашиваем возраст у пользователя
+    const ageInput = prompt('Введите возраст (от 13 до 45):');
+    
+    if (!ageInput) {
+      return; // Пользователь отменил ввод
+    }
+    
+    const ageNum = parseInt(ageInput.trim(), 10);
+    
+    // Валидация возраста
+    if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
+      alert('Возраст должен быть от 13 до 45 лет');
+      return;
+    }
+    
+    // Определяем возрастную группу
+    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
+    if (ageNum >= 13 && ageNum <= 17) {
+      ageGroup = '13-17';
+    } else if (ageNum >= 18 && ageNum <= 24) {
+      ageGroup = '18-24';
+    } else if (ageNum >= 25 && ageNum <= 34) {
+      ageGroup = '25-34';
+    } else {
+      ageGroup = '35-45';
+    }
+    
+    // Устанавливаем тестовые данные для FREE теста
+    sessionStorage.setItem('profi.user', JSON.stringify({ 
+      plan: 'free',
+      name: 'Тестовый пользователь',
+      age: ageGroup,
+      gender: 'male',
+      testType: 'Первичное понимание',
+      email: 'test@test.com'
+    }));
+    navigate('/test');
+  };
+  // END TEMPORARY TESTING
+
   const startTest = () => {
     const emailValue = form.email.trim();
     const emailConfirmValue = form.emailConfirm.trim();
@@ -509,7 +551,7 @@ export default function HomePage() {
                 }}
               >
                 <button 
-                  className="btn btn-primary px-5 py-3 text-base sm:text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="btn btn-primary px-5 py-3 text-center text-base sm:text-lg font-bold rounded-xl transition-all duration-300"
                   onClick={(e) => {
                     e.stopPropagation();
                     openFor('free');
@@ -602,10 +644,10 @@ export default function HomePage() {
             Короткий тест, который помогает увидеть свои сильные стороны и роли, в которых тебе естественно и комфортно быть собой.
             </p>
                 <div className="flex gap-3">
-                  <button className="btn btn-primary px-5 py-3" onClick={() => openFor('free')}>
+                  <button className="btn btn-primary px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300" onClick={() => openFor('free')}>
                     Начать    
                   </button>
-                  <Link to="/details" className="btn btn-ghost px-5 py-3 text-center">
+                  <Link to="/details" className="btn btn-ghost px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300">
                     Подробнее
                   </Link>
             </div>
@@ -849,9 +891,9 @@ export default function HomePage() {
           <div className={`card flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 transition-all duration-300 relative
             ${expandedCard === 'premium' ? 'shadow-lg' : ''}
             lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}>
-            {/* Баннер сверху */}
-            <div className="absolute -top-3 lg:-top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg shadow-md z-10">
-              <p className="text-xs lg:text-sm font-semibold whitespace-nowrap">Для родителей</p>
+            {/* Баннер сверху - только для mobile */}
+            <div className="lg:hidden absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1.5 rounded-lg shadow-md z-10">
+              <p className="text-xs font-semibold whitespace-nowrap">Для родителей</p>
             </div>
             
             {/* Desktop версия */}
@@ -1447,6 +1489,8 @@ export default function HomePage() {
           <div className="space-y-1">
             <input
               type="text"
+              id="form-name"
+              name="name"
               className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
                 errors.name 
                   ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
@@ -1479,6 +1523,8 @@ export default function HomePage() {
           <div className="space-y-1">
             <input
               type="text"
+              id="form-age"
+              name="age"
               className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
                 errors.age 
                   ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
@@ -1516,6 +1562,8 @@ export default function HomePage() {
           </div>
           <div className="space-y-1">
             <Select
+              id="form-gender"
+              name="gender"
               value={form.gender}
               onChange={(v) => {
                 setForm({ ...form, gender: v });
@@ -1542,6 +1590,8 @@ export default function HomePage() {
           <div className="space-y-1">
             <input
               type="email"
+              id="form-email"
+              name="email"
               className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
                 errors.email 
                   ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
@@ -1578,6 +1628,8 @@ export default function HomePage() {
             <div className="space-y-1">
               <input
                 type="email"
+                id="form-email-confirm"
+                name="emailConfirm"
                 className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
                   errors.emailConfirm 
                     ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
@@ -1619,6 +1671,8 @@ export default function HomePage() {
               </label>
               <input
                 type="email"
+                id="form-parent-email"
+                name="parentEmail"
                 className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
                   errors.parentEmail 
                     ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
@@ -1656,6 +1710,8 @@ export default function HomePage() {
             <div className="space-y-1">
               <input
                 type="email"
+                id="form-parent-email-confirm"
+                name="parentEmailConfirm"
                 className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
                   errors.parentEmailConfirm 
                     ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
@@ -1693,6 +1749,8 @@ export default function HomePage() {
           {!form.testType && (
             <div className="space-y-1">
               <Select
+                id="form-test-type"
+                name="testType"
                 value={form.testType}
                 onChange={(v) => {
                   setForm({ ...form, testType: v });
@@ -1722,6 +1780,8 @@ export default function HomePage() {
             <label className="flex items-start gap-3">
               <input
                 type="checkbox"
+                id="form-consent"
+                name="consent"
                 checked={form.consent}
                 onChange={(e) => {
                   setForm({ ...form, consent: e.target.checked });
@@ -1753,6 +1813,17 @@ export default function HomePage() {
               </motion.p>
             )}
           </div>
+          {/* TEMPORARY TESTING: Кнопка для быстрого тестирования */}
+          {plan === 'free' && form.testType === 'Первичное понимание' && (
+            <button
+              type="button"
+              className="px-5 py-3 transition border-2 border-primary/30 text-primary hover:bg-primary hover:text-white rounded-lg font-semibold"
+              onClick={startTestQuick}
+            >
+              🧪 Тест (пропустить форму)
+            </button>
+          )}
+          {/* END TEMPORARY TESTING */}
           <button
             type="button"
             className={`btn btn-primary px-5 py-3 transition ${

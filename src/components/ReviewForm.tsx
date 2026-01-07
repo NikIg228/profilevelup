@@ -103,6 +103,8 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
                 </label>
                 <input
                   type="text"
+                  id="review-name"
+                  name="name"
                   value={form.name}
                   onChange={(e) => {
                     setForm({ ...form, name: e.target.value });
@@ -125,6 +127,8 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
                   Ваш отзыв *
                 </label>
                 <textarea
+                  id="review-text"
+                  name="text"
                   value={form.text}
                   onChange={(e) => {
                     setForm({ ...form, text: e.target.value });

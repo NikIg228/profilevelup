@@ -73,6 +73,8 @@ export default function AdminPage() {
               </label>
               <input
                 type="password"
+                id="admin-password"
+                name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-secondary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"

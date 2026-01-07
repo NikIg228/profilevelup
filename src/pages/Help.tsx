@@ -149,11 +149,11 @@ export default function HelpPage() {
           <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           
           <div className="relative z-10 grid gap-6">
-            <p className="text-muted max-w-xl relative">
+            <div className="text-muted max-w-xl relative">
               <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary/30 rounded-full opacity-60"></div>
               <span className="pl-6">Есть вопросы или нужна поддержка?</span>
               <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary/30 rounded-full opacity-60"></div>
-            </p>
+            </div>
             
             <div className="grid gap-3">
               <motion.a 

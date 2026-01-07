@@ -1,39 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ProgressBar from '../components/ProgressBar';
 import QuestionCard from '../components/QuestionCard';
-import { generateTestPDF } from '../utils/generatePDF';
-
-type Q = { id: string; text: string; options: { value: string; label: string }[] };
-
-const FREE_QUESTIONS: Q[] = [
-  { id: 'q1', text: 'Что приносит вам больше удовольствия?', options: [
-    { value: 'people', label: 'Помогать людям и общаться' },
-    { value: 'tech', label: 'Разбираться в технологиях' },
-    { value: 'create', label: 'Создавать что-то новое' },
-  ]},
-  { id: 'q2', text: 'Какой формат задач вам ближе?', options: [
-    { value: 'structured', label: 'Чёткие инструкции и правила' },
-    { value: 'mixed', label: 'Смешанный формат' },
-    { value: 'open', label: 'Творческие и открытые задачи' },
-  ]},
-  { id: 'q3', text: 'Какая среда вам комфортнее?', options: [
-    { value: 'team', label: 'Командная работа' },
-    { value: 'solo', label: 'Индивидуальная работа' },
-    { value: 'flex', label: 'Гибридный формат' },
-  ]},
-  { id: 'q4', text: 'Как относитесь к анализу данных?', options: [
-    { value: 'love', label: 'Нравится' },
-    { value: 'neutral', label: 'Нейтрально' },
-    { value: 'avoid', label: 'Избегаю' },
-  ]},
-  { id: 'q5', text: 'Что вас мотивирует?', options: [
-    { value: 'impact', label: 'Польза и влияние' },
-    { value: 'growth', label: 'Развитие и новые навыки' },
-    { value: 'stability', label: 'Стабильность' },
-  ]},
-];
+import { getTestConfig } from '../engine/getTestConfig';
+import { resolveResult } from '../engine/resolveResult';
+import { sendResultToBackend } from '../utils/sendResult';
+import type { TestConfig, Answers, ResultIndex, Tariff, AgeGroup, Gender } from '../engine/types';
 
 export default function TestingPage() {
   const user = useMemo(() => {
@@ -48,75 +21,135 @@ export default function TestingPage() {
     } : { plan: 'free' as const };
   }, []);
 
-  const total = user.plan === 'pro' ? 12 : FREE_QUESTIONS.length; // укороченный pro для макета
+  const [testConfig, setTestConfig] = useState<TestConfig | null>(null);
+  const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Answers>({} as Answers);
   const [done, setDone] = useState(false);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [resultIndex, setResultIndex] = useState<ResultIndex | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [resultSent, setResultSent] = useState(false);
 
-  const currentQuestion = FREE_QUESTIONS[step - 1];
+  // Загружаем конфигурацию теста при монтировании (синхронно)
+  useEffect(() => {
+    try {
+      setLoading(true);
+      
+      // Определяем параметры теста из user данных
+      const tariff: Tariff = user.plan === 'free' ? 'FREE' : 'FREE'; // Пока только FREE
+      const age: AgeGroup = (user.age as AgeGroup) || '18-24'; // Дефолтное значение
+
+      const config = getTestConfig(tariff, age);
+      setTestConfig(config);
+    } catch (error) {
+      console.error('Ошибка загрузки теста:', error);
+      alert('Не удалось загрузить тест. Пожалуйста, обновите страницу.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user.age, user.plan]);
+
+  const total = testConfig?.questions.length ?? 0;
+  const currentQuestion = testConfig?.questions[step - 1];
+
+  // Проверка, что все вопросы отвечены (config-driven)
+  const allAnswered = useMemo(() => {
+    if (!testConfig) return false;
+    return testConfig.questions.every(q => answers[q.id as keyof Answers]);
+  }, [answers, testConfig]);
 
   useEffect(() => {
-    if (step > total) setDone(true);
+    if (step > total && total > 0) {
+      setDone(true);
+    }
   }, [step, total]);
 
-  const onSelect = (val: string) => {
+  // Вычисляем результат только когда тест завершён, конфиг загружен и все вопросы отвечены
+  useEffect(() => {
+    if (done && testConfig && allAnswered && !resultIndex) {
+      try {
+        const result = resolveResult(answers, testConfig);
+        setResultIndex(result);
+        console.log('Результат теста:', result);
+      } catch (error) {
+        console.error('Ошибка вычисления результата:', error);
+      }
+    }
+  }, [done, answers, testConfig, allAnswered, resultIndex]);
+
+  const onSelect = (value: string) => {
     if (!currentQuestion) return;
-    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: val }));
+    
+    // Сохраняем букву ответа
+    const questionId = currentQuestion.id as keyof Answers;
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: value as Answers[typeof questionId],
+    }));
   };
 
-  const handleDownloadPDF = async () => {
-    setIsGeneratingPDF(true);
+  const handleSendResult = async () => {
+    if (!resultIndex) return;
+    
+    setIsSending(true);
     try {
-      const summary = Object.values(answers);
-      const votes = {
-        people: summary.filter(v => v === 'people').length,
-        tech: summary.filter(v => v === 'tech' || v === 'structured' || v === 'love').length,
-        create: summary.filter(v => v === 'create' || v === 'open').length,
-      };
-      const top = Object.entries(votes).sort((a,b) => b[1]-a[1])[0]?.[0] ?? 'mixed';
-      const brief = top === 'people' ? 'Коммуникации и сервис' : top === 'tech' ? 'Технологии и аналитика' : 'Креативные индустрии';
-
-      await generateTestPDF({
-        name: user.name || 'Пользователь',
-        age: user.age || 'Не указан',
-        gender: user.gender || 'Не указан',
-        testType: user.testType || (user.plan === 'pro' ? 'Расширенный тест' : 'Базовый тест'),
-        direction: brief,
-        votes,
-        answers,
-        date: new Date().toLocaleDateString('ru-RU', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })
-      });
+      const gender = (user.gender as Gender) || undefined;
+      await sendResultToBackend(resultIndex, user.email, gender);
+      setResultSent(true);
     } catch (error) {
-      console.error('Ошибка при генерации PDF:', error);
-      alert('Произошла ошибка при генерации PDF. Попробуйте ещё раз.');
+      console.error('Ошибка отправки результата на бэкенд:', error);
+      alert('Произошла ошибка при отправке результата. Попробуйте ещё раз.');
     } finally {
-      setIsGeneratingPDF(false);
+      setIsSending(false);
     }
   };
 
-  if (done) {
-    const summary = Object.values(answers);
-    const votes = {
-      people: summary.filter(v => v === 'people').length,
-      tech: summary.filter(v => v === 'tech' || v === 'structured' || v === 'love').length,
-      create: summary.filter(v => v === 'create' || v === 'open').length,
-    };
-    const top = Object.entries(votes).sort((a,b) => b[1]-a[1])[0]?.[0] ?? 'mixed';
-    const brief = top === 'people' ? 'Коммуникации и сервис' : top === 'tech' ? 'Технологии и аналитика' : 'Креативные индустрии';
-    const totalVotes = votes.people + votes.tech + votes.create;
+  // Преобразуем вопросы из TestConfig в формат для QuestionCard
+  const questionCardOptions = currentQuestion?.options.map(opt => ({
+    value: opt.value,
+    label: opt.label,
+  })) || [];
 
+  if (loading) {
     return (
       <section className="container-balanced mt-10">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-3 text-muted">Загрузка теста...</span>
+        </div>
+      </section>
+    );
+  }
+
+  if (!testConfig) {
+    return (
+      <section className="container-balanced mt-10">
+        <div className="card p-6">
+          <p className="text-muted">Не удалось загрузить тест. Пожалуйста, обновите страницу.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (done && resultIndex) {
+    return (
+      <section className="container-balanced mt-10 relative min-h-[calc(100vh-5rem)]">
+        {/* Полупрозрачный фон с логотипом */}
+        <div 
+          className="fixed inset-0 -z-10 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: 'url(/logomain.png)',
+            backgroundSize: '30%',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+        
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="card p-6"
+          className="card p-6 relative z-10"
         >
           {/* Заголовок с иконкой успеха */}
           <div className="flex items-center gap-3 mb-4">
@@ -141,88 +174,42 @@ export default function TestingPage() {
             transition={{ delay: 0.3, duration: 0.3 }}
             className="mt-4 p-5 bg-gradient-to-br from-primary-50 to-white rounded-xl border-2 border-primary-200"
           >
-            <p className="text-sm text-muted mb-1">Ваше направление</p>
-            <p className="text-2xl font-bold text-primary">{brief}</p>
-          </motion.div>
-          
-          {/* Детализация результатов */}
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.3 }}
-            className="mt-6 p-4 bg-base rounded-lg border border-secondary/40"
-          >
-            <h2 className="font-semibold mb-3">Детализация результатов:</h2>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-muted">Коммуникации и сервис</span>
-                  <span className="text-sm font-medium">{votes.people} ({totalVotes > 0 ? Math.round((votes.people / totalVotes) * 100) : 0}%)</span>
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${totalVotes > 0 ? (votes.people / totalVotes) * 100 : 0}%` }}
-                    transition={{ delay: 0.5, duration: 0.8, ease: 'easeOut' }}
-                    className="bg-blue-500 h-2 rounded-full"
-                  ></motion.div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-muted">Технологии и аналитика</span>
-                  <span className="text-sm font-medium">{votes.tech} ({totalVotes > 0 ? Math.round((votes.tech / totalVotes) * 100) : 0}%)</span>
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${totalVotes > 0 ? (votes.tech / totalVotes) * 100 : 0}%` }}
-                    transition={{ delay: 0.6, duration: 0.8, ease: 'easeOut' }}
-                    className="bg-primary h-2 rounded-full"
-                  ></motion.div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-muted">Креативные индустрии</span>
-                  <span className="text-sm font-medium">{votes.create} ({totalVotes > 0 ? Math.round((votes.create / totalVotes) * 100) : 0}%)</span>
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${totalVotes > 0 ? (votes.create / totalVotes) * 100 : 0}%` }}
-                    transition={{ delay: 0.7, duration: 0.8, ease: 'easeOut' }}
-                    className="bg-purple-500 h-2 rounded-full"
-                  ></motion.div>
-                </div>
-              </div>
-            </div>
+            <p className="text-sm text-muted mb-1">Ваш тип личности</p>
+            <p className="text-2xl font-bold text-primary mb-2">{resultIndex}</p>
+            <p className="text-sm text-muted mt-2">Результат отправлен на сервер для обработки</p>
           </motion.div>
 
-          {/* Кнопка скачивания PDF */}
+          {/* Кнопка отправки результата на бэкенд */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.3 }}
             className="mt-6"
           >
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isGeneratingPDF}
-              className="btn btn-primary w-full sm:w-auto px-5 py-3 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isGeneratingPDF ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Генерация PDF...
-                </>
-              ) : (
-                <>
-                  <Download className="w-5 h-5" />
-                  Скачать отчёт в PDF
-                </>
-              )}
-            </button>
+            {resultSent ? (
+              <div className="flex items-center gap-2 text-primary">
+                <CheckCircle className="w-5 h-5" />
+                <span>Результат отправлен на сервер</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleSendResult}
+                disabled={isSending || !resultIndex}
+                className="btn btn-primary w-full sm:w-auto px-5 py-3 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Отправка результата...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Отправить результат на сервер
+                  </>
+                )}
+              </button>
+            )}
           </motion.div>
 
           {user.plan === 'free' ? (
@@ -233,9 +220,9 @@ export default function TestingPage() {
             </div>
           ) : (
             <div className="mt-6 grid gap-3">
-              <p className="text-muted">Полный отчёт с детальными рекомендациями доступен в скачанном PDF файле.</p>
+              <p className="text-muted">Полный отчёт с детальными рекомендациями будет сгенерирован на сервере.</p>
               {user.email && (
-                <p className="text-sm text-muted">Мы также отправим вам полный отчёт на email: <span className="font-medium">{user.email}</span></p>
+                <p className="text-sm text-muted">Мы отправим вам полный отчёт на email: <span className="font-medium">{user.email}</span></p>
               )}
             </div>
           )}
@@ -245,35 +232,48 @@ export default function TestingPage() {
   }
 
   return (
-    <section className="container-balanced mt-10">
-      <h1 className="text-2xl font-semibold">Пройди тест и узнай, какая профессия тебе подходит</h1>
-      <div className="mt-6">
-        <ProgressBar current={step} total={total} />
-      </div>
-      {currentQuestion && (
+    <section className="container-balanced mt-10 relative min-h-[calc(100vh-5rem)]">
+      {/* Полупрозрачный фон с логотипом */}
+      <div 
+        className="fixed inset-0 -z-10 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: 'url(/logomain.png)',
+          backgroundSize: '30%',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      
+      <div className="relative z-10">
+        <h1 className="text-2xl font-semibold">Пройди тест и узнай, какая профессия тебе подходит</h1>
         <div className="mt-6">
-          <QuestionCard
-            question={currentQuestion.text}
-            options={currentQuestion.options}
-            value={answers[currentQuestion.id]}
-            onChange={onSelect}
-          />
+          <ProgressBar current={step} total={total} />
         </div>
-      )}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
-          className="btn px-5 py-3 w-full"
-          onClick={() => setStep((s) => Math.max(1, s - 1))}
-          disabled={step === 1}
-        >Назад</button>
-        <button
-          className="btn btn-primary px-5 py-3 w-full"
-          onClick={() => setStep((s) => s + 1)}
-          disabled={!currentQuestion || !answers[currentQuestion.id]}
-        >Далее</button>
+        {currentQuestion && (
+          <div className="mt-6">
+            <QuestionCard
+              question={currentQuestion.text}
+              options={questionCardOptions}
+              value={answers[currentQuestion.id as keyof Answers]}
+              onChange={onSelect}
+            />
+          </div>
+        )}
+        <div className="mt-6 flex justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
+            <button
+              className="px-4 py-2 w-full text-sm bg-transparent border-2 border-primary text-primary rounded-lg font-semibold transition hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setStep((s) => Math.max(1, s - 1))}
+              disabled={step === 1}
+            >Назад</button>
+            <button
+              className="btn btn-primary px-4 py-2 w-full text-sm"
+              onClick={() => setStep((s) => s + 1)}
+              disabled={!currentQuestion || !answers[currentQuestion.id as keyof Answers]}
+            >Далее</button>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
-
-

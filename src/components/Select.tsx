@@ -8,9 +8,11 @@ type Props = {
   placeholder?: string;
   options: Option[];
   error?: boolean;
+  id?: string;
+  name?: string;
 };
 
-export default function Select({ value, onChange, placeholder = 'Выберите', options, error = false }: Props) {
+export default function Select({ value, onChange, placeholder = 'Выберите', options, error = false, id, name }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -29,6 +31,8 @@ export default function Select({ value, onChange, placeholder = 'Выберит�
     <div className="relative" ref={containerRef}>
       <button
         type="button"
+        id={id}
+        name={name}
         className={`w-full px-4 py-3 rounded-xl border border-black/10 bg-white text-left text-ink flex items-center justify-between transition shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/40 ${error ? 'border-red-500' : ''}`}
         onClick={() => setOpen(o => !o)}
         aria-haspopup="listbox"

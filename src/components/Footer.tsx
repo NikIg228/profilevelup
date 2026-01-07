@@ -55,6 +55,7 @@ export default function Footer() {
         <nav className="grid gap-3 text-sm md:text-right">
           <Link className="text-section-bg hover:text-primary transition-colors" to="/privacy">Политика конфиденциальности</Link>
           <Link className="text-section-bg hover:text-primary transition-colors" to="/terms">Пользовательское соглашение</Link>
+          <Link className="text-section-bg hover:text-primary transition-colors" to="/public-offer">Публичная оферта</Link>
         </nav>
         <div className="text-center text-sm text-section-bg pt-4 border-t border-secondary/20 md:col-span-2">
           © 2026 «ProfiLevelUp». Все права защищены.

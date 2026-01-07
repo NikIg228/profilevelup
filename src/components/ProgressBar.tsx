@@ -6,7 +6,6 @@ export default function ProgressBar({ current, total }: Props) {
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-muted">Вопрос {current} из {total}</span>
-        <span className="text-sm font-semibold text-primary">{pct}%</span>
       </div>
       <div className="relative h-3 bg-secondary/30 rounded-full overflow-hidden">
         <div 

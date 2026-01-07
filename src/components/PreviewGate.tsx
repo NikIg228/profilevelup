@@ -36,6 +36,8 @@ export default function PreviewGate({ children }: PropsWithChildren) {
         <div className="mt-4 relative">
           <input
             type={show ? 'text' : 'password'}
+            id="preview-password"
+            name="password"
             className="px-4 py-3 pr-12 rounded-xl border border-black/10 w-full"
             placeholder="Пароль"
             value={value}

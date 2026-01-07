@@ -13,6 +13,8 @@ import AboutPage from './pages/About';
 import HelpPage from './pages/Help';
 import DetailsPage from './pages/Details';
 import AdminPage from './pages/Admin';
+import NotFoundPage from './pages/NotFound';
+import PublicOfferPage from './pages/PublicOffer';
 import { initializeDefaultReviews } from './utils/reviewsStorage';
 
 const router = createBrowserRouter([
@@ -26,12 +28,22 @@ const router = createBrowserRouter([
       { path: 'about', element: <AboutPage /> },
       { path: 'privacy', element: <PrivacyPage /> },
       { path: 'terms', element: <TermsPage /> },
+      { path: 'public-offer', element: <PublicOfferPage /> },
       { path: 'help', element: <HelpPage /> },
       { path: 'details', element: <DetailsPage /> },
       { path: 'admin', element: <AdminPage /> },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
-]);
+], {
+  future: {
+    v7_fetcherPersist: true,
+    v7_normalizeFormMethod: true,
+    v7_partialHydration: true,
+    v7_relativeSplatPath: true,
+    v7_skipActionErrorRevalidation: true,
+  },
+});
 
 // Инициализация дефолтных отзывов
 initializeDefaultReviews();
