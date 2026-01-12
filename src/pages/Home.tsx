@@ -357,7 +357,7 @@ export default function HomePage() {
     });
   };
 
-  const openFor = (p: 'free'|'pro', testTypeValue?: string) => {
+  const openFor = (p: 'free'|'pro'|null, testTypeValue?: string) => {
     setPlan(p);
     // Сбрасываем форму и ошибки при открытии
     setForm({ name: '', age: '', gender: '', testType: testTypeValue || '', email: '', emailConfirm: '', parentEmail: '', parentEmailConfirm: '', consent: false });
@@ -733,7 +733,7 @@ export default function HomePage() {
                   className="btn btn-primary px-5 py-3 text-center text-base sm:text-lg font-bold rounded-xl transition-all duration-300"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openFor('free');
+                    openFor(null);
                   }}
                 >
                   Начать
@@ -823,7 +823,7 @@ export default function HomePage() {
             Короткий тест, который помогает увидеть свои сильные стороны и роли, в которых тебе естественно и комфортно быть собой.
             </p>
                 <div className="flex gap-3">
-                  <button className="btn btn-primary px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300" onClick={() => openFor('free')}>
+                  <button className="btn btn-primary px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300" onClick={() => openFor(null)}>
                     Начать    
                   </button>
                   <Link to="/details" className="btn btn-ghost px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300">
@@ -1925,8 +1925,8 @@ export default function HomePage() {
               )}
             </div>
           )}
-          {/* Селектор показывается только если тип теста не выбран (форма открыта через кнопку "Начать" в hero) */}
-          {!form.testType && (
+          {/* Селектор показывается только если форма открыта через кнопку "Начать" в hero (plan === null) */}
+          {plan === null && (
             <div className="space-y-1">
               <Select
                 id="form-test-type"
@@ -1978,6 +1978,10 @@ export default function HomePage() {
                 ,{' '}
                 <Link to="/terms" className="text-heading font-bold hover:underline">
                   Пользовательским соглашением
+                </Link>
+                ,{' '}
+                <Link to="/public-offer" className="text-heading font-bold hover:underline">
+                  Публичной офертой
                 </Link>{' '}
                 и <span className="text-heading font-bold">получением рассылок</span>.<br />
               </span>

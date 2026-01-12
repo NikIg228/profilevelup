@@ -12,7 +12,7 @@ export function useLenisSmoothScroll() {
     }
 
     const lenisInstance = new Lenis({
-      duration: 1.4,
+      duration: 1.0,
       easing: (t) => 1 - Math.pow(1 - t, 5),
       smoothWheel: true,
       syncTouch: false, // Нативный скролл на touch устройствах

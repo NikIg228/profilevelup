@@ -105,6 +105,56 @@ header {
   height: 0 !important;
 }
 
+/* Кастомный скроллбар для модального окна в стилистике сайта */
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #C9A24D rgba(201, 162, 77, 0.2);
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: rgba(201, 162, 77, 0.1);
+  border-radius: 4px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #C9A24D;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9E7F3A;
+}
+
+/* Для контейнера со скроллом внутри модального окна */
+.modal-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: #C9A24D rgba(201, 162, 77, 0.2);
+}
+
+.modal-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scroll-container::-webkit-scrollbar-track {
+  background: rgba(201, 162, 77, 0.1);
+  border-radius: 4px;
+}
+
+.modal-scroll-container::-webkit-scrollbar-thumb {
+  background: #C9A24D;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.modal-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #9E7F3A;
+}
+
 /* Hero анимации */
 @keyframes shake-light {
   0%, 100% { transform: translateX(0); }
