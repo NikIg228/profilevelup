@@ -9,6 +9,7 @@ import {
   deleteReview,
   Review,
 } from '../utils/reviewsStorage';
+import { sanitizeText } from '../utils/sanitize';
 
 export default function AdminPage() {
   const [pendingReviews, setPendingReviews] = useState<Review[]>([]);
@@ -17,7 +18,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || '10203';
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -32,6 +33,10 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!ADMIN_PASSWORD) {
+      alert('Пароль не настроен. Установите VITE_ADMIN_PASSWORD в переменных окружения.');
+      return;
+    }
     if (password === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       setPassword('');
@@ -150,7 +155,7 @@ export default function AdminPage() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-heading">{review.name}</h3>
+                    <h3 className="font-semibold text-heading">{sanitizeText(review.name)}</h3>
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${
                         review.status === 'approved'
@@ -174,7 +179,7 @@ export default function AdminPage() {
                       {review.testType && <span>Тест: {review.testType}</span>}
                     </p>
                   )}
-                  <p className="text-ink leading-relaxed">{review.text}</p>
+                  <p className="text-ink leading-relaxed">{sanitizeText(review.text)}</p>
                 </div>
               </div>
 

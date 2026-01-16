@@ -13,6 +13,7 @@ import CountUp from '../components/CountUp';
 import ReviewForm from '../components/ReviewForm';
 import { getReviews } from '../utils/reviewsStorage';
 import { useLenis } from '../contexts/LenisContext';
+import { scrollLockManager } from '../utils/scrollLock';
 
 type FormErrorKey = 'name' | 'age' | 'gender' | 'testType' | 'email' | 'emailConfirm' | 'parentEmail' | 'parentEmailConfirm' | 'consent';
 
@@ -130,42 +131,23 @@ export default function HomePage() {
     'Какие таланты? Главное — диплом!'
   ];
 
-  // Блокировка скролла во время анимации боли (только для анимации, не влияет на основной scroll)
+  // Блокировка скролла во время анимации боли через менеджер
   useEffect(() => {
     if (heroStage === 'pain' || heroStage === 'transition') {
-      // Сохраняем позицию скролла
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = `-${scrollY}px`;
-      // НЕ меняем overflow-y, чтобы не создавать конфликты
+      scrollLockManager.lock('hero');
     } else {
-      // Восстанавливаем скролл
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-      if (scrollY) {
-        const scrollPosition = parseInt(scrollY || '0') * -1;
-        if (lenis) {
-          lenis.scrollTo(scrollPosition, { immediate: false });
-        } else {
-          window.scrollTo(0, scrollPosition);
-        }
-      }
+      scrollLockManager.unlock('hero');
     }
     
     return () => {
-      // Cleanup
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
+      scrollLockManager.unlock('hero');
     };
   }, [heroStage]);
 
-  // Получение позиции существующего логотипа в hero (мобильная и desktop версии)
+  // Получение позиции существующего логотипа в hero (только для desktop версии)
   useLayoutEffect(() => {
-    if (heroStage === 'solution' && logoRef.current && !animationSkipped) {
+    const isMobile = window.innerWidth < 1024;
+    if (heroStage === 'solution' && logoRef.current && !animationSkipped && !isMobile) {
       const logo = logoRef.current;
       const rect = logo.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
@@ -182,9 +164,10 @@ export default function HomePage() {
     }
   }, [heroStage, animationSkipped]);
 
-  // Эффект "выход из тени" - затемнение с расширяющимся светом из лого
+  // Эффект "выход из тени" - затемнение с расширяющимся светом из лого (только для desktop)
   useLayoutEffect(() => {
-    if (heroStage === 'solution' && !animationSkipped && logoRef.current) {
+    const isMobile = window.innerWidth < 1024;
+    if (heroStage === 'solution' && !animationSkipped && logoRef.current && !isMobile) {
       // Небольшая задержка, чтобы убедиться, что логотип в DOM
       const timer = setTimeout(() => {
         setShowDarkOverlay(true);
@@ -271,13 +254,23 @@ export default function HomePage() {
 
     // Также триггерим при изменении ориентации
     const handleOrientationChange = () => {
+      // Увеличиваем задержку для корректного определения размеров после поворота
       setTimeout(triggerResize, 200);
+      setTimeout(triggerResize, 400);
     };
 
     window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // Дополнительная обработка через resize для более точного определения
+    const handleResize = () => {
+      triggerResize();
+    };
+    
+    window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -592,7 +585,7 @@ export default function HomePage() {
       {/* Overlay затемнения с расширяющимся светом из лого */}
       {showDarkOverlay && (
         <motion.div
-          className="fixed inset-0 pointer-events-none z-[10000]"
+          className="fixed inset-0 pointer-events-none z-[70]"
           style={{
             background: 'rgba(0, 0, 0, 0.85)',
             maskImage: `radial-gradient(circle at ${logoPosition.x} ${logoPosition.y}, transparent 0%, transparent ${maskRadius}%, black ${maskRadius}%)`,
@@ -607,7 +600,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <section 
-        className={`hero-section ${heroStage === 'pain' || heroStage === 'transition' ? 'fixed inset-0' : 'relative'} ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[9999]' : 'z-0'} min-h-screen lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} ${heroStage === 'pain' || heroStage === 'transition' ? 'overflow-hidden' : ''} transition-all duration-1000 ${
+        className={`hero-section ${heroStage === 'pain' || heroStage === 'transition' ? 'fixed inset-0' : 'relative'} ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[60]' : 'z-0'} h-[100svh] lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} ${heroStage === 'pain' || heroStage === 'transition' ? 'overflow-hidden' : ''} transition-all duration-1000 ${
           heroStage === 'pain' || heroStage === 'transition' 
             ? 'bg-gray-900' 
             : 'bg-base'
@@ -617,23 +610,23 @@ export default function HomePage() {
           cursor: heroStage === 'pain' || heroStage === 'transition' ? 'pointer' : 'default',
         }}
       >
-        {/* Фоновый узор нейросети (только на светлом фоне) */}
+        {/* Фоновый узор нейросети - только для desktop */}
         {heroStage === 'solution' && (
           <div 
-            className="absolute inset-0 opacity-[0.05] lg:opacity-[0.08] pointer-events-none"
+            className="hidden lg:block absolute inset-0 opacity-[0.05] lg:opacity-[0.08] pointer-events-none"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }}
           />
         )}
 
-        {/* Мобильная версия */}
-        <div className="lg:hidden w-full flex flex-col items-center justify-center px-4 py-2 relative z-10">
+        {/* Мобильная версия - Full Viewport Hero */}
+        <div className="lg:hidden w-full h-[100svh] flex flex-col relative z-10">
           {/* Стадия 1: Фразы боли */}
           {heroStage === 'pain' && currentPainIndex >= 0 && (
             <motion.div
               key={currentPainIndex}
-              className="text-center px-4"
+              className="absolute inset-0 flex items-center justify-center text-center px-4"
               initial={{ opacity: 0, scale: 0.7 }}
               animate={{ 
                 opacity: [0, 1, 1, 0],
@@ -641,8 +634,8 @@ export default function HomePage() {
               }}
               transition={{
                 duration: 2.8,
-                times: [0, 0.179, 0.714, 1], // pop-in 0.5 сек, показ 2 сек, fade-out 0.8 сек
-                ease: [0.34, 1.56, 0.64, 1], // pop-in
+                times: [0, 0.179, 0.714, 1],
+                ease: [0.34, 1.56, 0.64, 1],
               }}
             >
               <motion.h2
@@ -664,7 +657,7 @@ export default function HomePage() {
           {/* Подсказка о пропуске - внизу экрана, еле заметная */}
           {heroStage === 'pain' && currentPainIndex >= 0 && (
             <motion.p
-              className="fixed bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-white/20 text-center pointer-events-none z-[10000]"
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-white/20 text-center pointer-events-none z-[80]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 2.5 }}
@@ -683,69 +676,77 @@ export default function HomePage() {
             />
           )}
 
-          {/* Стадия 2: Решение */}
+          {/* Стадия 2: Решение - Action-Oriented Hero */}
           {heroStage === 'solution' && (
-            <div className="relative w-full flex flex-col items-center">
-              {/* Логотип в центре */}
-              <motion.div
-                className="flex items-center justify-center mb-4"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.1 }}
-              >
-                <div className="rounded-2xl overflow-visible flex items-center justify-center">
-                  <img 
-                    ref={logoRef}
-                    src="/logo-hero-mobile.png" 
-                    alt="Логотип Профиль будущего" 
-                    className="w-48 h-48 sm:w-56 sm:h-56 object-contain" 
-                    loading="lazy" 
-                  />
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="text-center px-4"
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
-              >
-                <h1 className="text-2xl sm:text-3xl font-semibold text-heading leading-relaxed">
-                  <span className="block">Узнай себя глубже —</span>
-                  <span className="block">и выбирай путь, который подходит именно тебе.</span>
-            </h1>
-              </motion.div>
-
-              {/* CTA кнопки */}
-              <motion.div
-                className="flex justify-center gap-3 mt-4"
-                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  duration: 0.6, 
-                  delay: 0.6,
-                  type: 'spring',
-                  stiffness: 200,
-                  damping: 15,
+            <div className="h-full flex flex-col items-center justify-center px-4 relative">
+              {/* Абстрактный эмоциональный фон - мягкое пятно с градиентом */}
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: `
+                    radial-gradient(
+                      120% 60% at 50% 20%,
+                      rgba(201, 162, 77, 0.12),
+                      transparent 60%
+                    )
+                  `
                 }}
-              >
-                <button 
-                  className="btn btn-primary px-5 py-3 text-center text-base sm:text-lg font-bold rounded-xl transition-all duration-300"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openFor(null);
-                  }}
-                >
-                  Начать
-                </button>
-                <Link 
-                  to="/details" 
-                  className="btn btn-ghost px-5 py-3 text-center text-base sm:text-lg font-bold rounded-xl transition-all duration-300"
-                >
-                  Подробнее
-                </Link>
-              </motion.div>
+              />
+              
+              {/* Лёгкий шум/текстура для глубины */}
+              <div 
+                className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                  backgroundSize: '200px 200px'
+                }}
+              />
 
+              {/* Контент - вертикально центрирован */}
+              <div className="relative z-10 w-full max-w-md mx-auto flex flex-col items-center">
+                {/* Заголовок - один сильный заголовок */}
+                <motion.h1
+                  className="text-3xl sm:text-4xl font-semibold text-heading text-center leading-tight mb-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+                >
+                  Узнай себя глубже
+                </motion.h1>
+
+                {/* Обещание - одно четкое обещание */}
+                <motion.p
+                  className="text-base sm:text-lg text-muted text-center leading-relaxed mb-8 max-w-sm"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+                >
+                  Короткий тест покажет твои сильные стороны и роли, в которых тебе естественно быть собой.
+                </motion.p>
+
+                {/* Primary CTA - одна кнопка действия */}
+                <motion.div
+                  className="w-full"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
+                >
+                  <button 
+                    className="btn btn-primary px-8 py-4 text-center text-lg font-bold rounded-xl transition-all duration-300 w-full min-h-[56px] shadow-lg hover:shadow-xl"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openFor(null);
+                    }}
+                  >
+                    Начать тест
+                  </button>
+                  
+                  {/* Доверительный микротекст под CTA */}
+                  <p className="text-xs text-muted/70 text-center mt-3">
+                    Более 8 200 человек уже прошли тест
+                  </p>
+                </motion.div>
+              </div>
             </div>
           )}
         </div>
@@ -787,7 +788,7 @@ export default function HomePage() {
           {/* Подсказка о пропуске - внизу экрана, еле заметная */}
           {heroStage === 'pain' && currentPainIndex >= 0 && (
             <motion.p
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-white/20 text-center pointer-events-none z-[10000]"
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-white/20 text-center pointer-events-none z-[80]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 2.5 }}
@@ -858,8 +859,16 @@ export default function HomePage() {
       {/* Остальной контент - показывается только после анимации */}
       {(heroStage === 'solution' || animationSkipped) && (
         <>
+      {/* Визуальное разделение между Hero и следующей секцией - только на мобильных */}
+      <div className="lg:hidden relative">
+        {/* Мягкий градиентный переход для четкого окончания hero */}
+        <div className="h-24 bg-gradient-to-b from-base via-base/97 to-base" />
+        {/* Тонкая декоративная линия */}
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-40 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
+      </div>
+
       {/* Formats */}
-          <section id="formats" className="container-balanced mt-12 lg:mt-16">
+          <section id="formats" className="container-balanced pt-6 pb-12 lg:pt-16 lg:pb-16">
             <div className="relative mb-6 sm:mb-8 lg:mb-12">
               {/* Верхняя золотая полоса */}
               <div className="absolute -top-3 sm:-top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-20 sm:w-24 h-0.5 sm:h-1 bg-primary rounded-full opacity-60"></div>
@@ -877,18 +886,22 @@ export default function HomePage() {
             {/* Desktop версия - grid */}
             <div className="levels-desktop hidden lg:grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* Первичное понимание */}
-          <div className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
+          <div 
+            className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
             ${expandedCard === 'basic' ? 'shadow-lg bg-base/30' : ''}
-            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:cursor-pointer`}>
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:cursor-pointer`}
+            onClick={() => openFor('free', 'Первичное понимание')}
+          >
             {/* Desktop версия - ТОЛЬКО для desktop */}
             <div className="hidden lg:flex flex-col h-full justify-between group">
               <div>
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/basic.png"
-                    alt=""
+                    alt="Иконка тарифа Basic"
                     className="h-[156px] opacity-90 object-contain"
                     loading="lazy"
+                    aria-hidden="true"
                   />
                 </div>
                 <div className="flex items-start justify-between gap-3 mb-2">
@@ -916,7 +929,10 @@ export default function HomePage() {
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('free', 'Первичное понимание')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFor('free', 'Первичное понимание');
+                }}
               >
                 Начать
               </button>
@@ -925,18 +941,22 @@ export default function HomePage() {
           </div>
 
           {/* Личный разбор */}
-          <div className={`card flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 transition-all duration-300 relative
+          <div 
+            className={`card flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 transition-all duration-300 relative
             ${expandedCard === 'extended' ? 'shadow-lg bg-base/30' : ''}
-            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:hover:border-primary/40 lg:cursor-pointer`}>
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:hover:border-primary/40 lg:cursor-pointer`}
+            onClick={() => openFor('pro', 'Личный разбор')}
+          >
             {/* Desktop версия */}
             <div className="hidden lg:flex flex-col h-full justify-between group">
               <div>
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/vip.png"
-                    alt=""
+                    alt="Иконка тарифа VIP"
                     className="h-[156px] opacity-90 object-contain"
                     loading="lazy"
+                    aria-hidden="true"
                   />
                 </div>
                 <div className="flex items-start justify-between gap-3 mb-2">
@@ -968,7 +988,10 @@ export default function HomePage() {
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('pro', 'Личный разбор')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFor('pro', 'Личный разбор');
+                }}
               >
                 Получить личный разбор
               </button>
@@ -990,7 +1013,7 @@ export default function HomePage() {
             >
               <div className="flex items-start gap-3 mb-2">
                 <div className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <img src="/komu/vip.png" alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" />
+                  <img src="/komu/vip.png" alt="Иконка тарифа VIP" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Название + цена в одной строке */}
@@ -1057,7 +1080,10 @@ export default function HomePage() {
               {/* CTA кнопка - единственный главный CTA */}
               {expandedCard === 'extended' && (
                 <button
-                  onClick={() => openFor('pro', 'Личный разбор')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFor('pro', 'Личный разбор');
+                  }}
                   className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                 >
                   Получить личный разбор
@@ -1067,9 +1093,12 @@ export default function HomePage() {
           </div>
 
           {/* Подросток и родитель */}
-          <div className={`card flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 transition-all duration-300 relative
+          <div 
+            className={`card flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 transition-all duration-300 relative
             ${expandedCard === 'premium' ? 'shadow-lg' : ''}
-            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}>
+            lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}
+            onClick={() => openFor('pro', 'Подросток и родитель')}
+          >
             {/* Баннер сверху - только для mobile */}
             <div className="lg:hidden absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1.5 rounded-lg shadow-md z-10">
               <p className="text-xs font-semibold whitespace-nowrap">Для родителей</p>
@@ -1081,9 +1110,10 @@ export default function HomePage() {
                 <div className="flex justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <img
                     src="/komu/PREMIUM .png"
-                    alt=""
+                    alt="Иконка тарифа Premium"
                     className="h-[156px] opacity-90 object-contain"
                     loading="lazy"
+                    aria-hidden="true"
                   />
                 </div>
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -1179,7 +1209,10 @@ export default function HomePage() {
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={() => openFor('pro', 'Подросток и родитель')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFor('pro', 'Подросток и родитель');
+                }}
               >
                 Начать навигацию
               </button>
@@ -1201,7 +1234,7 @@ export default function HomePage() {
             >
               <div className="flex items-start gap-3 mb-2">
                 <div className="flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg flex items-center justify-center">
-                  <img src="/komu/PREMIUM .png" alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" />
+                  <img src="/komu/PREMIUM .png" alt="Иконка тарифа Premium" className="w-20 h-20 sm:w-24 sm:h-24 object-contain" loading="lazy" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   {/* Название + цена в одной строке */}
@@ -1330,7 +1363,10 @@ export default function HomePage() {
               {/* CTA кнопка - единственный главный CTA */}
               {expandedCard === 'premium' && (
                 <button
-                  onClick={() => openFor('pro', 'Подросток и родитель')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFor('pro', 'Подросток и родитель');
+                  }}
                   className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                 >
                   Начать навигацию
@@ -1345,14 +1381,18 @@ export default function HomePage() {
           <div className="levels-mobile-scroll">
             {/* Карточка 1: Первичное понимание */}
             <div className="level-card-snap">
-              <div className="level-card-mobile bg-white rounded-2xl shadow-md p-6 flex flex-col h-full w-full">
+              <div 
+                className="level-card-mobile bg-white rounded-2xl shadow-md p-6 flex flex-col h-full w-full cursor-pointer"
+                onClick={() => openFor('free', 'Первичное понимание')}
+              >
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4">
                   <img
                     src="/komu/basic.png"
-                    alt=""
+                    alt="Иконка тарифа Basic"
                     className="h-32 opacity-90 object-contain"
                     loading="lazy"
+                    aria-hidden="true"
                   />
                 </div>
                 
@@ -1378,7 +1418,10 @@ export default function HomePage() {
                 {/* Кнопка */}
                 <button
                   className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
-                  onClick={() => openFor('free', 'Первичное понимание')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFor('free', 'Первичное понимание');
+                  }}
                 >
                   Начать
                 </button>
@@ -1387,14 +1430,18 @@ export default function HomePage() {
 
             {/* Карточка 2: Личный разбор */}
             <div className="level-card-snap">
-              <div className="level-card-mobile bg-white rounded-2xl shadow-md border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-white p-6 flex flex-col h-full w-full">
+              <div 
+                className="level-card-mobile bg-white rounded-2xl shadow-md border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-white p-6 flex flex-col h-full w-full cursor-pointer"
+                onClick={() => openFor('pro', 'Личный разбор')}
+              >
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4">
                   <img
                     src="/komu/vip.png"
-                    alt=""
+                    alt="Иконка тарифа VIP"
                     className="h-32 opacity-90 object-contain"
                     loading="lazy"
+                    aria-hidden="true"
                   />
                 </div>
                 
@@ -1422,7 +1469,10 @@ export default function HomePage() {
                 {/* Кнопка */}
                 <button
                   className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
-                  onClick={() => openFor('pro', 'Личный разбор')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFor('pro', 'Личный разбор');
+                  }}
                 >
                   Получить личный разбор
                 </button>
@@ -1431,14 +1481,18 @@ export default function HomePage() {
 
             {/* Карточка 3: Подросток и родитель */}
             <div className="level-card-snap">
-              <div className="level-card-mobile bg-white rounded-2xl shadow-xl bg-card-recommend p-6 flex flex-col h-full relative border-2 border-primary w-full">
+              <div 
+                className="level-card-mobile bg-white rounded-2xl shadow-xl bg-card-recommend p-6 flex flex-col h-full relative border-2 border-primary w-full cursor-pointer"
+                onClick={() => openFor('pro', 'Подросток и родитель')}
+              >
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4">
                   <img
                     src="/komu/PREMIUM .png"
-                    alt=""
+                    alt="Иконка тарифа Premium"
                     className="h-32 opacity-90 object-contain"
                     loading="lazy"
+                    aria-hidden="true"
                   />
                 </div>
                 
@@ -1529,7 +1583,10 @@ export default function HomePage() {
                 {/* Кнопка */}
                 <button
                   className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
-                  onClick={() => openFor('pro', 'Подросток и родитель')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFor('pro', 'Подросток и родитель');
+                  }}
                 >
                   Начать навигацию
                 </button>
@@ -2343,7 +2400,10 @@ function WhoForCards() {
             }
           }
         } catch (error) {
-          console.warn('Swiper update error:', error);
+          // Логируем только в dev режиме
+          if (import.meta.env.DEV) {
+            console.warn('Swiper update error:', error);
+          }
         }
       }
     };
@@ -2381,7 +2441,7 @@ function WhoForCards() {
         <div className="flex items-start justify-center h-[180px] mb-3 sm:mb-4 relative">
           <img
             src="/komu/okushylar.png"
-            alt=""
+            alt="Иллюстрация для учеников старших классов"
             className="h-[180px] w-auto object-contain object-top"
             loading="lazy"
           />
@@ -2427,7 +2487,7 @@ function WhoForCards() {
           </div>
           <img
             src="/komu/students.png"
-            alt=""
+            alt="Иллюстрация для студентов"
             className="h-[140px] sm:h-[180px] w-auto object-contain object-top relative z-10"
             loading="lazy"
           />
@@ -2471,7 +2531,7 @@ function WhoForCards() {
         <div className="flex items-start justify-center h-[140px] sm:h-[180px] mb-3 sm:mb-4 relative">
           <img
             src="/komu/parents.png"
-            alt=""
+            alt="Иллюстрация для родителей"
             className="h-[140px] sm:h-[180px] w-auto object-contain object-top"
             loading="lazy"
           />
@@ -2513,7 +2573,7 @@ function WhoForCards() {
         <div className="flex items-start justify-center h-[140px] sm:h-[180px] mb-3 sm:mb-4 relative">
           <img
             src="/komu/vzroslym.png"
-            alt=""
+            alt="Иллюстрация для взрослых"
             className="h-[140px] sm:h-[180px] w-auto object-contain object-top"
             loading="lazy"
           />
@@ -2592,7 +2652,10 @@ function WhoForCards() {
                   }
                 }
               } catch (error) {
-                console.warn('Swiper init update error:', error);
+                // Логируем только в dev режиме
+                if (import.meta.env.DEV) {
+                  console.warn('Swiper init update error:', error);
+                }
               }
             }, 300);
           }}
@@ -2612,7 +2675,7 @@ function WhoForCards() {
               <div className="flex items-start justify-center h-[180px] mb-3 relative">
                 <img
                   src="/komu/okushylar.png"
-                  alt=""
+                  alt="Иллюстрация для учеников старших классов"
                   className="h-[180px] w-auto object-contain object-top"
                   loading="lazy"
                 />
@@ -2660,7 +2723,7 @@ function WhoForCards() {
                 </div>
                 <img
                   src="/komu/students.png"
-                  alt=""
+                  alt="Иллюстрация для студентов"
                   className="h-[140px] w-auto object-contain object-top relative z-10"
                   loading="lazy"
                 />
@@ -2702,7 +2765,7 @@ function WhoForCards() {
               <div className="flex items-start justify-center h-[140px] mb-3 relative">
                 <img
                   src="/komu/parents.png"
-                  alt=""
+                  alt="Иллюстрация для родителей"
                   className="h-[140px] w-auto object-contain object-top"
                   loading="lazy"
                 />
@@ -2746,7 +2809,7 @@ function WhoForCards() {
               <div className="flex items-start justify-center h-[140px] mb-3 relative">
                 <img
                   src="/komu/vzroslym.png"
-                  alt=""
+                  alt="Иллюстрация для взрослых"
                   className="h-[140px] w-auto object-contain object-top"
                   loading="lazy"
                 />

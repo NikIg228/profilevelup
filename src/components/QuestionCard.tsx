@@ -25,7 +25,7 @@ export default function QuestionCard({ question, options, value, onChange }: Pro
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1, duration: 0.2 }}
-            className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 shadow-soft hover:shadow-hover hover:scale-[1.02] ${
+            className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 shadow-soft hover:shadow-hover hover:scale-[1.02] min-h-[44px] touch-manipulation ${
               value === o.value 
                 ? 'border-primary bg-primary/10 scale-[1.02] shadow-md' 
                 : 'border-secondary/60 bg-card hover:border-primary/40'

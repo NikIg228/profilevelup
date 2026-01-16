@@ -2,12 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Screen reader only - для доступности */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
 html {
   width: 100%;
   height: 100%;
   margin: 0;
-  overflow: hidden; /* Lenis управляет скроллом */
   -webkit-overflow-scrolling: touch;
+  /* overflow управляется динамически: Lenis на desktop, нативный на mobile */
 }
 
 html, body {
@@ -21,19 +45,66 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  /* overflow управляется Lenis на desktop, на мобильных - нативный */
+  /* overflow управляется динамически через JS */
 }
 
-/* На мобильных оставляем нативный скролл для работы Swiper */
+/* На мобильных используем нативный скролл для работы Swiper */
 @media (max-width: 767px) {
-  body {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+  html {
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   
-  html {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+  body {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+/* Safe area для iPhone с вырезами - только на мобильных */
+@supports (padding: max(0px)) {
+  @media (max-width: 1023px) {
+    body {
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+    }
+    
+    header {
+      padding-top: max(0px, env(safe-area-inset-top));
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+    }
+    
+    footer {
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+    }
+    
+    /* Модальные окна также учитывают safe area */
+    .modal-scroll-container {
+      padding-left: max(24px, calc(24px + env(safe-area-inset-left)));
+      padding-right: max(24px, calc(24px + env(safe-area-inset-right)));
+    }
+  }
+}
+
+/* Улучшение производительности на мобильных */
+@media (max-width: 767px) {
+  * {
+    -webkit-tap-highlight-color: rgba(201, 162, 77, 0.2);
+  }
+}
+
+/* Оптимизация анимаций для пользователей с prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -54,17 +125,17 @@ h1, h2, h3, h4 {
 /* Mobile-only ограничения для container-balanced */
 @media (max-width: 1023px) {
   .container-balanced {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }
 
 /* Фиксация header */
 header {
-  max-width: 100vw !important;
-  width: 100% !important;
-  left: 0 !important;
-  right: 0 !important;
+  max-width: 100vw;
+  width: 100%;
+  left: 0;
+  right: 0;
 }
 
 .card {
@@ -73,6 +144,17 @@ header {
 
 .btn {
   @apply inline-flex items-center justify-center rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary;
+  /* Минимальный размер для touch-целей на мобильных */
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* На desktop можно уменьшить размер для некликабельных элементов */
+@media (min-width: 768px) {
+  .btn:not(.btn-compact) {
+    min-height: auto;
+    min-width: auto;
+  }
 }
 .btn-primary {
   @apply bg-primary text-white focus:ring-primary/20 shadow-sm hover:shadow-md transition-all duration-200;
@@ -215,35 +297,34 @@ header {
   .test-cards-container .card-desktop-full,
   .test-card-slide .card-desktop-full,
   .card-desktop-full {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    max-height: 0 !important;
-    overflow: hidden !important;
-    opacity: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: absolute !important;
-    left: -9999px !important;
+    display: none;
+    visibility: hidden;
+    height: 0;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    left: -9999px;
   }
   
-  /* Mobile: КРИТИЧЕСКИ ВАЖНО - скрываем desktop-версию карточек полностью */
-  /* Используем более специфичный селектор для гарантированного скрытия */
+  /* Mobile: скрываем desktop-версию карточек полностью */
   div[class*="hidden"][class*="lg:grid"],
   div.hidden.lg\\:grid,
   .hidden.lg\\:grid,
   div[class*="hidden lg:grid"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    opacity: 0 !important;
-    position: absolute !important;
-    left: -9999px !important;
-    width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    pointer-events: none !important;
+    display: none;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    position: absolute;
+    left: -9999px;
+    width: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
   }
   
   /* Mobile: скрываем все карточки внутри desktop-версии */
@@ -251,38 +332,38 @@ header {
   div[class*="hidden lg:grid"] > div,
   .hidden.lg\\:grid > div,
   .hidden.lg\\:grid > div.card {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    overflow: hidden !important;
+    display: none;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
   }
   
   /* Mobile: скрываем старые мобильные версии-accordion внутри desktop-карточек */
   .hidden.lg\\:grid [class*="hidden"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    overflow: hidden !important;
+    display: none;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
   }
   
   /* Mobile: показываем только mobile-блоки из нового свайпера */
   .test-cards-container {
-    display: flex !important;
-    visibility: visible !important;
+    display: flex;
+    visibility: visible;
   }
   
   .test-cards-container .card-mobile-header,
   .test-cards-container .card-mobile-summary,
   .test-cards-container .card-mobile-toggle {
-    display: block !important;
-    visibility: visible !important;
+    display: block;
+    visibility: visible;
   }
   
   /* Mobile: гарантируем, что мобильная версия видна */
   div.lg\\:hidden[class*="lg:hidden"],
   .lg\\:hidden {
-    display: block !important;
-    visibility: visible !important;
+    display: block;
+    visibility: visible;
   }
   
   /* Mobile-extra блок: скрыт по умолчанию */
@@ -336,55 +417,55 @@ header {
   .test-cards-container .card-mobile-summary,
   .test-cards-container .card-mobile-toggle,
   .test-cards-container .card-mobile-extra {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    max-height: 0 !important;
-    overflow: hidden !important;
+    display: none;
+    visibility: hidden;
+    height: 0;
+    max-height: 0;
+    overflow: hidden;
   }
   
   .test-cards-container .card-desktop-full {
-    display: block !important;
-    visibility: visible !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    opacity: 1 !important;
+    display: block;
+    visibility: visible;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    opacity: 1;
   }
   
   /* На desktop показываем desktop-full, переопределяя inline style */
   .test-cards-container .card-desktop-full[style*="display: none"] {
-    display: block !important;
+    display: block;
   }
 }
 
 /* Swiper pagination стили для мобильной версии уровней навигации */
 .levels-mobile .swiper-pagination {
-  position: relative !important;
+  position: relative;
   margin-top: 1rem;
-  bottom: 0 !important;
+  bottom: 0;
 }
 
 .levels-mobile .swiper-pagination-bullet {
-  background-color: rgba(201, 162, 77, 0.3) !important;
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 50% !important;
-  transition: all 0.3s ease !important;
+  background-color: rgba(201, 162, 77, 0.3);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
 }
 
 .levels-mobile .swiper-pagination-bullet-active {
-  background-color: #C9A24D !important;
-  width: 24px !important;
-  border-radius: 4px !important;
+  background-color: #C9A24D;
+  width: 24px;
+  border-radius: 4px;
 }
 
 /* Mobile-only стили для CSS Scroll Snap карусели */
 @media (max-width: 1023px) {
   .levels-mobile {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: hidden !important;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
     position: relative;
   }
 
@@ -393,14 +474,14 @@ header {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
     gap: 16px;
     padding: 0 16px 3rem 16px;
   }
 
-  .levels-mobile-scroll::-webkit-scrollbar {
-    display: none;
+  /* Используем общий класс scrollbar-hide */
+  .levels-mobile-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .level-card-snap {
@@ -411,164 +492,184 @@ header {
   }
 
   .level-card-mobile {
-    width: 100% !important;
+    width: 100%;
     height: 100%;
     box-sizing: border-box;
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 }
 
-/* Уменьшение расстояния между hero и следующим блоком на мобильных */
+/* Hero секция на мобильных - полная высота viewport */
 @media (max-width: 1023px) {
-  /* Убираем min-height: 100vh у hero на мобильных */
+  /* Hero занимает 100svh на мобильных */
   .hero-section {
-    min-height: auto !important;
-    height: auto !important;
-    max-height: none !important;
+    height: 100svh;
+    min-height: 100svh;
+    max-height: 100svh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Гарантируем, что hero не показывает следующий контент */
+  .hero-section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  /* Плавный переход от hero к следующей секции */
+  .hero-section + div {
+    position: relative;
+    z-index: 1;
   }
 
   /* Гарантируем правильную высоту секции "Кому подойдёт" */
   section.container-balanced {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
+    height: auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   /* Гарантируем отображение секции с заголовком "Кому подойдёт" */
   section.container-balanced:has(h2) {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    display: block;
+    visibility: visible;
+    opacity: 1;
   }
   
   /* Уменьшаем отступы внутри hero на мобильных */
   .hero-section > div.lg\\:hidden {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
   
   /* Убираем justify-center на мобильных, чтобы контент был сверху */
   .hero-section {
-    justify-content: flex-start !important;
+    justify-content: flex-start;
   }
   
   /* Устанавливаем небольшой отступ у секции "Уровни навигации" на мобильных */
   #formats.container-balanced {
-    margin-top: 3rem !important;
-    padding-top: 0 !important;
-    overflow: hidden !important;
-    max-width: 100% !important;
+    margin-top: 3rem;
+    padding-top: 0;
+    overflow: hidden;
+    max-width: 100%;
   }
   
   /* Ограничиваем overflow для контейнера уровней навигации */
   #formats {
-    overflow: hidden !important;
-    max-width: 100% !important;
+    overflow: hidden;
+    max-width: 100%;
   }
   
   /* Убираем лишние отступы у контейнера внутри hero на мобильных */
   .hero-section .lg\\:hidden {
-    min-height: auto !important;
+    min-height: auto;
   }
 }
 
 /* Swiper pagination стили для мобильной версии "Кому подойдет" */
 @media (max-width: 767px) {
   .md\\:hidden .swiper-pagination {
-    position: relative !important;
+    position: relative;
     margin-top: 1rem;
-    bottom: 0 !important;
+    bottom: 0;
   }
 
   .md\\:hidden .swiper-pagination-bullet {
-    background-color: rgba(201, 162, 77, 0.3) !important;
-    width: 8px !important;
-    height: 8px !important;
-    border-radius: 50% !important;
-    transition: all 0.3s ease !important;
+    background-color: rgba(201, 162, 77, 0.3);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
   }
 
   .md\\:hidden .swiper-pagination-bullet-active {
-    background-color: #C9A24D !important;
-    width: 24px !important;
-    border-radius: 4px !important;
+    background-color: #C9A24D;
+    width: 24px;
+    border-radius: 4px;
   }
 
   /* Гарантируем отображение компонента WhoForCards на мобильных */
   div.md\\:hidden {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    height: auto !important;
-    min-height: 200px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: visible !important;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    height: auto;
+    min-height: 200px;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
   }
 
   /* Гарантируем отображение Swiper в WhoForCards на мобильных */
   div.md\\:hidden > .swiper,
   div.md\\:hidden .swiper {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 400px !important;
-    overflow: visible !important;
-    position: relative !important;
-    touch-action: pan-y pinch-zoom !important;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 400px;
+    overflow: visible;
+    position: relative;
+    touch-action: pan-y pinch-zoom;
   }
 
   /* Гарантируем отображение SwiperWrapper в WhoForCards на мобильных */
   div.md\\:hidden .swiper-wrapper {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 100% !important;
-    height: auto !important;
-    transform: translate3d(0, 0, 0) !important;
-    touch-action: pan-y pinch-zoom !important;
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+    width: 100%;
+    height: auto;
+    transform: translate3d(0, 0, 0);
+    touch-action: pan-y pinch-zoom;
   }
 
   /* Гарантируем отображение SwiperSlide в WhoForCards на мобильных */
   div.md\\:hidden .swiper-slide {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 400px !important;
-    flex-shrink: 0 !important;
-    box-sizing: border-box !important;
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 400px;
+    flex-shrink: 0;
+    box-sizing: border-box;
   }
 
   /* Убеждаемся, что контент внутри слайдов виден */
   div.md\\:hidden .swiper-slide > * {
-    width: 100% !important;
-    height: auto !important;
-    min-height: auto !important;
+    width: 100%;
+    height: auto;
+    min-height: auto;
   }
 }
 
-/* Lenis smooth scroll styles */
-html.lenis,
-html.lenis body {
+/* Lenis smooth scroll styles - только для desktop */
+html.lenis:not([data-mobile="true"]),
+html.lenis:not([data-mobile="true"]) body {
   height: auto;
-  overflow: hidden !important; /* Скрываем нативный scrollbar */
+  overflow: hidden; /* Скрываем нативный scrollbar только на desktop */
 }
 
-html.lenis {
-  /* Скрываем scrollbar для html когда Lenis активен */
+html.lenis:not([data-mobile="true"]) {
+  /* Скрываем scrollbar для html когда Lenis активен (только desktop) */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
 }
 
-html.lenis::-webkit-scrollbar {
+html.lenis:not([data-mobile="true"])::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
 }
 
@@ -586,6 +687,20 @@ html.lenis::-webkit-scrollbar {
 
 .lenis.lenis-scrolling iframe {
   pointer-events: none;
+}
+
+/* Анимация fade-out для индикатора синхронизации */
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-fade-out {
+  animation: fade-out 2s ease-out forwards;
 }
 
 

@@ -6,6 +6,8 @@
  * - Конечный буквенный результат (resultIndex)
  */
 
+const isDev = import.meta.env.DEV;
+
 export interface TestRecord {
   id: string;
   startTime: string;
@@ -40,7 +42,9 @@ function setCurrentRecordId(recordId: string): void {
   try {
     sessionStorage.setItem(SESSION_KEY, recordId);
   } catch (error) {
-    console.error('Ошибка сохранения ID записи в sessionStorage:', error);
+    if (isDev) {
+      console.error('Ошибка сохранения ID записи в sessionStorage:', error);
+    }
   }
 }
 
@@ -72,7 +76,9 @@ export function startTestRecording(
     
     // Если запись существует и не завершена, используем её
     if (existingRecord && !existingRecord.completed) {
-      console.log('Используется существующая активная запись теста:', currentRecordId);
+      if (isDev) {
+        console.log('Используется существующая активная запись теста:', currentRecordId);
+      }
       return currentRecordId;
     }
     
@@ -114,7 +120,9 @@ export function startTestRecording(
 export function recordAnswer(questionId: number, answer: string): void {
   const records = getTestRecords();
   if (records.length === 0) {
-    console.warn('Нет активной записи теста');
+    if (isDev) {
+      console.warn('Нет активной записи теста');
+    }
     return;
   }
 
@@ -137,7 +145,9 @@ export function recordAnswer(questionId: number, answer: string): void {
   }
 
   if (currentRecord.completed) {
-    console.warn('Попытка записать ответ в завершённый тест');
+    if (isDev) {
+      console.warn('Попытка записать ответ в завершённый тест');
+    }
     return;
   }
 
@@ -151,7 +161,9 @@ export function recordAnswer(questionId: number, answer: string): void {
 export function finishTestRecording(resultIndex: string): void {
   const records = getTestRecords();
   if (records.length === 0) {
-    console.warn('Нет активной записи теста');
+    if (isDev) {
+      console.warn('Нет активной записи теста');
+    }
     return;
   }
 
@@ -174,7 +186,9 @@ export function finishTestRecording(resultIndex: string): void {
   }
 
   if (currentRecord.completed) {
-    console.warn('Тест уже завершён');
+    if (isDev) {
+      console.warn('Тест уже завершён');
+    }
     return;
   }
 
@@ -195,6 +209,7 @@ export function getTestRecords(): TestRecord[] {
     if (!raw) return [];
     return JSON.parse(raw) as TestRecord[];
   } catch (error) {
+    // Ошибки логируем всегда
     console.error('Ошибка чтения записей тестов:', error);
     return [];
   }
@@ -207,6 +222,7 @@ function saveTestRecords(records: TestRecord[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
   } catch (error) {
+    // Ошибки логируем всегда
     console.error('Ошибка сохранения записей тестов:', error);
   }
 }

@@ -33,7 +33,7 @@ export default function Select({ value, onChange, placeholder = 'Выберит�
         type="button"
         id={id}
         name={name}
-        className={`w-full px-4 py-3 rounded-xl border border-black/10 bg-white text-left text-ink flex items-center justify-between transition shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/40 ${error ? 'border-red-500' : ''}`}
+        className={`w-full px-4 py-3 rounded-xl border border-black/10 bg-white text-left text-ink flex items-center justify-between transition shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/40 min-h-[44px] touch-manipulation ${error ? 'border-red-500' : ''}`}
         onClick={() => setOpen(o => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -52,7 +52,7 @@ export default function Select({ value, onChange, placeholder = 'Выберит�
               key={o.value}
               role="option"
               aria-selected={o.value === value}
-              className={`w-full text-left px-4 py-2 transition ${o.value === value ? 'bg-primary/10 text-ink' : 'hover:bg-black/5'}`}
+              className={`w-full text-left px-4 py-3 transition min-h-[44px] flex items-center touch-manipulation ${o.value === value ? 'bg-primary/10 text-ink' : 'hover:bg-black/5'}`}
               onClick={() => { onChange(o.value); setOpen(false); }}
               type="button"
             >

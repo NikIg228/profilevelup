@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { addReview } from '../utils/reviewsStorage';
+import { sanitizeName, sanitizeReviewText } from '../utils/sanitize';
 
 interface ReviewFormProps {
   open: boolean;
@@ -36,9 +37,13 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
     setIsSubmitting(true);
     
     try {
+      // Санитизируем пользовательский ввод перед сохранением
+      const sanitizedName = sanitizeName(form.name.trim());
+      const sanitizedText = sanitizeReviewText(form.text.trim());
+      
       addReview({
-        name: form.name.trim(),
-        text: form.text.trim(),
+        name: sanitizedName,
+        text: sanitizedText,
       });
 
       setIsSuccess(true);

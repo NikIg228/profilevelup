@@ -33,8 +33,12 @@ export async function sendResultToBackend(
     }
 
     const data = await response.json();
-    console.log('Результат отправлен на бэкенд:', data);
+    // Логируем только в dev режиме
+    if (import.meta.env.DEV) {
+      console.log('Результат отправлен на бэкенд:', data);
+    }
   } catch (error) {
+    // Ошибки логируем всегда
     console.error('Ошибка отправки результата на бэкенд:', error);
     throw error;
   }

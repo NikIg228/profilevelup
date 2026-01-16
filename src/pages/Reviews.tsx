@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ReviewForm from '../components/ReviewForm';
 import { getReviews } from '../utils/reviewsStorage';
+import { sanitizeText } from '../utils/sanitize';
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState(getReviews());
@@ -56,7 +57,9 @@ export default function ReviewsPage() {
               
               <div className="flex items-center justify-between mb-3 relative z-10">
                 <div>
-                  <h3 className="font-semibold group-hover:text-primary transition-colors duration-300">{r.name.split(' ')[0]}</h3>
+                  <h3 className="font-semibold group-hover:text-primary transition-colors duration-300">
+                    {sanitizeText(r.name).split(' ')[0]}
+                  </h3>
                   {(r.age || r.testType) && (
                     <div className="text-xs text-muted mt-0.5">
                       {r.age && <span>{r.age} лет</span>}
@@ -66,7 +69,7 @@ export default function ReviewsPage() {
                   )}
                 </div>
               </div>
-              <p className="leading-relaxed relative z-10">{r.text}</p>
+              <p className="leading-relaxed relative z-10">{sanitizeText(r.text)}</p>
             </motion.article>
           ))}
         </div>
