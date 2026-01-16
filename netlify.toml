@@ -6,6 +6,10 @@
   NODE_VERSION = "20"
   VITE_PREVIEW_ENABLED = "true"
 
+# Плагины отключены - используем Supabase, а не Neon DB
+# Если вы видите ошибки с плагином "neon", отключите интеграцию Neon в настройках Netlify UI:
+# Site settings → Integrations → отключите Neon DB интеграцию
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
