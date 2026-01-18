@@ -38,15 +38,15 @@ export default function ChangeNameForm() {
   };
 
   return (
-    <div className="bg-secondary/20 rounded-xl p-4 border border-secondary">
+    <div className="bg-white rounded-xl border border-secondary/40 shadow-sm p-4">
       <h3 className="text-base font-semibold text-heading mb-3 flex items-center gap-2">
-        <User className="w-4 h-4" />
+        <User className="w-4 h-4 text-primary" />
         Имя пользователя
       </h3>
       
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label htmlFor="full-name" className="block text-sm font-medium text-heading mb-1.5">
+          <label htmlFor="full-name" className="block text-xs font-medium text-heading mb-1">
             Ваше имя
           </label>
           <div className="relative">
@@ -56,20 +56,20 @@ export default function ChangeNameForm() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
               placeholder="Введите ваше имя"
             />
           </div>
         </div>
 
         {error && (
-          <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 text-xs">
+          <div className="p-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600 text-xs flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-green-50 border border-green-200 text-green-600 text-xs flex items-center gap-2">
             <Check className="w-3 h-3" />
             Имя успешно изменено
           </div>
@@ -78,7 +78,7 @@ export default function ChangeNameForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-2 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+          className="w-full py-2 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm shadow-sm"
         >
           {isLoading ? (
             <>

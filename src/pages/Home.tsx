@@ -327,7 +327,7 @@ export default function HomePage() {
   const trimmedParentEmail = form.parentEmail.trim();
   const trimmedParentEmailConfirm = form.parentEmailConfirm.trim();
   const isBasicTest = plan === 'free' || form.testType === 'Первичное понимание';
-  const isPremiumTest = form.testType === 'Подросток и родитель';
+  const isPremiumTest = form.testType === 'Семейная навигация';
   const emailsMatch = trimmedEmail && trimmedEmailConfirm && trimmedEmail === trimmedEmailConfirm;
   const parentEmailsMatch = trimmedParentEmail && trimmedParentEmailConfirm && trimmedParentEmail === trimmedParentEmailConfirm;
   const isFormComplete = Boolean(
@@ -443,7 +443,7 @@ export default function HomePage() {
       name: 'Тестовый пользователь',
       ageGroup: ageGroup,
       gender: 'male',
-      testType: 'Личный разбор',
+      testType: 'Персональный разбор',
       email: 'test@test.com'
     }));
     navigate('/test');
@@ -483,7 +483,7 @@ export default function HomePage() {
       name: 'Тестовый пользователь',
       ageGroup: ageGroup,
       gender: 'male',
-      testType: 'Подросток и родитель',
+      testType: 'Семейная навигация',
       email: 'test@test.com'
     }));
     navigate('/test');
@@ -496,7 +496,7 @@ export default function HomePage() {
     const parentEmailValue = form.parentEmail.trim();
     const parentEmailConfirmValue = form.parentEmailConfirm.trim();
     const isBasicTest = plan === 'free' || form.testType === 'Первичное понимание';
-    const isPremiumTest = form.testType === 'Подросток и родитель';
+    const isPremiumTest = form.testType === 'Семейная навигация';
     const newErrors: Partial<Record<FormErrorKey, string>> = {};
 
     if (!form.name.trim()) newErrors.name = 'Укажите имя';
@@ -570,9 +570,9 @@ export default function HomePage() {
     let finalPlan: 'free' | 'extended' | 'premium';
     if (form.testType === 'Первичное понимание') {
       finalPlan = 'free';
-    } else if (form.testType === 'Личный разбор') {
+    } else if (form.testType === 'Персональный разбор') {
       finalPlan = 'extended';
-    } else if (form.testType === 'Подросток и родитель') {
+    } else if (form.testType === 'Семейная навигация') {
       finalPlan = 'premium';
     } else {
       // Fallback: используем plan из state или по умолчанию 'free'
@@ -891,14 +891,14 @@ export default function HomePage() {
       {/* Визуальное разделение между Hero и следующей секцией - только на мобильных */}
       <div className="lg:hidden relative">
         {/* Мягкий градиентный переход для четкого окончания hero */}
-        <div className="h-24 bg-gradient-to-b from-base via-base/97 to-base" />
+        <div className="h-12 bg-gradient-to-b from-base via-base/97 to-base" />
         {/* Тонкая декоративная линия */}
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-40 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-40 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
       </div>
 
       {/* Formats */}
-          <section id="formats" className="container-balanced pt-6 pb-12 lg:pt-16 lg:pb-16">
-            <div className="relative mb-6 sm:mb-8 lg:mb-12">
+          <section id="formats" className="container-balanced pt-4 pb-8 lg:pt-8 lg:pb-12">
+            <div className="relative mb-4 sm:mb-5 lg:mb-6">
               {/* Верхняя золотая полоса */}
               <div className="absolute -top-3 sm:-top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-20 sm:w-24 h-0.5 sm:h-1 bg-primary rounded-full opacity-60"></div>
               
@@ -909,6 +909,25 @@ export default function HomePage() {
                 <div className="w-12 sm:w-16 h-0.5 bg-primary/40 mt-2 mb-2"></div>
                 {/* Подзаголовок скрыт на мобильных, так как он теперь в каждой карточке Swiper */}
                 <p className="hidden lg:block text-sm sm:text-base text-muted">От первого понимания — к глубокой работе с собой и отношениями</p>
+              </div>
+            </div>
+            
+            {/* Декоративные метки над карточками - Desktop */}
+            <div className="hidden lg:grid grid-cols-3 gap-6 mb-3">
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-0.5 bg-primary/40 mb-2"></div>
+                <div className="text-sm font-semibold text-primary">Старт</div>
+                <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-0.5 bg-primary/40 mb-2"></div>
+                <div className="text-sm font-semibold text-primary">Глубина</div>
+                <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-0.5 bg-primary/40 mb-2"></div>
+                <div className="text-sm font-semibold text-primary">Семья</div>
+                <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
               </div>
             </div>
             
@@ -939,7 +958,7 @@ export default function HomePage() {
                       <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] max-w-[320px] relative">
                         <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
                         <p className="text-sm font-medium text-heading leading-relaxed">
-                          Мягкий вход, чтобы увидеть себя со стороны
+                          Точка входа в систему навигации.
                         </p>
                       </div>
                     </div>
@@ -949,12 +968,23 @@ export default function HomePage() {
                     Бесплатно
                   </span>
                 </div>
-                <ul className="mt-6 text-sm text-muted space-y-2 list-disc list-inside">
-                  <li>Короткий вводный тест</li>
-                  <li>Первичное понимание своего стиля мышления и действий</li>
-                  <li>Краткий навигационный ориентир (1 страница)</li>
-                  <li>Помогает почувствовать, откликается ли тебе этот формат</li>
-                </ul>
+                <p className="text-sm text-muted mb-4 leading-relaxed">
+                  Точка входа в систему навигации.<br/>
+                  Помогает увидеть свой базовый стиль мышления и решений — без ярлыков и оценок.
+                </p>
+                <div className="mb-4">
+                  <p className="text-sm font-semibold text-heading mb-2">Ты получаешь:</p>
+                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
+                    <li>Понимание, как ты обычно думаешь и принимаешь решения</li>
+                    <li>Где твои сильные стороны сейчас</li>
+                    <li>В каких форматах тебе легче действовать и развиваться</li>
+                    <li>Подходит ли тебе этот формат глубокой навигации</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-muted italic mb-8">
+                  Это не мотивация и не психология.<br/>
+                  Это первая карта: где ты сейчас и как ты устроен.
+                </p>
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
@@ -963,18 +993,18 @@ export default function HomePage() {
                   openFor('free', 'Первичное понимание');
                 }}
               >
-                Начать
+                 Получить первичное понимание
               </button>
             </div>
 
           </div>
 
-          {/* Личный разбор */}
+          {/* Персональный разбор */}
           <div 
             className={`card flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 transition-all duration-300 relative
             ${expandedCard === 'extended' ? 'shadow-lg bg-base/30' : ''}
             lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:hover:border-primary/40 lg:cursor-pointer`}
-            onClick={() => openFor('pro', 'Личный разбор')}
+            onClick={() => openFor('pro', 'Персональный разбор')}
           >
             {/* Desktop версия */}
             <div className="hidden lg:flex flex-col h-full justify-between group">
@@ -994,35 +1024,42 @@ export default function HomePage() {
                       <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] max-w-[320px] relative">
                         <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
                         <p className="text-sm font-medium text-heading leading-relaxed">
-                          Глубокое понимание себя и своих особенностей
+                          Персональная инструкция к твоему характеру, мышлению и стилю жизни.
                         </p>
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold text-heading mb-1">Личный разбор</h3>
+                    <h3 className="text-xl font-semibold text-heading mb-1">Персональный разбор</h3>
                   </div>
                   <span className="px-4 py-1.5 bg-primary/10 text-primary text-base font-semibold rounded-lg whitespace-nowrap">
                     14 990 ₸
                   </span>
                 </div>
-                <div className="mt-6 text-sm text-muted space-y-2 border-l-2 border-primary/30 pl-4">
-                  <ul className="list-disc list-inside space-y-2">
-                    <li>Расширенный тест</li>
-                    <li>Персональный навигационный отчёт (5–6 страниц, PDF)</li>
-                    <li>Как ты думаешь, принимаешь решения и реагируешь</li>
-                    <li>Твои сильные стороны и зоны роста</li>
-                    <li>Среды и форматы, где тебе легче быть собой</li>
-                    <li>Рекомендации по развитию и взаимодействию с другими</li>
+                <p className="text-sm text-muted mb-4 leading-relaxed">
+                  Персональная инструкция к твоему характеру, мышлению и стилю жизни.
+                </p>
+                <div className="mb-4">
+                  <p className="text-sm font-semibold text-heading mb-2">Ты получаешь:</p>
+                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
+                    <li>Как ты думаешь, выбираешь и реагируешь</li>
+                    <li>Где твоя настоящая сила и где ты теряешь энергию</li>
+                    <li>Почему одни среды тебя усиливают, а другие выжигают</li>
+                    <li>В каких форматах тебе легче добиваться результата</li>
+                    <li>Как выстраивать решения, обучение, работу и отношения под свой стиль</li>
                   </ul>
                 </div>
+                <p className="text-sm text-muted italic mb-8">
+                  Это не типология и не приговор.<br/>
+                  Это навигационная система под твою реальную жизнь.
+                </p>
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
-                  openFor('pro', 'Личный разбор');
+                  openFor('pro', 'Персональный разбор');
                 }}
               >
-                Получить личный разбор
+                 Получить персональный разбор
               </button>
             </div>
 
@@ -1057,7 +1094,7 @@ export default function HomePage() {
                         </div>
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold text-heading">
-                        Личный разбор
+                        Персональный разбор
                       </h3>
                     </div>
                     <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
@@ -1111,7 +1148,7 @@ export default function HomePage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    openFor('pro', 'Личный разбор');
+                    openFor('pro', 'Персональный разбор');
                   }}
                   className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                 >
@@ -1121,12 +1158,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Подросток и родитель */}
+          {/* Семейная навигация */}
           <div 
             className={`card flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 transition-all duration-300 relative
             ${expandedCard === 'premium' ? 'shadow-lg' : ''}
             lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}
-            onClick={() => openFor('pro', 'Подросток и родитель')}
+            onClick={() => openFor('pro', 'Семейная навигация')}
           >
             {/* Баннер сверху - только для mobile */}
             <div className="lg:hidden absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1.5 rounded-lg shadow-md z-10">
@@ -1155,12 +1192,16 @@ export default function HomePage() {
                         </p>
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold text-heading mb-1">Подросток и родитель</h3>
+                    <h3 className="text-xl font-semibold text-heading mb-1">Семейная навигация</h3>
                   </div>
                   <span className="px-4 py-1.5 bg-primary/10 text-primary text-base font-semibold rounded-lg whitespace-nowrap">
                     34 990 ₸
                   </span>
                 </div>
+                
+                <p className="text-sm text-muted mb-4 leading-relaxed italic">
+                  Чтобы подросток понял себя, а родитель — понял своего ребёнка
+                </p>
 
                 {/* Слайдер с переключателями */}
                 <div className="mt-4">
@@ -1210,12 +1251,11 @@ export default function HomePage() {
                           Что получает подросток
                         </h4>
                         <ul className="text-sm text-muted space-y-1.5 list-disc list-inside">
-                          <li>Расширенный тест</li>
-                          <li>Личный навигационный отчёт</li>
                           <li>Понимание своего характера, сильных сторон и особенностей</li>
                           <li>В каких условиях ему легче учиться, общаться и развиваться</li>
-                          <li>Навигационный «компас», а не оценка и не приговор</li>
-                  </ul>
+                          <li>Как он думает, принимает решения и реагирует на давление</li>
+                          <li>Навигационный компас вместо оценок и ярлыков</li>
+                        </ul>
                       </div>
 
                       {/* Слайд 2: Что получает родитель */}
@@ -1225,25 +1265,29 @@ export default function HomePage() {
                           Что получает родитель
                         </h4>
                         <ul className="text-sm text-muted space-y-1.5 list-disc list-inside">
-                          <li>Отдельный персональный отчёт о ребёнке (PDF)</li>
-                          <li>Как ребёнок чувствует, думает и воспринимает мир</li>
-                          <li>Как с ним лучше общаться, чтобы поддерживать, а не давить</li>
-                          <li>Какие слова и подходы мотивируют, а какие вызывают сопротивление</li>
-            
+                          <li>Персональную карту психологии ребёнка</li>
+                          <li>Как ребёнок думает, чувствует и воспринимает мир</li>
+                          <li>Как с ним лучше общаться без конфликтов</li>
+                          <li>Какие слова поддерживают, а какие вызывают сопротивление</li>
                         </ul>
                       </div>
                     </motion.div>
                   </div>
                 </div>
+                
+                <p className="text-sm text-muted mt-4 italic mb-8">
+                  Это не про «воспитание».<br/>
+                  Это про язык понимания.
+                </p>
               </div>
               <button
                 className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
-                  openFor('pro', 'Подросток и родитель');
+                  openFor('pro', 'Семейная навигация');
                 }}
               >
-                Начать навигацию
+                 Начать семейную навигацию
               </button>
             </div>
 
@@ -1278,7 +1322,7 @@ export default function HomePage() {
                         </div>
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold text-heading">
-                        Подросток и родитель
+                        Семейная навигация
                       </h3>
                     </div>
                     <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-white font-bold text-sm sm:text-base rounded-lg whitespace-nowrap flex-shrink-0 shadow-md">
@@ -1394,11 +1438,11 @@ export default function HomePage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    openFor('pro', 'Подросток и родитель');
+                    openFor('pro', 'Семейная навигация');
                   }}
                   className="w-full mt-3 px-6 py-3 min-h-[48px] bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                 >
-                  Начать навигацию
+                  Начать семейную навигацию
                 </button>
               )}
             </div>
@@ -1410,6 +1454,12 @@ export default function HomePage() {
           <div className="levels-mobile-scroll">
             {/* Карточка 1: Первичное понимание */}
             <div className="level-card-snap">
+              {/* Декоративная метка над карточкой */}
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-16 h-0.5 bg-primary/40 mb-2"></div>
+                <div className="text-sm font-semibold text-primary">Старт</div>
+                <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
+              </div>
               <div 
                 className="level-card-mobile bg-white rounded-2xl shadow-md p-6 flex flex-col h-full w-full cursor-pointer"
                 onClick={() => openFor('free', 'Первичное понимание')}
@@ -1433,35 +1483,52 @@ export default function HomePage() {
                   </span>
                 </div>
                 
-                {/* Подзаголовок */}
-                <p className="text-base font-medium text-heading mb-4 px-3 py-2 bg-primary/10 rounded-lg border-l-4 border-primary">Мягкий вход, чтобы увидеть себя со стороны</p>
+                {/* Описание */}
+                <p className="text-sm text-muted mb-4 leading-relaxed">
+                  Точка входа в систему навигации.<br/>
+                  Помогает увидеть свой базовый стиль мышления и решений — без ярлыков и оценок.
+                </p>
                 
                 {/* Список пунктов */}
-                <ul className="text-sm text-muted space-y-2 list-disc list-inside mb-6 flex-1">
-                  <li>Короткий вводный тест</li>
-                  <li>Первичное понимание своего стиля мышления и действий</li>
-                  <li>Краткий навигационный ориентир (1 страница)</li>
-                  <li>Помогает почувствовать, откликается ли тебе этот формат</li>
-                </ul>
+                <div className="mb-4 flex-1">
+                  <p className="text-sm font-semibold text-heading mb-2">Ты получаешь:</p>
+                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
+                    <li>Понимание, как ты обычно думаешь и принимаешь решения</li>
+                    <li>Где твои сильные стороны сейчас</li>
+                    <li>В каких форматах тебе легче действовать и развиваться</li>
+                    <li>Подходит ли тебе этот формат глубокой навигации</li>
+                  </ul>
+                </div>
+                
+                <p className="text-sm text-muted italic mb-4">
+                  Это не мотивация и не психология.<br/>
+                  Это первая карта: где ты сейчас и как ты устроен.
+                </p>
                 
                 {/* Кнопка */}
                 <button
-                  className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
+                  className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto mt-8"
                   onClick={(e) => {
                     e.stopPropagation();
                     openFor('free', 'Первичное понимание');
                   }}
                 >
-                  Начать
+                   Получить первичное понимание
                 </button>
               </div>
             </div>
 
-            {/* Карточка 2: Личный разбор */}
+            {/* Карточка 2: Персональный разбор */}
             <div className="level-card-snap">
+              {/* Декоративная метка над карточкой */}
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-16 h-0.5 bg-primary/40 mb-2"></div>
+                <div className="text-sm font-semibold text-primary">Глубина</div>
+                <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
+              </div>
               <div 
                 className="level-card-mobile bg-white rounded-2xl shadow-md border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-white p-6 flex flex-col h-full w-full cursor-pointer"
-                onClick={() => openFor('pro', 'Личный разбор')}
+                onClick={() => openFor('pro', 'Персональный разбор')}
               >
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4">
@@ -1476,43 +1543,58 @@ export default function HomePage() {
                 
                 {/* Заголовок и цена */}
                 <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="text-xl font-semibold text-heading flex-1">Личный разбор</h3>
+                  <h3 className="text-xl font-semibold text-heading flex-1">Персональный разбор</h3>
                   <span className="px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
                     14 990 ₸
                   </span>
                 </div>
                 
-                {/* Подзаголовок */}
-                <p className="text-base font-medium text-heading mb-4 px-3 py-2 bg-primary/10 rounded-lg border-l-4 border-primary">Глубокое понимание себя и своих особенностей</p>
+                {/* Описание */}
+                <p className="text-sm text-muted mb-4 leading-relaxed">
+                  Персональная инструкция к твоему характеру, мышлению и стилю жизни.
+                </p>
                 
                 {/* Список пунктов */}
-                <ul className="text-sm text-muted space-y-2 list-disc list-inside border-l-2 border-primary/30 pl-4 mb-6 flex-1">
-                  <li>Расширенный тест</li>
-                  <li>Персональный навигационный отчёт (5–6 страниц, PDF)</li>
-                  <li>Как ты думаешь, принимаешь решения и реагируешь</li>
-                  <li>Твои сильные стороны и зоны роста</li>
-                  <li>Среды и форматы, где тебе легче быть собой</li>
-                  <li>Рекомендации по развитию и взаимодействию с другими</li>
-                </ul>
+                <div className="mb-4 flex-1">
+                  <p className="text-sm font-semibold text-heading mb-2">Ты получаешь:</p>
+                  <ul className="text-sm text-muted space-y-2 list-disc list-inside">
+                    <li>Как ты думаешь, выбираешь и реагируешь</li>
+                    <li>Где твоя настоящая сила и где ты теряешь энергию</li>
+                    <li>Почему одни среды тебя усиливают, а другие выжигают</li>
+                    <li>В каких форматах тебе легче добиваться результата</li>
+                    <li>Как выстраивать решения, обучение, работу и отношения под свой стиль</li>
+                  </ul>
+                </div>
+                
+                <p className="text-sm text-muted italic mb-8">
+                  Это не типология и не приговор.<br/>
+                  Это навигационная система под твою реальную жизнь.
+                </p>
                 
                 {/* Кнопка */}
                 <button
                   className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openFor('pro', 'Личный разбор');
+                    openFor('pro', 'Персональный разбор');
                   }}
                 >
-                  Получить личный разбор
+                   Получить персональный разбор
                 </button>
               </div>
             </div>
 
-            {/* Карточка 3: Подросток и родитель */}
+            {/* Карточка 3: Семейная навигация */}
             <div className="level-card-snap">
+              {/* Декоративная метка над карточкой */}
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-16 h-0.5 bg-primary/40 mb-2"></div>
+                <div className="text-sm font-semibold text-primary">Семья</div>
+                <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
+              </div>
               <div 
                 className="level-card-mobile bg-white rounded-2xl shadow-xl bg-card-recommend p-6 flex flex-col h-full relative border-2 border-primary w-full cursor-pointer"
-                onClick={() => openFor('pro', 'Подросток и родитель')}
+                onClick={() => openFor('pro', 'Семейная навигация')}
               >
                 {/* Иллюстрация */}
                 <div className="flex justify-center mb-4">
@@ -1527,14 +1609,16 @@ export default function HomePage() {
                 
                 {/* Заголовок и цена */}
                 <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="text-xl font-semibold text-heading flex-1">Подросток и родитель</h3>
+                  <h3 className="text-xl font-semibold text-heading flex-1">Семейная навигация</h3>
                   <span className="px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
                     34 990 ₸
                   </span>
                 </div>
                 
                 {/* Подзаголовок */}
-                <p className="text-base font-medium text-heading mb-4 px-3 py-2 bg-primary/10 rounded-lg border-l-4 border-primary">Чтобы подросток понял себя, а родитель — понял своего ребёнка</p>
+                <p className="text-sm text-muted mb-4 leading-relaxed italic">
+                  Чтобы подросток понял себя, а родитель — понял своего ребёнка
+                </p>
                 
                 {/* Слайдер с переключателями */}
                 <div className="mb-6 flex-1">
@@ -1584,11 +1668,10 @@ export default function HomePage() {
                           Что получает подросток
                         </h4>
                         <ul className="text-sm text-muted space-y-1.5 list-disc list-inside">
-                          <li>Расширенный тест</li>
-                          <li>Личный навигационный отчёт</li>
                           <li>Понимание своего характера, сильных сторон и особенностей</li>
                           <li>В каких условиях ему легче учиться, общаться и развиваться</li>
-                          <li>Навигационный «компас», а не оценка и не приговор</li>
+                          <li>Как он думает, принимает решения и реагирует на давление</li>
+                          <li>Навигационный компас вместо оценок и ярлыков</li>
                         </ul>
                       </div>
 
@@ -1599,25 +1682,31 @@ export default function HomePage() {
                           Что получает родитель
                         </h4>
                         <ul className="text-sm text-muted space-y-1.5 list-disc list-inside">
-                          <li>Отдельный персональный отчёт о ребёнке (PDF)</li>
-                          <li>Как ребёнок чувствует, думает и воспринимает мир</li>
-                          <li>Как с ним лучше общаться, чтобы поддерживать, а не давить</li>
-                          <li>Какие слова и подходы мотивируют, а какие вызывают сопротивление</li>
+                          <li>Персональную карту психологии ребёнка</li>
+                          <li>Как ребёнок думает, чувствует и воспринимает мир</li>
+                          <li>Как с ним лучше общаться без конфликтов</li>
+                          <li>Какие слова поддерживают, а какие вызывают сопротивление</li>
+                          <li>Как быть опорой, а не источником давления</li>
                         </ul>
                       </div>
                     </motion.div>
                   </div>
                 </div>
                 
+                <p className="text-sm text-muted italic mb-8">
+                  Это не про «воспитание».<br/>
+                  Это про язык понимания.
+                </p>
+                
                 {/* Кнопка */}
                 <button
                   className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openFor('pro', 'Подросток и родитель');
+                    openFor('pro', 'Семейная навигация');
                   }}
                 >
-                  Начать навигацию
+                   Начать семейную навигацию
                 </button>
               </div>
             </div>
@@ -2025,8 +2114,8 @@ export default function HomePage() {
                 placeholder="Вид навигации"
                 options={[
                   { value: 'Первичное понимание', label: 'Первичное понимание — Бесплатно' },
-                  { value: 'Личный разбор', label: 'Личный разбор — 14 990 ₸' },
-                  { value: 'Подросток и родитель', label: 'Подросток и родитель — 34 990 ₸' },
+                  { value: 'Персональный разбор', label: 'Персональный разбор — 14 990 ₸' },
+                  { value: 'Семейная навигация', label: 'Семейная навигация — 34 990 ₸' },
                 ]}
                 error={Boolean(errors.testType)}
               />
@@ -2093,7 +2182,7 @@ export default function HomePage() {
                Тест 
             </button>
           )}
-          {plan === 'pro' && form.testType === 'Личный разбор' && (
+          {plan === 'pro' && form.testType === 'Персональный разбор' && (
             <button
               type="button"
               className="px-5 py-3 transition border-2 border-primary/30 text-primary hover:bg-primary hover:text-white rounded-lg font-semibold"
@@ -2102,7 +2191,7 @@ export default function HomePage() {
                Тест 
             </button>
           )}
-          {plan === 'pro' && form.testType === 'Подросток и родитель' && (
+          {plan === 'pro' && form.testType === 'Семейная навигация' && (
             <button
               type="button"
               className="px-5 py-3 transition border-2 border-primary/30 text-primary hover:bg-primary hover:text-white rounded-lg font-semibold"
@@ -2482,22 +2571,31 @@ function WhoForCards() {
         <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3 text-center">Ученикам старших классов</h3>
         
         <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4 text-center">
-          Когда ты стоишь на пороге выбора — важно увидеть себя не через оценки, а через склонности.
+          Ты стоишь на этапе, где закладывается твоя будущая траектория.
           <br className="hidden sm:block" />
           <br className="hidden sm:block" />
-          Здесь ты находишь направление, в котором чувствуешь себя естественно.
+          Ошибки здесь стоят дорого, а правильные решения дают преимущество на годы вперёд.
         </p>
         
-        <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 list-disc list-inside">
-          <li>понять своё направление перед выбором вуза</li>
-          <li>сверить интересы с реальными склонностями</li>
-          <li>выбрать среду, где учёба будет естественной</li>
-        </ul>
+        <div className="mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm font-semibold text-heading mb-2">Профиль будущего помогает:</p>
+          <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 list-disc list-inside">
+            <li>понять, как ты думаешь и принимаешь решения</li>
+            <li>увидеть свои реальные сильные стороны, а не оценки в дневнике</li>
+            <li>выбрать направление, где ты будешь расти быстрее других</li>
+            <li>не идти «куда все», а строить собственную стратегию</li>
+          </ul>
+        </div>
+        
+        <p className="text-xs sm:text-sm text-muted italic mb-3 sm:mb-4 text-center">
+          Это не про выбор профессии.<br/>
+          Это про выбор правильной траектории.
+        </p>
         
         {/* Плашка снизу */}
         <div className="mt-auto pt-3 sm:pt-4 border-t border-secondary/40">
           <div className="bg-primary/5 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-center">
-            <p className="text-xs sm:text-sm text-primary font-medium italic">"Выбор направления — это не про правильность, а про соответствие себе"</p>
+            <p className="text-xs sm:text-sm text-primary font-medium italic">"Будущее начинается с понимания того, как ты устроен."</p>
           </div>
         </div>
       </motion.div>
@@ -2526,25 +2624,32 @@ function WhoForCards() {
         
         <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3 text-center">Студентам</h3>
         
-        {/* Desktop: полный текст */}
-        <p className="hidden sm:block text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4 text-center">
-          В университете нет "правильного пути" — есть твой формат, твой темп роста.
-          <br />
-          <br />
-          Наш профиль показывает, как раскрыться в реальной практике.
+        <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4 text-center">
+          Университет — это не путь.
+          <br className="hidden sm:block" />
+          <br className="hidden sm:block" />
+          Это среда. И каждый в ней раскрывается по-разному.
         </p>
         
-        {/* Mobile: только буллеты */}
-        <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 list-disc list-inside">
-          <li>уточнить специализацию и карьерный трек</li>
-          <li>понять, в какой практике вы раскроетесь лучше</li>
-          <li>скорректировать учебную траекторию</li>
-        </ul>
+        <div className="mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm font-semibold text-heading mb-2">Профиль будущего помогает:</p>
+          <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 list-disc list-inside">
+            <li>понять, в каком формате ты раскрываешься сильнее всего</li>
+            <li>выстроить свой карьерный трек, а не плыть по программе</li>
+            <li>увидеть, где твои реальные точки роста</li>
+            <li>перестать тратить годы на «не своё»</li>
+          </ul>
+        </div>
+        
+        <p className="text-xs sm:text-sm text-muted italic mb-3 sm:mb-4 text-center">
+          Это не про диплом.<br/>
+          Это про капитал мышления и решений.
+        </p>
         
         {/* Плашка снизу */}
         <div className="mt-auto pt-3 sm:pt-4 border-t border-secondary/40">
           <div className="bg-primary/5 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-center">
-            <p className="text-xs sm:text-sm text-primary font-medium italic">"Практика показывает, кто ты на самом деле, а не диплом"</p>
+            <p className="text-xs sm:text-sm text-primary font-medium italic">"Карьера строится не из предметов. Она строится из мышления."</p>
           </div>
         </div>
       </motion.div>
@@ -2571,22 +2676,31 @@ function WhoForCards() {
         <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3 text-center">Родителям подростков</h3>
         
         <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4 text-center">
-          Подростковый возраст — это поиск своего голоса.
+          Подростковый возраст — это не кризис.
           <br className="hidden sm:block" />
           <br className="hidden sm:block" />
-          Профиль помогает родителям увидеть сильные стороны ребёнка и говорить с ним на одном языке.
+          Это этап формирования характера, мышления и будущей траектории.
         </p>
         
-        <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 list-disc list-inside">
-          <li>глубже понять характер и мышление ребёнка</li>
-          <li>увидеть, как с ним говорить и мотивировать</li>
-          <li>найти баланс между поддержкой и свободой</li>
-        </ul>
+        <div className="mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm font-semibold text-heading mb-2">Профиль будущего помогает родителям:</p>
+          <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 list-disc list-inside">
+            <li>понять, как ребёнок думает и принимает решения</li>
+            <li>увидеть его реальные сильные стороны</li>
+            <li>выстроить язык общения без конфликтов</li>
+            <li>создать среду, в которой ребёнок раскрывается, а не ломается</li>
+          </ul>
+        </div>
+        
+        <p className="text-xs sm:text-sm text-muted italic mb-3 sm:mb-4 text-center">
+          Это не про контроль.<br/>
+          Это про настройку системы развития.
+        </p>
         
         {/* Плашка снизу */}
         <div className="mt-auto pt-3 sm:pt-4 border-t border-secondary/40">
           <div className="bg-primary/5 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-center">
-            <p className="text-xs sm:text-sm text-primary font-medium italic">"Поддержка семьи — основа роста"</p>
+            <p className="text-xs sm:text-sm text-primary font-medium italic">"Сильный характер формируется в правильно настроенной среде."</p>
           </div>
         </div>
       </motion.div>
@@ -2614,23 +2728,31 @@ function WhoForCards() {
         <h3 className="text-lg sm:text-xl font-semibold text-heading mb-2 sm:mb-3 text-center">Взрослым</h3>
         
         <p className="text-xs sm:text-sm text-muted leading-relaxed mb-3 sm:mb-4 text-center">
-          Порой мы оказываемся "не на своём месте" не потому, что ошиблись,
-          а потому что пришло время обновиться.
+          Взрослая жизнь — это не про «найти себя».
           <br className="hidden sm:block" />
           <br className="hidden sm:block" />
-          Профиль помогает взрослому увидеть, где его энергия естественна.
+          Это про управление своей траекторией.
         </p>
         
-        <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 list-disc list-inside">
-          <li>переосмыслить профессию, если "не на своём месте"</li>
-          <li>понять, где комфортнее реализовывать себя</li>
-          <li>восстановить ясность в том, чего вы хотите</li>
-        </ul>
+        <div className="mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm font-semibold text-heading mb-2">Профиль будущего помогает:</p>
+          <ul className="text-xs sm:text-sm text-muted space-y-1.5 sm:space-y-2 list-disc list-inside">
+            <li>понять, где твоя энергия естественна</li>
+            <li>увидеть, почему ты упираешься в потолок</li>
+            <li>перестроить карьеру без хаоса и резких шагов</li>
+            <li>вернуть ощущение контроля над своей жизнью</li>
+          </ul>
+        </div>
+        
+        <p className="text-xs sm:text-sm text-muted italic mb-3 sm:mb-4 text-center">
+          Это не про мотивацию.<br/>
+          Это про стратегию.
+        </p>
         
         {/* Плашка снизу */}
         <div className="mt-auto pt-3 sm:pt-4 border-t border-secondary/40">
           <div className="bg-primary/5 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-center">
-            <p className="text-xs sm:text-sm text-primary font-medium italic">"Обновление — это не отказ от прошлого, а возврат к себе"</p>
+            <p className="text-xs sm:text-sm text-primary font-medium italic">"Когда понимаешь, как устроена твоя система — начинаешь управлять."</p>
           </div>
         </div>
       </motion.div>
@@ -2716,22 +2838,31 @@ function WhoForCards() {
               <h3 className="text-lg font-semibold text-heading mb-2 text-center">Ученикам старших классов</h3>
               
               <p className="text-xs text-muted leading-relaxed mb-3 text-center">
-                Когда ты стоишь на пороге выбора — важно увидеть себя не через оценки, а через склонности.
+                Ты стоишь на этапе, где закладывается твоя будущая траектория.
                 <br />
                 <br />
-                Здесь ты находишь направление, в котором чувствуешь себя естественно.
+                Ошибки здесь стоят дорого, а правильные решения дают преимущество на годы вперёд.
               </p>
               
-              <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
-                <li>понять своё направление перед выбором вуза</li>
-                <li>сверить интересы с реальными склонностями</li>
-                <li>выбрать среду, где учёба будет естественной</li>
-              </ul>
+              <div className="mb-3">
+                <p className="text-xs font-semibold text-heading mb-2">Профиль будущего помогает:</p>
+                <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
+                  <li>понять, как ты думаешь и принимаешь решения</li>
+                  <li>увидеть свои реальные сильные стороны, а не оценки в дневнике</li>
+                  <li>выбрать направление, где ты будешь расти быстрее других</li>
+                  <li>не идти «куда все», а строить собственную стратегию</li>
+                </ul>
+              </div>
+              
+              <p className="text-xs text-muted italic mb-3 text-center">
+                Это не про выбор профессии.<br/>
+                Это про выбор правильной траектории.
+              </p>
               
               {/* Плашка снизу */}
               <div className="mt-auto pt-3 border-t border-secondary/40">
                 <div className="bg-primary/5 rounded-full px-3 py-1.5 text-center">
-                  <p className="text-xs text-primary font-medium italic">"Выбор направления — это не про правильность, а про соответствие себе"</p>
+                  <p className="text-xs text-primary font-medium italic">"Будущее начинается с понимания того, как ты устроен."</p>
                 </div>
               </div>
             </motion.div>
@@ -2761,22 +2892,31 @@ function WhoForCards() {
               <h3 className="text-lg font-semibold text-heading mb-2 text-center">Студентам</h3>
               
               <p className="text-xs text-muted leading-relaxed mb-3 text-center">
-                В университете нет "правильного пути" — есть твой формат, твой темп роста.
+                Университет — это не путь.
                 <br />
                 <br />
-                Наш профиль показывает, как раскрыться в реальной практике.
+                Это среда. И каждый в ней раскрывается по-разному.
               </p>
               
-              <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
-                <li>уточнить специализацию и карьерный трек</li>
-                <li>понять, в какой практике вы раскроетесь лучше</li>
-                <li>скорректировать учебную траекторию</li>
-              </ul>
+              <div className="mb-3">
+                <p className="text-xs font-semibold text-heading mb-2">Профиль будущего помогает:</p>
+                <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
+                  <li>понять, в каком формате ты раскрываешься сильнее всего</li>
+                  <li>выстроить свой карьерный трек, а не плыть по программе</li>
+                  <li>увидеть, где твои реальные точки роста</li>
+                  <li>перестать тратить годы на «не своё»</li>
+                </ul>
+              </div>
+              
+              <p className="text-xs text-muted italic mb-3 text-center">
+                Это не про диплом.<br/>
+                Это про капитал мышления и решений.
+              </p>
               
               {/* Плашка снизу */}
               <div className="mt-auto pt-3 border-t border-secondary/40">
                 <div className="bg-primary/5 rounded-full px-3 py-1.5 text-center">
-                  <p className="text-xs text-primary font-medium italic">"Практика показывает, кто ты на самом деле, а не диплом"</p>
+                  <p className="text-xs text-primary font-medium italic">"Карьера строится не из предметов. Она строится из мышления."</p>
                 </div>
               </div>
             </motion.div>
@@ -2805,22 +2945,31 @@ function WhoForCards() {
               <h3 className="text-lg font-semibold text-heading mb-2 text-center">Родителям подростков</h3>
               
               <p className="text-xs text-muted leading-relaxed mb-3 text-center">
-                Подростковый возраст — это поиск своего голоса.
+                Подростковый возраст — это не кризис.
                 <br />
                 <br />
-                Профиль помогает родителям увидеть сильные стороны ребёнка и говорить с ним на одном языке.
+                Это этап формирования характера, мышления и будущей траектории.
               </p>
               
-              <ul className="text-xs text-muted space-y-1.5 mb-3 list-disc list-inside">
-                <li>глубже понять характер и мышление ребёнка</li>
-                <li>увидеть, как с ним говорить и мотивировать</li>
-                <li>найти баланс между поддержкой и свободой</li>
-              </ul>
+              <div className="mb-3">
+                <p className="text-xs font-semibold text-heading mb-2">Профиль будущего помогает родителям:</p>
+                <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
+                  <li>понять, как ребёнок думает и принимает решения</li>
+                  <li>увидеть его реальные сильные стороны</li>
+                  <li>выстроить язык общения без конфликтов</li>
+                  <li>создать среду, в которой ребёнок раскрывается, а не ломается</li>
+                </ul>
+              </div>
+              
+              <p className="text-xs text-muted italic mb-3 text-center">
+                Это не про контроль.<br/>
+                Это про настройку системы развития.
+              </p>
               
               {/* Плашка снизу */}
               <div className="mt-auto pt-3 border-t border-secondary/40">
                 <div className="bg-primary/5 rounded-full px-3 py-1.5 text-center">
-                  <p className="text-xs text-primary font-medium italic">"Поддержка семьи — основа роста"</p>
+                  <p className="text-xs text-primary font-medium italic">"Сильный характер формируется в правильно настроенной среде."</p>
                 </div>
               </div>
             </motion.div>
@@ -2850,23 +2999,31 @@ function WhoForCards() {
               <h3 className="text-lg font-semibold text-heading mb-2 text-center">Взрослым</h3>
               
               <p className="text-xs text-muted leading-relaxed mb-3 text-center">
-                Порой мы оказываемся "не на своём месте" не потому, что ошиблись,
-                а потому что пришло время обновиться.
+                Взрослая жизнь — это не про «найти себя».
                 <br />
                 <br />
-                Профиль помогает взрослому увидеть, где его энергия естественна.
+                Это про управление своей траекторией.
               </p>
               
-              <ul className="text-xs text-muted space-y-1.5 mb-3 list-disc list-inside">
-                <li>переосмыслить профессию, если "не на своём месте"</li>
-                <li>понять, где комфортнее реализовывать себя</li>
-                <li>восстановить ясность в том, чего вы хотите</li>
-              </ul>
+              <div className="mb-3">
+                <p className="text-xs font-semibold text-heading mb-2">Профиль будущего помогает:</p>
+                <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
+                  <li>понять, где твоя энергия естественна</li>
+                  <li>увидеть, почему ты упираешься в потолок</li>
+                  <li>перестроить карьеру без хаоса и резких шагов</li>
+                  <li>вернуть ощущение контроля над своей жизнью</li>
+                </ul>
+              </div>
+              
+              <p className="text-xs text-muted italic mb-3 text-center">
+                Это не про мотивацию.<br/>
+                Это про стратегию.
+              </p>
               
               {/* Плашка снизу */}
               <div className="mt-auto pt-3 border-t border-secondary/40">
                 <div className="bg-primary/5 rounded-full px-3 py-1.5 text-center">
-                  <p className="text-xs text-primary font-medium italic">"Обновление — это не отказ от прошлого, а возврат к себе"</p>
+                  <p className="text-xs text-primary font-medium italic">"Когда понимаешь, как устроена твоя система — начинаешь управлять."</p>
                 </div>
               </div>
             </motion.div>

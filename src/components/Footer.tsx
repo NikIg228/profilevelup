@@ -37,8 +37,8 @@ export default function Footer() {
         {/* Основной контент футера */}
         <div className="grid gap-8 md:grid-cols-4 md:gap-6 lg:gap-10">
           {/* Блок 1: Логотип и описание */}
-          <div className="md:col-span-1 space-y-4 flex flex-col items-center md:items-start">
-            <Link to="/" className="inline-block flex justify-center md:justify-start">
+          <div className="md:col-span-1 space-y-4 flex flex-col items-center">
+            <Link to="/" className="inline-block flex justify-center">
               <img
                 src="/logomain.png"
                 alt="ProfiLevelUp"
@@ -46,8 +46,8 @@ export default function Footer() {
                 loading="lazy"
               />
             </Link>
-            <p className="text-sm text-section-bg/80 leading-relaxed max-w-xs text-center md:text-left">
-              Профиль будущего - психологический навигатор для подростков, родителей и взрослых
+            <p className="text-sm text-section-bg/80 leading-relaxed max-w-xs text-center">
+            Профиль будущего — система понимания себя и управления решениями.
             </p>
           </div>
 
@@ -72,6 +72,12 @@ export default function Footer() {
                 className="text-sm text-section-bg/80 hover:text-primary transition-colors w-fit"
               >
                 Поддержка
+              </Link>
+              <Link
+                to="/account"
+                className="text-sm text-section-bg/80 hover:text-primary transition-colors w-fit"
+              >
+                Личный кабинет
               </Link>
             </nav>
           </div>
@@ -99,7 +105,7 @@ export default function Footer() {
                 </motion.a>
               ))}
             </div>
-            <p className="text-xs text-section-bg/60 mt-3">Следите за новостями и полезными материалами</p>
+            <p className="text-xs text-section-bg/60 mt-3">Обновления навигации и новые материалы</p>
           </div>
 
           {/* Блок 4: Юридическая информация */}

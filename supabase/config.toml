@@ -220,6 +220,23 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Настройка шаблонов email
+[auth.email.template.signup]
+subject = "Подтверждение регистрации - Профиль будущего"
+content_path = "./templates/signup.html"
+
+[auth.email.template.magiclink]
+subject = "Вход в аккаунт - Профиль будущего"
+content_path = "./templates/signup.html"
+
+[auth.email.template.change_email]
+subject = "Подтверждение изменения email - Профиль будущего"
+content_path = "./templates/email_change.html"
+
+[auth.email.template.reset_password]
+subject = "Сброс пароля - Профиль будущего"
+content_path = "./templates/password_reset.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

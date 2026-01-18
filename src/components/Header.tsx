@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { scrollLockManager } from '../utils/scrollLock';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -46,8 +46,7 @@ export default function Header() {
           <NavLink to="/about" className={navLinkClass}>О нас</NavLink>
           <NavLink to="/help" className={navLinkClass}>Поддержка</NavLink>
           <NavLink to="/account" className={navLinkClass}>
-            <User className="w-4 h-4" />
-            <span>Личный кабинет</span>
+            {isAuthenticated ? 'Личный кабинет' : 'Войти'}
           </NavLink>
         </nav>
 
@@ -129,8 +128,7 @@ export default function Header() {
                 onClick={() => setOpen(false)} 
                 className={navLinkClass}
               >
-                <User className="w-4 h-4" />
-                <span>Личный кабинет</span>
+                {isAuthenticated ? 'Личный кабинет' : 'Войти'}
               </NavLink>
             </div>
           </motion.div>

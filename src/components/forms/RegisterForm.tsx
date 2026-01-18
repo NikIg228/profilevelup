@@ -1,10 +1,10 @@
 import { useState, FormEvent } from 'react';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { Mail, Lock, Loader2, User } from 'lucide-react';
+import { Mail, Lock, Loader2, User, Eye, EyeOff } from 'lucide-react';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
-  onSwitchToLogin?: () => void;
+  onSwitchToLogin?: (registeredEmail?: string, isAlreadyRegistered?: boolean) => void;
 }
 
 export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
@@ -12,6 +12,8 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const register = useAuthStore((state) => state.register);
@@ -35,9 +37,37 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
     const result = await register(email, password, fullName);
     
     if (result.success) {
-      onSuccess?.();
+      if (result.requiresEmailConfirmation) {
+        // Очищаем форму перед редиректом
+        const registeredEmailValue = email;
+        setFullName('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        // Переключаемся на форму входа с передачей email для уведомления
+        onSwitchToLogin?.(registeredEmailValue);
+      } else {
+        // Email подтвержден автоматически, переходим в аккаунт
+        onSuccess?.();
+      }
     } else {
-      setError(result.error || 'Ошибка регистрации');
+      // Проверяем, является ли ошибка связанной с уже зарегистрированным пользователем
+      const errorMessage = result.error?.toLowerCase() || '';
+      if (errorMessage.includes('уже зарегистрирован') || 
+          errorMessage.includes('already registered') ||
+          errorMessage.includes('email already exists') ||
+          errorMessage.includes('email уже используется')) {
+        // Пользователь уже зарегистрирован - переключаемся на форму входа
+        const existingEmail = email;
+        setFullName('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        // Переключаемся на форму входа с уведомлением о том, что пользователь уже зарегистрирован
+        onSwitchToLogin?.(existingEmail, true);
+      } else {
+        setError(result.error || 'Ошибка регистрации');
+      }
     }
     
     setIsLoading(false);
@@ -88,14 +118,26 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
           <input
             id="register-password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-12 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Минимум 6 символов"
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading transition-colors"
+            aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+          >
+            {showPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -107,14 +149,26 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
           <input
             id="register-confirm-password"
-            type="password"
+            type={showConfirmPassword ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-12 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Повторите пароль"
           />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading transition-colors"
+            aria-label={showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'}
+          >
+            {showConfirmPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -144,7 +198,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
           Уже есть аккаунт?{' '}
           <button
             type="button"
-            onClick={onSwitchToLogin}
+            onClick={() => onSwitchToLogin()}
             className="text-primary hover:underline font-medium"
           >
             Войти

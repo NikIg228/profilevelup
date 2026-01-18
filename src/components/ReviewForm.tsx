@@ -11,7 +11,7 @@ interface ReviewFormProps {
 }
 
 export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps) {
-  const [form, setForm] = useState({ name: '', text: '' });
+  const [form, setForm] = useState({ name: '', testType: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -21,10 +21,8 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
     if (!form.name.trim()) {
       newErrors.name = 'Укажите имя';
     }
-    if (!form.text.trim()) {
-      newErrors.text = 'Напишите отзыв';
-    } else if (form.text.trim().length < 10) {
-      newErrors.text = 'Отзыв должен содержать минимум 10 символов';
+    if (!form.testType) {
+      newErrors.testType = 'Выберите уровень навигации';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -39,15 +37,22 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
     try {
       // Санитизируем пользовательский ввод перед сохранением
       const sanitizedName = sanitizeName(form.name.trim());
-      const sanitizedText = sanitizeReviewText(form.text.trim());
+      
+      // Генерируем текст отзыва на основе уровня навигации
+      const reviewTexts: Record<string, string> = {
+        'Первичное понимание': 'Прошёл опрос "Первичное понимание" — всё зашло! Теперь понятно, куда двигаться. Рекомендую.',
+        'Персональный разбор': 'Купил опрос "Персональный разбор" — не пожалел! Отчёт реально помог разобраться в себе. Стоит своих денег.',
+        'Семейная навигация': 'Проходили опрос "Семейная навигация" вместе с родителями — было прикольно! Теперь лучше понимаем друг друга.',
+      };
       
       addReview({
         name: sanitizedName,
-        text: sanitizedText,
+        text: reviewTexts[form.testType] || `Прошёл опрос "${form.testType}". Понравилось!`,
+        testType: form.testType,
       });
 
       setIsSuccess(true);
-      setForm({ name: '', text: '' });
+      setForm({ name: '', testType: '' });
       setErrors({});
 
       setTimeout(() => {
@@ -122,26 +127,29 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
 
               <div>
                 <label className="block text-sm font-medium text-heading mb-2">
-                  Ваш отзыв *
+                  Уровень навигации *
                 </label>
-                <textarea
-                  id="review-text"
-                  name="text"
-                  value={form.text}
+                <select
+                  id="review-testType"
+                  name="testType"
+                  value={form.testType}
                   onChange={(e) => {
-                    setForm({ ...form, text: e.target.value });
-                    if (errors.text) setErrors({ ...errors, text: '' });
+                    setForm({ ...form, testType: e.target.value });
+                    if (errors.testType) setErrors({ ...errors, testType: '' });
                   }}
-                  rows={5}
-                  className={`w-full px-4 py-3 rounded-xl border transition-all resize-none ${
-                    errors.text
+                  className={`w-full px-4 py-3 rounded-xl border transition-all ${
+                    errors.testType
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-secondary/40 focus:border-primary'
                   } focus:outline-none focus:ring-2 focus:ring-primary/20`}
-                  placeholder="Поделитесь своими впечатлениями о тесте..."
-                />
-                {errors.text && (
-                  <p className="mt-1 text-sm text-red-500">{errors.text}</p>
+                >
+                  <option value="">Выберите уровень навигации</option>
+                  <option value="Первичное понимание">Первичное понимание</option>
+                  <option value="Персональный разбор">Персональный разбор</option>
+                  <option value="Семейная навигация">Семейная навигация</option>
+                </select>
+                {errors.testType && (
+                  <p className="mt-1 text-sm text-red-500">{errors.testType}</p>
                 )}
               </div>
 

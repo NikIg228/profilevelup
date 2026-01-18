@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
 import LoginForm from '../components/forms/LoginForm';
 import RegisterForm from '../components/forms/RegisterForm';
-import ChangeEmailForm from '../components/forms/ChangeEmailForm';
-import ChangePasswordForm from '../components/forms/ChangePasswordForm';
+import SecuritySettings from '../components/forms/SecuritySettings';
 import ChangeNameForm from '../components/forms/ChangeNameForm';
 import ForgotPasswordForm from '../components/forms/ForgotPasswordForm';
 import TestHistory from '../components/TestHistory';
@@ -16,6 +15,8 @@ export default function AccountPage() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [viewMode, setViewMode] = useState<ViewMode>(isAuthenticated ? 'account' : 'login');
   const [section, setSection] = useState<AccountSection>('settings');
+  const [registeredEmail, setRegisteredEmail] = useState<string | undefined>(undefined);
+  const [isAlreadyRegistered, setIsAlreadyRegistered] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -35,14 +36,28 @@ export default function AccountPage() {
           <div className="bg-secondary/20 rounded-2xl p-6 border border-secondary">
             {viewMode === 'login' ? (
               <LoginForm
-                onSuccess={() => setViewMode('account')}
-                onSwitchToRegister={() => setViewMode('register')}
+                onSuccess={() => {
+                  setViewMode('account');
+                  setRegisteredEmail(undefined); // Очищаем email после успешного входа
+                  setIsAlreadyRegistered(false);
+                }}
+                onSwitchToRegister={() => {
+                  setViewMode('register');
+                  setRegisteredEmail(undefined); // Очищаем email при переключении
+                  setIsAlreadyRegistered(false);
+                }}
                 onForgotPassword={() => setViewMode('forgot-password')}
+                registeredEmail={registeredEmail}
+                isAlreadyRegistered={isAlreadyRegistered}
               />
             ) : viewMode === 'register' ? (
               <RegisterForm
                 onSuccess={() => setViewMode('account')}
-                onSwitchToLogin={() => setViewMode('login')}
+                onSwitchToLogin={(email, isAlreadyRegisteredFlag) => {
+                  setRegisteredEmail(email);
+                  setIsAlreadyRegistered(isAlreadyRegisteredFlag || false);
+                  setViewMode('login');
+                }}
               />
             ) : (
               <ForgotPasswordForm
@@ -65,10 +80,10 @@ export default function AccountPage() {
         </div>
 
         {/* Информация о пользователе */}
-        <div className="bg-secondary/20 rounded-xl p-4 border border-secondary mb-4">
+        <div className="bg-white rounded-xl p-4 border border-secondary/40 shadow-sm mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
                 <User className="w-6 h-6 text-primary" />
               </div>
               <div>
@@ -82,7 +97,7 @@ export default function AccountPage() {
             </div>
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors flex items-center gap-2 text-sm"
+              className="px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Выйти</span>
@@ -91,13 +106,13 @@ export default function AccountPage() {
         </div>
 
         {/* Навигация по разделам */}
-        <div className="flex gap-2 mb-4 border-b border-secondary">
+        <div className="flex gap-2 mb-4 border-b border-secondary/40">
           <button
             onClick={() => setSection('settings')}
-            className={`px-3 py-2 rounded-t-lg font-medium transition-colors flex items-center gap-2 text-sm ${
+            className={`px-4 py-2 rounded-t-lg font-medium transition-all flex items-center gap-2 text-sm ${
               section === 'settings'
-                ? 'bg-secondary/20 text-primary border-b-2 border-primary'
-                : 'text-muted hover:text-heading'
+                ? 'bg-white text-primary border-b-2 border-primary shadow-sm'
+                : 'text-muted hover:text-heading hover:bg-secondary/10'
             }`}
           >
             <Settings className="w-4 h-4" />
@@ -105,10 +120,10 @@ export default function AccountPage() {
           </button>
           <button
             onClick={() => setSection('history')}
-            className={`px-3 py-2 rounded-t-lg font-medium transition-colors flex items-center gap-2 text-sm ${
+            className={`px-4 py-2 rounded-t-lg font-medium transition-all flex items-center gap-2 text-sm ${
               section === 'history'
-                ? 'bg-secondary/20 text-primary border-b-2 border-primary'
-                : 'text-muted hover:text-heading'
+                ? 'bg-white text-primary border-b-2 border-primary shadow-sm'
+                : 'text-muted hover:text-heading hover:bg-secondary/10'
             }`}
           >
             <History className="w-4 h-4" />
@@ -120,9 +135,8 @@ export default function AccountPage() {
         {section === 'settings' ? (
           <div className="grid md:grid-cols-2 gap-4">
             <ChangeNameForm />
-            <ChangeEmailForm />
-            <div className="md:col-span-2">
-              <ChangePasswordForm />
+            <div className="md:col-span-1">
+              <SecuritySettings />
             </div>
           </div>
         ) : (

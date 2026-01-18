@@ -176,7 +176,7 @@ export default function AdminPage() {
                     <p className="text-sm text-muted mb-2">
                       {review.age && <span>Возраст: {review.age} лет</span>}
                       {review.age && review.testType && <span> • </span>}
-                      {review.testType && <span>Тест: {review.testType}</span>}
+                      {review.testType && <span>Опрос: {review.testType}</span>}
                     </p>
                   )}
                   <p className="text-ink leading-relaxed">{sanitizeText(review.text)}</p>
