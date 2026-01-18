@@ -1,93 +1,70 @@
 import { useState, FormEvent } from 'react';
+import { Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { Mail, Lock, Loader2, User, Eye, EyeOff } from 'lucide-react';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
-  onSwitchToLogin?: (registeredEmail?: string, isAlreadyRegistered?: boolean) => void;
+  onSwitchToLogin?: (email?: string) => void;
 }
 
 export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const register = useAuthStore((state) => state.register);
+  const isLoading = useAuthStore((state) => state.isLoading);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
+
+    // Валидация
+    if (password.length < 6) {
+      setError('Пароль должен содержать минимум 6 символов');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Пароли не совпадают');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
-      return;
-    }
-
-    setIsLoading(true);
-
-    const result = await register(email, password, fullName);
+    const result = await register(email, password, fullName || undefined);
     
     if (result.success) {
-      if (result.requiresEmailConfirmation) {
-        // Очищаем форму перед редиректом
-        const registeredEmailValue = email;
-        setFullName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        // Переключаемся на форму входа с передачей email для уведомления
-        onSwitchToLogin?.(registeredEmailValue);
-      } else {
-        // Email подтвержден автоматически, переходим в аккаунт
-        onSuccess?.();
-      }
+      // После успешной регистрации сразу переключаемся на форму входа
+      // с предзаполненным email
+      onSwitchToLogin?.(email);
     } else {
-      // Проверяем, является ли ошибка связанной с уже зарегистрированным пользователем
-      const errorMessage = result.error?.toLowerCase() || '';
-      if (errorMessage.includes('уже зарегистрирован') || 
-          errorMessage.includes('already registered') ||
-          errorMessage.includes('email already exists') ||
-          errorMessage.includes('email уже используется')) {
-        // Пользователь уже зарегистрирован - переключаемся на форму входа
-        const existingEmail = email;
-        setFullName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        // Переключаемся на форму входа с уведомлением о том, что пользователь уже зарегистрирован
-        onSwitchToLogin?.(existingEmail, true);
-      } else {
-        setError(result.error || 'Ошибка регистрации');
-      }
+      setError(result.error || 'Ошибка регистрации');
     }
-    
-    setIsLoading(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="register-name" className="block text-sm font-medium text-heading mb-2">
+        <label htmlFor="full-name" className="block text-sm font-medium text-heading mb-2">
           Имя (необязательно)
         </label>
         <div className="relative">
           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
           <input
-            id="register-name"
+            id="full-name"
             type="text"
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            onChange={(e) => {
+              setFullName(e.target.value);
+              setError('');
+            }}
+            className="w-full pl-10 pr-4 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Ваше имя"
+            disabled={isLoading}
           />
         </div>
       </div>
@@ -102,10 +79,14 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
             id="register-email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError('');
+            }}
+            className="w-full pl-10 pr-4 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            placeholder="your@email.com"
             required
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="Ваш email"
+            disabled={isLoading}
           />
         </div>
       </div>
@@ -120,60 +101,63 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
             id="register-password"
             type={showPassword ? 'text' : 'password'}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError('');
+            }}
+            className="w-full pl-10 pr-12 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            placeholder="Минимум 6 символов"
             required
             minLength={6}
-            className="w-full pl-10 pr-12 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="Минимум 6 символов"
+            disabled={isLoading}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading transition-colors"
-            aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            disabled={isLoading}
           >
-            {showPassword ? (
-              <EyeOff className="w-5 h-5" />
-            ) : (
-              <Eye className="w-5 h-5" />
-            )}
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       <div>
-        <label htmlFor="register-confirm-password" className="block text-sm font-medium text-heading mb-2">
+        <label htmlFor="confirm-password" className="block text-sm font-medium text-heading mb-2">
           Подтвердите пароль
         </label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
           <input
-            id="register-confirm-password"
+            id="confirm-password"
             type={showConfirmPassword ? 'text' : 'password'}
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            minLength={6}
-            className="w-full pl-10 pr-12 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              setError('');
+            }}
+            className="w-full pl-10 pr-12 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Повторите пароль"
+            required
+            disabled={isLoading}
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading transition-colors"
-            aria-label={showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            disabled={isLoading}
           >
-            {showConfirmPassword ? (
-              <EyeOff className="w-5 h-5" />
-            ) : (
-              <Eye className="w-5 h-5" />
-            )}
+            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
+        <div className={`p-3 rounded-lg border text-sm ${
+          success 
+            ? 'bg-blue-50 border-blue-200 text-blue-600' 
+            : 'bg-red-50 border-red-200 text-red-600'
+        }`}>
           {error}
         </div>
       )}
@@ -181,7 +165,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3 px-4 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
       >
         {isLoading ? (
           <>
@@ -194,16 +178,16 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
       </button>
 
       {onSwitchToLogin && (
-        <p className="text-center text-sm text-muted">
-          Уже есть аккаунт?{' '}
+        <div className="text-center text-sm">
           <button
             type="button"
-            onClick={() => onSwitchToLogin()}
-            className="text-primary hover:underline font-medium"
+            onClick={onSwitchToLogin}
+            className="text-muted hover:text-heading transition-colors"
+            disabled={isLoading}
           >
-            Войти
+            Уже есть аккаунт? <span className="text-primary font-medium">Войти</span>
           </button>
-        </p>
+        </div>
       )}
     </form>
   );

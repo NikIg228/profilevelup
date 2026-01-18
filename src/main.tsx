@@ -174,10 +174,9 @@ const router = createBrowserRouter([
 // Инициализация дефолтных отзывов
 initializeDefaultReviews();
 
-// Инициализация сессии Supabase
-import('./stores/useAuthStore').then(({ useAuthStore }) => {
-  useAuthStore.getState().checkSession();
-});
+// Инициализация сессии авторизации
+import { useAuthStore } from './stores/useAuthStore';
+useAuthStore.getState().checkSession();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

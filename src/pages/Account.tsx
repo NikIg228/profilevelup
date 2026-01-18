@@ -1,28 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
 import LoginForm from '../components/forms/LoginForm';
 import RegisterForm from '../components/forms/RegisterForm';
-import SecuritySettings from '../components/forms/SecuritySettings';
-import ChangeNameForm from '../components/forms/ChangeNameForm';
 import ForgotPasswordForm from '../components/forms/ForgotPasswordForm';
+import ChangeEmailForm from '../components/forms/ChangeEmailForm';
+import ChangePasswordForm from '../components/forms/ChangePasswordForm';
 import TestHistory from '../components/TestHistory';
-import { User, LogOut, Settings, History } from 'lucide-react';
+import { User, LogOut, History, Settings } from 'lucide-react';
 
 type ViewMode = 'login' | 'register' | 'forgot-password' | 'account';
 type AccountSection = 'settings' | 'history';
 
 export default function AccountPage() {
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const [viewMode, setViewMode] = useState<ViewMode>(isAuthenticated ? 'account' : 'login');
-  const [section, setSection] = useState<AccountSection>('settings');
-  const [registeredEmail, setRegisteredEmail] = useState<string | undefined>(undefined);
-  const [isAlreadyRegistered, setIsAlreadyRegistered] = useState(false);
+  const { user, isAuthenticated, logout, checkSession } = useAuthStore();
+  const [viewMode, setViewMode] = useState<ViewMode>('login');
+  const [section, setSection] = useState<AccountSection>('history');
+  const [registeredEmail, setRegisteredEmail] = useState<string>('');
 
-  const handleLogout = () => {
-    logout();
+  // Проверяем сессию при загрузке
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
+  // Обновляем viewMode при изменении авторизации
+  useEffect(() => {
+    if (isAuthenticated) {
+      setViewMode('account');
+    } else {
+      setViewMode('login');
+    }
+  }, [isAuthenticated]);
+
+  const handleLogout = async () => {
+    await logout();
     setViewMode('login');
   };
 
+  // Если не авторизован, показываем формы входа/регистрации
   if (!isAuthenticated) {
     return (
       <div className="container-balanced py-12">
@@ -38,24 +52,20 @@ export default function AccountPage() {
               <LoginForm
                 onSuccess={() => {
                   setViewMode('account');
-                  setRegisteredEmail(undefined); // Очищаем email после успешного входа
-                  setIsAlreadyRegistered(false);
+                  setRegisteredEmail(''); // Очищаем email после успешного входа
                 }}
                 onSwitchToRegister={() => {
                   setViewMode('register');
-                  setRegisteredEmail(undefined); // Очищаем email при переключении
-                  setIsAlreadyRegistered(false);
+                  setRegisteredEmail(''); // Очищаем email при переключении
                 }}
                 onForgotPassword={() => setViewMode('forgot-password')}
-                registeredEmail={registeredEmail}
-                isAlreadyRegistered={isAlreadyRegistered}
+                initialEmail={registeredEmail}
               />
             ) : viewMode === 'register' ? (
               <RegisterForm
                 onSuccess={() => setViewMode('account')}
-                onSwitchToLogin={(email, isAlreadyRegisteredFlag) => {
-                  setRegisteredEmail(email);
-                  setIsAlreadyRegistered(isAlreadyRegisteredFlag || false);
+                onSwitchToLogin={(email) => {
+                  setRegisteredEmail(email || '');
                   setViewMode('login');
                 }}
               />
@@ -70,6 +80,7 @@ export default function AccountPage() {
     );
   }
 
+  // Если авторизован, показываем личный кабинет
   return (
     <div className="container-balanced py-8">
       <div className="max-w-3xl mx-auto">
@@ -134,10 +145,8 @@ export default function AccountPage() {
         {/* Контент */}
         {section === 'settings' ? (
           <div className="grid md:grid-cols-2 gap-4">
-            <ChangeNameForm />
-            <div className="md:col-span-1">
-              <SecuritySettings />
-            </div>
+            <ChangeEmailForm />
+            <ChangePasswordForm />
           </div>
         ) : (
           <TestHistory />
@@ -146,4 +155,3 @@ export default function AccountPage() {
     </div>
   );
 }
-

@@ -1,16 +1,16 @@
 import { useState, FormEvent } from 'react';
+import { Mail, Lock, Loader2, Check, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { Mail, Lock, Loader2, Check, Eye, EyeOff } from 'lucide-react';
 
 export default function ChangeEmailForm() {
+  const user = useAuthStore((state) => state.user);
+  const changeEmail = useAuthStore((state) => state.changeEmail);
   const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const changeEmail = useAuthStore((state) => state.changeEmail);
-  const user = useAuthStore((state) => state.user);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -18,13 +18,33 @@ export default function ChangeEmailForm() {
     setSuccess(false);
     setIsLoading(true);
 
+    if (!newEmail || !password) {
+      setError('Заполните все поля');
+      setIsLoading(false);
+      return;
+    }
+
+    if (newEmail === user?.email) {
+      setError('Новый email совпадает с текущим');
+      setIsLoading(false);
+      return;
+    }
+
     const result = await changeEmail(newEmail, password);
     
     if (result.success) {
       setSuccess(true);
       setNewEmail('');
       setPassword('');
-      setTimeout(() => setSuccess(false), 3000);
+      if (result.requiresConfirmation) {
+        setError(result.error || 'Проверьте новую почту и подтвердите изменение email');
+      } else {
+        setError('');
+      }
+      setTimeout(() => {
+        setSuccess(false);
+        setError('');
+      }, 5000);
     } else {
       setError(result.error || 'Ошибка изменения email');
     }
@@ -33,28 +53,28 @@ export default function ChangeEmailForm() {
   };
 
   return (
-    <div className="bg-secondary/20 rounded-xl p-4 border border-secondary">
+    <div className="bg-white rounded-xl border border-secondary/40 shadow-sm p-4">
       <h3 className="text-base font-semibold text-heading mb-3 flex items-center gap-2">
-        <Mail className="w-4 h-4" />
-        Email
+        <Mail className="w-4 h-4 text-primary" />
+        Изменить email
       </h3>
       
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label htmlFor="current-email" className="block text-sm font-medium text-heading mb-1.5">
+          <label htmlFor="current-email" className="block text-xs font-medium text-heading mb-1">
             Текущий email
           </label>
           <input
             id="current-email"
             type="email"
             value={user?.email || ''}
+            className="w-full px-4 py-2 rounded-lg border border-secondary/40 bg-base text-ink text-sm"
             disabled
-            className="w-full px-3 py-2 rounded-lg border border-secondary bg-base/50 text-ink opacity-60 cursor-not-allowed text-sm"
           />
         </div>
 
         <div>
-          <label htmlFor="new-email" className="block text-sm font-medium text-heading mb-1.5">
+          <label htmlFor="new-email" className="block text-xs font-medium text-heading mb-1">
             Новый email
           </label>
           <div className="relative">
@@ -63,17 +83,21 @@ export default function ChangeEmailForm() {
               id="new-email"
               type="email"
               value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              required
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              onChange={(e) => {
+                setNewEmail(e.target.value);
+                setError('');
+              }}
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
               placeholder="new@email.com"
+              required
+              disabled={isLoading}
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="email-password" className="block text-sm font-medium text-heading mb-1.5">
-            Пароль для подтверждения
+          <label htmlFor="email-password" className="block text-xs font-medium text-heading mb-1">
+            Текущий пароль (для подтверждения)
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
@@ -81,34 +105,39 @@ export default function ChangeEmailForm() {
               id="email-password"
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError('');
+              }}
+              className="w-full pl-9 pr-12 py-2 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+              placeholder="Введите текущий пароль"
               required
-              className="w-full pl-9 pr-10 py-2 rounded-lg border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-              placeholder="••••••••"
+              disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-heading transition-colors"
-              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+              disabled={isLoading}
             >
-              {showPassword ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
+              {showPassword ? '👁️' : '👁️‍🗨️'}
             </button>
           </div>
         </div>
 
         {error && (
-          <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 text-xs">
-            {error}
+          <div className={`p-2 rounded-lg text-xs flex items-start gap-2 ${
+            success 
+              ? 'bg-blue-50 border border-blue-200 text-blue-600' 
+              : 'bg-red-50 border border-red-200 text-red-600'
+          }`}>
+            <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
-        {success && (
-          <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600 text-xs flex items-center gap-2">
+        {success && !error && (
+          <div className="p-2 rounded-lg bg-green-50 border border-green-200 text-green-600 text-xs flex items-center gap-2">
             <Check className="w-3 h-3" />
             Email успешно изменен
           </div>
@@ -117,7 +146,7 @@ export default function ChangeEmailForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-2 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+          className="w-full py-2 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm shadow-sm"
         >
           {isLoading ? (
             <>

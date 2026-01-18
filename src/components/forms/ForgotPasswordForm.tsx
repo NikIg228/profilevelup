@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
+import { Mail, ArrowLeft, Loader2, Check } from 'lucide-react';
 import { useAuthStore } from '../../stores/useAuthStore';
-import { Mail, Loader2, Check, ArrowLeft } from 'lucide-react';
 
 interface ForgotPasswordFormProps {
   onBack?: () => void;
@@ -23,7 +23,6 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
     
     if (result.success) {
       setSuccess(true);
-      setEmail('');
     } else {
       setError(result.error || 'Ошибка отправки письма');
     }
@@ -32,77 +31,95 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
   };
 
   return (
-    <div className="space-y-4">
-      {onBack && (
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-sm text-muted hover:text-heading transition-colors mb-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Назад к входу
-        </button>
-      )}
-
-      <div>
-        <h2 className="text-xl font-semibold text-heading mb-2">Восстановление пароля</h2>
-        <p className="text-sm text-muted mb-4">
+    <div>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-heading mb-2">Восстановление пароля</h2>
+        <p className="text-sm text-muted">
           Введите ваш email, и мы отправим вам ссылку для сброса пароля
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="reset-email" className="block text-sm font-medium text-heading mb-2">
-            Email
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
-            <input
-              id="reset-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="your@email.com"
-            />
-          </div>
-        </div>
-
-        {error && (
-          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 text-sm flex items-center gap-2">
-            <Check className="w-4 h-4" />
+      {success ? (
+        <div className="space-y-4">
+          <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-600 flex items-start gap-3">
+            <Check className="w-5 h-5 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-medium">Письмо отправлено!</p>
-              <p className="text-xs mt-1">Проверьте вашу почту и следуйте инструкциям для сброса пароля.</p>
+              <p className="font-medium mb-1">Письмо отправлено!</p>
+              <p className="text-sm">
+                Проверьте почту <strong>{email}</strong> и перейдите по ссылке для сброса пароля.
+              </p>
             </div>
           </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={isLoading || success}
-          className="w-full py-3 px-4 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Отправка...</span>
-            </>
-          ) : (
-            'Отправить ссылку для сброса'
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Вернуться к входу
+            </button>
           )}
-        </button>
-      </form>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="reset-email" className="block text-sm font-medium text-heading mb-2">
+              Email
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+              <input
+                id="reset-email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="your@email.com"
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Отправка...</span>
+              </>
+            ) : (
+              'Отправить ссылку'
+            )}
+          </button>
+
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="w-full py-3 px-4 border border-secondary/40 text-heading rounded-lg font-medium hover:bg-secondary/40 transition-colors flex items-center justify-center gap-2"
+              disabled={isLoading}
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Вернуться к входу
+            </button>
+          )}
+        </form>
+      )}
     </div>
   );
 }
-
-
 

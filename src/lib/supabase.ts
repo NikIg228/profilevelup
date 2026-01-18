@@ -4,7 +4,17 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  throw new Error(
+    'Отсутствуют переменные окружения Supabase!\n\n' +
+    'Создайте файл .env в корне проекта и добавьте:\n' +
+    'VITE_SUPABASE_URL=https://your-project.supabase.co\n' +
+    'VITE_SUPABASE_ANON_KEY=your-anon-key\n\n' +
+    'Как найти эти значения:\n' +
+    '1. Откройте https://supabase.com/dashboard\n' +
+    '2. Выберите ваш проект\n' +
+    '3. Перейдите в Settings > API\n' +
+    '4. Скопируйте "Project URL" и "anon public" ключ'
+  );
 }
 
 // Проверяем, что используется anon key, а не service role key
