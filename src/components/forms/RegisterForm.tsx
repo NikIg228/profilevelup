@@ -181,7 +181,10 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
         <div className="text-center text-sm">
           <button
             type="button"
-            onClick={onSwitchToLogin}
+            onClick={(e) => {
+              e.preventDefault();
+              onSwitchToLogin();
+            }}
             className="text-muted hover:text-heading transition-colors"
             disabled={isLoading}
           >
