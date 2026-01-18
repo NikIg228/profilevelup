@@ -357,6 +357,16 @@ export default function HomePage() {
     setErrors({});
     setModalOpen(true);
   };
+
+  // Функция для скролла к блоку "Уровни навигации"
+  const scrollToFormats = () => {
+    const formatsSection = document.getElementById('formats');
+    if (formatsSection && lenis) {
+      lenis.scrollTo(formatsSection, { offset: -80, duration: 1.2 });
+    } else if (formatsSection) {
+      formatsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
   // TEMPORARY TESTING: Быстрый переход к тесту без заполнения формы
   const startTestQuick = () => {
     // Запрашиваем возраст у пользователя
@@ -610,15 +620,6 @@ export default function HomePage() {
           cursor: heroStage === 'pain' || heroStage === 'transition' ? 'pointer' : 'default',
         }}
       >
-        {/* Фоновый узор нейросети - только для desktop */}
-        {heroStage === 'solution' && (
-          <div 
-            className="hidden lg:block absolute inset-0 opacity-[0.05] lg:opacity-[0.08] pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-        )}
 
         {/* Мобильная версия - Full Viewport Hero */}
         <div className="lg:hidden w-full h-[100svh] flex flex-col relative z-10">
@@ -724,22 +725,38 @@ export default function HomePage() {
                   Короткий тест покажет твои сильные стороны и роли, в которых тебе естественно быть собой.
                 </motion.p>
 
-                {/* Primary CTA - одна кнопка действия */}
+                {/* Primary CTA - две кнопки */}
                 <motion.div
-                  className="w-full"
+                  className="w-full flex flex-col gap-4"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
                 >
-                  <button 
-                    className="btn btn-primary px-8 py-4 text-center text-lg font-bold rounded-xl transition-all duration-300 w-full min-h-[56px] shadow-lg hover:shadow-xl"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openFor(null);
-                    }}
-                  >
-                    Начать тест
-                  </button>
+                  <div className="flex flex-col w-full">
+                    <button 
+                      className="btn btn-primary px-8 py-4 text-center text-lg font-bold rounded-xl transition-all duration-300 w-full min-h-[56px] shadow-lg hover:shadow-xl"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openFor('free');
+                      }}
+                    >
+                      Начать с первичного понимания
+                    </button>
+                    <span className="text-sm text-muted mt-2 text-center">Бесплатно</span>
+                  </div>
+                  
+                  <div className="flex flex-col w-full">
+                    <button 
+                      className="btn btn-ghost px-8 py-4 text-center text-lg font-bold rounded-xl transition-all duration-300 w-full min-h-[56px]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        scrollToFormats();
+                      }}
+                    >
+                     Уровни навигации
+                    </button>
+                    <span className="text-sm text-muted mt-2 text-center">Выбери формат, который подходит под твою задачу</span>
+                  </div>
                   
                   {/* Доверительный микротекст под CTA */}
                   <p className="text-xs text-muted/70 text-center mt-3">
@@ -817,19 +834,31 @@ export default function HomePage() {
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 <h1 className="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight mb-4">
-                  <span className="block">Узнай себя глубже —</span>
-                  <span className="block">и выбирай путь, который подходит именно тебе.</span>
+                  <span className="block">Характер — это система.</span>
+                  <span className="block">Когда понимаешь систему, начинаешь управлять.</span>
                 </h1>
                 <p className="mt-4 text-muted text-lg mb-6">
-            Короткий тест, который помогает увидеть свои сильные стороны и роли, в которых тебе естественно и комфортно быть собой.
+            Навигационная система для понимания мышления, решений и поведения в реальной жизни.
             </p>
-                <div className="flex gap-3">
-                  <button className="btn btn-primary px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300" onClick={() => openFor(null)}>
-                    Начать    
-                  </button>
-                  <Link to="/details" className="btn btn-ghost px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300">
-                    Подробнее
-                  </Link>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col">
+                    <button 
+                      className="btn btn-primary px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300" 
+                      onClick={() => openFor('free')}
+                    >
+                      Начать с первичного понимания
+                    </button>
+                    <span className="text-sm text-muted mt-1 text-center">Бесплатно</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <button 
+                      className="btn btn-ghost px-5 py-3 text-center text-base font-bold rounded-xl transition-all duration-300" 
+                      onClick={scrollToFormats}
+                    >
+                      Уровни навигации
+                    </button>
+                    <span className="text-sm text-muted mt-1 text-center">Выбери формат, который подходит под твою задачу</span>
+                  </div>
             </div>
               </motion.div>
               <div className="flex items-center justify-center relative">
@@ -841,8 +870,8 @@ export default function HomePage() {
                   <div className="rounded-2xl overflow-visible flex items-center justify-center">
                     <img 
                       ref={logoRef}
-                      src="/logomain.png" 
-                      alt="Логотип Профиль будущего" 
+                      src="/LOGO W TEXT AND BG HERO.png" 
+                      alt="Логотип PROFILEVELUP" 
                       className="w-[91%] h-[91%] max-w-[520px] max-h-[520px] object-contain" 
                       loading="lazy" 
                     />

@@ -37,7 +37,7 @@ export default function Header() {
             className="w-10 h-10 rounded-full object-cover shadow-soft border border-secondary/50"
             loading="lazy"
           />
-          <span className="text-lg font-sans text-heading font-normal uppercase tracking-wide">ПРОФИЛЬ БУДУЩЕГО</span>
+          <span className="text-lg font-sans text-heading font-normal uppercase tracking-wide">PROFILEVELUP</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-2">

@@ -97,3 +97,4 @@ CREATE INDEX IF NOT EXISTS idx_test_history_user_id ON public.test_history(user_
 CREATE INDEX IF NOT EXISTS idx_test_history_completed_at ON public.test_history(completed_at DESC);
 
 
+

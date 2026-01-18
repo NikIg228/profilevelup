@@ -18,3 +18,4 @@ CREATE TRIGGER on_auth_user_email_changed
   FOR EACH ROW EXECUTE FUNCTION public.handle_email_change();
 
 
+
