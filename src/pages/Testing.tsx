@@ -238,6 +238,7 @@ export default function TestingPage() {
         </div>
         <div className="flex-shrink-0 mb-6">
           <ProgressBar current={step} total={total} />
+
         </div>
         <div className="flex-1 flex flex-col justify-center overflow-hidden">
           {currentQuestion && (
@@ -289,3 +290,4 @@ export default function TestingPage() {
     </section>
   );
 }
+
