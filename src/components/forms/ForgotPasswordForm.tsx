@@ -78,7 +78,7 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
                   setError('');
                 }}
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                placeholder="your@email.com"
+                placeholder="Ваш email"
                 required
                 disabled={isLoading}
               />

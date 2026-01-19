@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Answers, ExtendedAnswers, Tariff, AgeGroup, TestConfig, ResultIndex } from '../engine/types';
+import type { Answers, ExtendedAnswers, Tariff, AgeGroup, TestConfig } from '../engine/types';
 
 interface TestState {
   // Основное состояние
@@ -10,8 +10,6 @@ interface TestState {
   testConfig: TestConfig | null;
   step: number;
   answers: Answers | ExtendedAnswers;
-  resultIndex: ResultIndex | null;
-  done: boolean;
   
   // Метаданные
   userId?: string;
@@ -31,13 +29,10 @@ interface TestState {
   setStep: (step: number) => void;
   setAnswer: (questionId: number, answer: string) => void;
   setAnswers: (answers: Answers | ExtendedAnswers) => void;
-  setResultIndex: (resultIndex: ResultIndex) => void;
-  setDone: (done: boolean) => void;
   resetTest: () => void;
   
   // Синхронизация
   syncWithServer: () => Promise<boolean>;
-  completeTest: (resultIndex: ResultIndex) => Promise<boolean>;
 }
 
 // Debounce для синхронизации
@@ -162,29 +157,6 @@ async function loadFromServer(testId: string): Promise<Partial<TestState> | null
   }
 }
 
-async function completeOnServer(testId: string, resultIndex: ResultIndex): Promise<boolean> {
-  // Если это локальный тест, не отправляем на сервер
-  if (testId.startsWith('local_')) {
-    return false; // Локальное сохранение уже сделано
-  }
-
-  try {
-    const response = await fetch(`/api/test/complete/${testId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        resultIndex, 
-        completedAt: new Date().toISOString() 
-      }),
-    });
-
-    // Если бэкенд не готов, это нормально - данные сохранены локально
-    return response.ok;
-  } catch (error) {
-    // Ошибка сети - это нормально, данные сохранены локально
-    return false;
-  }
-}
 
 export const useTestStore = create<TestState>()(
   persist(
@@ -196,8 +168,6 @@ export const useTestStore = create<TestState>()(
       testConfig: null,
       step: 1,
       answers: {},
-      resultIndex: null,
-      done: false,
       userId: undefined,
       email: undefined,
       startedAt: null,
@@ -211,12 +181,11 @@ export const useTestStore = create<TestState>()(
       initializeTest: async (tariff, ageGroup, userId, email) => {
         const state = get();
         
-        // Если уже есть активный незавершенный тест с теми же параметрами - не перезаписываем
+        // Если уже есть активный тест с теми же параметрами - не перезаписываем
         if (
           state.testId &&
           state.tariff === tariff &&
-          state.ageGroup === ageGroup &&
-          !state.done
+          state.ageGroup === ageGroup
         ) {
           // Только пытаемся загрузить с сервера, если это не локальный тест
           if (!state.testId.startsWith('local_')) {
@@ -240,8 +209,7 @@ export const useTestStore = create<TestState>()(
 
         // Создаем новую сессию только если:
         // 1. Нет активного теста
-        // 2. Тест завершен
-        // 3. Параметры изменились
+        // 2. Параметры изменились
         set({ isRestoring: true });
         
         const testId = await createTestSession(tariff, ageGroup, userId, email);
@@ -252,8 +220,6 @@ export const useTestStore = create<TestState>()(
           ageGroup,
           step: 1,
           answers: {},
-          resultIndex: null,
-          done: false,
           userId,
           email,
           startedAt: new Date().toISOString(),
@@ -322,16 +288,6 @@ export const useTestStore = create<TestState>()(
         }, SYNC_DEBOUNCE_MS);
       },
 
-      // Установка результата
-      setResultIndex: (resultIndex) => {
-        set({ resultIndex });
-      },
-
-      // Завершение теста
-      setDone: (done) => {
-        set({ done });
-      },
-
       // Ручная синхронизация
       syncWithServer: async () => {
         const state = get();
@@ -348,57 +304,6 @@ export const useTestStore = create<TestState>()(
         return success;
       },
 
-      // Завершение теста на сервере
-      completeTest: async (resultIndex) => {
-        const state = get();
-        if (!state.testId || !state.tariff || !state.ageGroup) return false;
-        
-        set({ isSaving: true });
-        const success = await completeOnServer(state.testId, resultIndex);
-        
-        // Сохраняем в историю тестов
-        try {
-          const testRecord = {
-            testId: state.testId,
-            tariff: state.tariff,
-            ageGroup: state.ageGroup,
-            resultIndex,
-            completedAt: new Date().toISOString(),
-            startedAt: state.startedAt || new Date().toISOString(),
-          };
-          
-          const stored = localStorage.getItem('profi-test-history');
-          const history = stored ? JSON.parse(stored) : [];
-          
-          // Проверяем, нет ли уже такого теста
-          if (!history.find((t: typeof testRecord) => t.testId === testRecord.testId)) {
-            history.push(testRecord);
-            localStorage.setItem('profi-test-history', JSON.stringify(history));
-          }
-        } catch (error) {
-          console.error('Ошибка сохранения в историю:', error);
-        }
-        
-        if (success) {
-          set({
-            done: true,
-            resultIndex,
-            isSaving: false,
-            lastSyncStatus: true,
-          });
-        } else {
-          set({
-            done: true,
-            resultIndex,
-            isSaving: false,
-            lastSyncStatus: false,
-            syncError: 'Ошибка завершения теста',
-          });
-        }
-        
-        return success;
-      },
-
       // Сброс состояния
       resetTest: () => {
         if (syncTimeout) clearTimeout(syncTimeout);
@@ -409,8 +314,6 @@ export const useTestStore = create<TestState>()(
           testConfig: null,
           step: 1,
           answers: {},
-          resultIndex: null,
-          done: false,
           userId: undefined,
           email: undefined,
           startedAt: null,
@@ -432,8 +335,6 @@ export const useTestStore = create<TestState>()(
         ageGroup: state.ageGroup,
         step: state.step,
         answers: state.answers,
-        resultIndex: state.resultIndex,
-        done: state.done,
         userId: state.userId,
         email: state.email,
         startedAt: state.startedAt,

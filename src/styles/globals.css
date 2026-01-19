@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   GLOBAL RHYTHM TOKENS (единая система отступов)
+   ========================================================= */
+:root {
+  /* Высота header (h-16 = 64px) */
+  --header-h: 64px;
+  
+  /* Header - плотность фона и blur (единые токены) */
+  --header-bg: rgba(255, 255, 255, 0.88);
+  --header-bg-scrolled: rgba(255, 255, 255, 0.94);
+  --header-blur: blur(8px);
+  --header-blur-scrolled: blur(6px);
+  --header-border: 1px solid rgba(0, 0, 0, 0.06);
+  --header-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --header-shadow-scrolled: 0 8px 24px rgba(0, 0, 0, 0.08);
+  
+  /* Между секциями (mobile / tablet / desktop) */
+  --section-gap-mobile: clamp(16px, 4vw, 28px);
+  --section-gap-tablet: clamp(20px, 3vw, 36px);
+  --section-gap-desktop: clamp(28px, 2vw, 48px);
+
+  /* Внутренние паддинги hero на mobile */
+  --hero-pad-top-mobile: clamp(10px, 3.5vw, 18px);
+  --hero-pad-bottom-mobile: clamp(14px, 4.5vw, 24px);
+}
+
+/* Адаптивная высота header для разных брейкпоинтов */
+@media (max-width: 767px) {
+  :root {
+    --header-h: 64px; /* h-16 на мобильных */
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-h: 64px; /* h-16 на планшетах и десктопе */
+  }
+}
+
 /* Screen reader only - для доступности */
 .sr-only {
   position: absolute;
@@ -26,15 +65,22 @@
   white-space: normal;
 }
 
+/* =========================================================
+   ЕДИНЫЙ СКРОЛЛ-КОНТЕЙНЕР (body/html)
+   ========================================================= */
+
 html {
   width: 100%;
   height: 100%;
   margin: 0;
+  overflow-x: hidden;
+  /* overflow-y управляется динамически: на desktop через Lenis (hidden), на mobile (auto) */
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* overflow управляется динамически: Lenis на desktop, нативный на mobile */
 }
 
-html, body {
+html,
+body {
   width: 100%;
   margin: 0;
   overflow-x: hidden;
@@ -45,20 +91,62 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  /* overflow управляется динамически через JS */
+  overflow-x: hidden;
+  /* overflow-y управляется динамически: на desktop через Lenis (hidden), на mobile (auto) */
+  overflow-y: auto;
+  /* Единый фон для всей страницы - убирает "шов" между header и hero */
+  background-color: #F7F7F5; /* bg-base */
 }
 
 /* На мобильных используем нативный скролл для работы Swiper */
 @media (max-width: 767px) {
   html {
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow-y: auto !important; /* Принудительно нативный скролл на mobile */
+    overflow-x: hidden !important;
   }
-  
+
   body {
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow-y: auto !important; /* Принудительно нативный скролл на mobile */
+    overflow-x: hidden !important;
   }
+}
+
+/* КРИТИЧНО: В mobile landscape принудительно один скролл (body) */
+@media (max-height: 430px) and (orientation: landscape) {
+  /* Принудительно отключаем Lenis и используем нативный скролл */
+  html,
+  html.lenis,
+  html[class*="lenis"] {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+  }
+
+  body,
+  body.lenis {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+  }
+
+  /* Убираем класс lenis если он есть */
+  html.lenis {
+    overflow-y: auto !important;
+  }
+
+  /* Убеждаемся что Lenis не создает свой контейнер */
+  .lenis,
+  .lenis-wrapper,
+  [class*="lenis"] {
+    overflow: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+  }
+}
+
+/* На desktop Lenis управляет скроллом через JS, но если Lenis не активен - используем нативный */
+html:not([data-mobile]) {
+  /* Lenis будет устанавливать overflow: hidden через JS, но если Lenis не работает - оставляем auto */
 }
 
 /* Safe area для iPhone с вырезами - только на мобильных */
@@ -68,19 +156,19 @@ body {
       padding-left: max(0px, env(safe-area-inset-left));
       padding-right: max(0px, env(safe-area-inset-right));
     }
-    
+
     header {
       padding-top: max(0px, env(safe-area-inset-top));
       padding-left: max(0px, env(safe-area-inset-left));
       padding-right: max(0px, env(safe-area-inset-right));
     }
-    
+
     footer {
       padding-bottom: max(0px, env(safe-area-inset-bottom));
       padding-left: max(0px, env(safe-area-inset-left));
       padding-right: max(0px, env(safe-area-inset-right));
     }
-    
+
     /* Модальные окна также учитывают safe area */
     .modal-scroll-container {
       padding-left: max(24px, calc(24px + env(safe-area-inset-left)));
@@ -110,11 +198,193 @@ body {
 
 #root {
   min-height: 100%;
+  height: auto;
   position: relative;
+  overflow: visible;
+  /* Убираем внутренний скролл - скроллим только body */
+}
+
+/* Убираем внутренний скролл у layout контейнеров */
+#page-root,
+.page-root {
+  min-height: 100%;
+  height: auto;
+  overflow: visible;
+  /* Убираем внутренний скролл - скроллим только body */
+}
+
+main,
+#main-content,
+.main-content {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  /* Отступ под header через padding-top, не через отдельный scroll-контейнер */
+}
+
+/* Убираем внутренний скролл у всех wrapper'ов и контейнеров */
+.layout,
+.page,
+.content,
+.wrapper,
+.container:not(.container-balanced) {
+  height: auto;
+  min-height: 100%;
   overflow: visible;
 }
 
-h1, h2, h3, h4 {
+/* =========================================================
+   КРИТИЧНО: Убираем второй скролл в MOBILE LANDSCAPE
+   Специфично для (max-height: 430px) and (orientation: landscape)
+   ========================================================= */
+@media (max-height: 430px) and (orientation: landscape) {
+  /* КРИТИЧНО: Принудительно убираем overflow-y у всех layout контейнеров */
+  #root,
+  #page-root,
+  .page-root,
+  main,
+  #main-content,
+  .main-content,
+  .layout,
+  .page,
+  .content,
+  .wrapper {
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 100% !important;
+  }
+
+  /* Убираем скролл у всех секций и основных блоков */
+  section:not(.swiper-slide):not([class*="swiper"]),
+  article,
+  aside {
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Исключения: только для элементов, которым действительно нужен скролл */
+  .modal-scroll-container,
+  .swiper-wrapper,
+  .levels-mobile-scroll,
+  [class*="swiper-wrapper"],
+  [class*="swiper-container"] {
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+  }
+
+  /* Убеждаемся что body/html скроллятся, а не внутренние контейнеры */
+  html {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Убираем любые height: 100vh/100dvh у layout элементов */
+  #root[style*="height"],
+  #page-root[style*="height"],
+  main[style*="height"] {
+    height: auto !important;
+  }
+
+  /* КРИТИЧНО: Убираем правый шов - заменяем 100vw на 100% для fixed элементов */
+  header.header-base,
+  header[data-site-header],
+  header#site-header,
+  header {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Убираем правый шов у всех fixed элементов */
+  [class*="fixed"],
+  .fixed,
+  [class*="inset-0"],
+  .inset-0,
+  [style*="position: fixed"],
+  [style*="position:fixed"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Убираем правый шов у overlay элементов */
+  [role="dialog"],
+  .mobile-drawer,
+  [class*="overlay"],
+  [class*="backdrop"],
+  [class*="modal"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* IntroOverlay fixed overlay */
+  div[class*="fixed"][class*="inset-0"][class*="z-[9999]"] {
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Убираем overflow у меню когда оно закрыто */
+  .mobile-drawer:not([aria-hidden="false"]):not([aria-expanded="true"]),
+  [role="dialog"][aria-hidden="true"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  /* Убираем все возможные источники горизонтального скролла */
+  * {
+    max-width: 100% !important;
+  }
+
+  /* Исключение для контента внутри контейнеров */
+  .container-balanced *,
+  main *,
+  #main-content * {
+    max-width: none;
+  }
+
+  /* Но сам контейнер ограничен */
+  .container-balanced {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Исключение: только горизонтальный скролл для Swiper и подобных */
+.levels-mobile-scroll,
+.swiper-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  /* Это нормально - горизонтальный скролл для карточек */
+}
+
+h1,
+h2,
+h3,
+h4 {
   @apply font-heading text-heading;
 }
 
@@ -132,10 +402,151 @@ h1, h2, h3, h4 {
 
 /* Фиксация header */
 header {
-  max-width: 100vw;
+  max-width: 100%;
   width: 100%;
   left: 0;
   right: 0;
+  /* Убираем subpixel gaps */
+  top: 0;
+  /* Убеждаемся что border не создает визуальный шов */
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  /* Убираем 100vw чтобы не было шва справа */
+}
+
+/* Скрываем header, footer и main во время анимации hero (pain/transition стадии) */
+body[data-hero-animating="true"] header,
+body[data-hero-animating="true"] footer,
+body[data-hero-animating="true"] main {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+}
+
+/* Устанавливаем темный фон для body во время анимации */
+body[data-hero-animating="true"] {
+  background-color: #111827 !important; /* bg-gray-900 - темный фон для анимации */
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   MOBILE DRAWER (бургер-меню)
+   ========================================================= */
+@media (max-width: 1023px) {
+  .mobile-drawer {
+    width: clamp(280px, 38vw, 360px) !important;
+    max-width: 360px !important;
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    transform: translateX(100%);
+    /* Убеждаемся что закрытое меню не создает скролл */
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  /* Когда меню открыто - показываем и включаем pointer-events */
+  .mobile-drawer[aria-modal="true"] {
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  @media (max-width: 360px) {
+    .mobile-drawer {
+      width: min(80vw, 360px) !important;
+      max-width: 360px !important;
+    }
+  }
+
+  .drawer-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+  }
+
+  .drawer-header {
+    flex-shrink: 0;
+  }
+
+  .drawer-nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .drawer-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .drawer-nav-links a {
+    font-size: 1rem;
+    line-height: 1.5;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .drawer-auth {
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .drawer-login-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #c9a24d;
+    background: transparent;
+    border: 2px solid rgba(201, 162, 77, 0.3);
+    border-radius: 0.625rem;
+    transition: all 0.2s ease;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  .drawer-login-button:hover {
+    background: rgba(201, 162, 77, 0.08);
+    border-color: rgba(201, 162, 77, 0.5);
+  }
+
+  .drawer-login-button:active {
+    background: rgba(201, 162, 77, 0.12);
+    border-color: rgba(201, 162, 77, 0.6);
+  }
+
+  .drawer-login-button-active {
+    background: rgba(201, 162, 77, 0.1);
+    border-color: #c9a24d;
+    color: #c9a24d;
+  }
+
+  body:has([role="dialog"][aria-label="Меню навигации"]) {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  html:has([role="dialog"][aria-label="Меню навигации"]) {
+    overflow: hidden !important;
+  }
 }
 
 .card {
@@ -144,33 +555,35 @@ header {
 
 .btn {
   @apply inline-flex items-center justify-center rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary;
-  /* Минимальный размер для touch-целей на мобильных */
   min-height: 44px;
   min-width: 44px;
 }
 
-/* На desktop можно уменьшить размер для некликабельных элементов */
 @media (min-width: 768px) {
   .btn:not(.btn-compact) {
     min-height: auto;
     min-width: auto;
   }
 }
+
 .btn-primary {
   @apply bg-primary text-white focus:ring-primary/20 shadow-sm hover:shadow-md transition-all duration-200;
   border-radius: 8px;
 }
+
 .btn-primary:hover {
-  background-color: #9E7F3A;
+  background-color: #9e7f3a;
 }
+
 .btn-ghost {
   @apply bg-transparent text-primary border border-primary;
   border-width: 1.5px;
   border-radius: 8px;
 }
+
 .btn-ghost:hover {
-  background-color: #C9A24D;
-  color: #FFFFFF;
+  background-color: #c9a24d;
+  color: #ffffff;
 }
 
 .fade-section {
@@ -181,6 +594,7 @@ header {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
@@ -190,7 +604,7 @@ header {
 /* Кастомный скроллбар для модального окна в стилистике сайта */
 .modal-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #C9A24D rgba(201, 162, 77, 0.2);
+  scrollbar-color: #c9a24d rgba(201, 162, 77, 0.2);
 }
 
 .modal-scrollbar::-webkit-scrollbar {
@@ -203,19 +617,19 @@ header {
 }
 
 .modal-scrollbar::-webkit-scrollbar-thumb {
-  background: #C9A24D;
+  background: #c9a24d;
   border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 .modal-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9E7F3A;
+  background: #9e7f3a;
 }
 
 /* Для контейнера со скроллом внутри модального окна */
 .modal-scroll-container {
   scrollbar-width: thin;
-  scrollbar-color: #C9A24D rgba(201, 162, 77, 0.2);
+  scrollbar-color: #c9a24d rgba(201, 162, 77, 0.2);
 }
 
 .modal-scroll-container::-webkit-scrollbar {
@@ -228,26 +642,48 @@ header {
 }
 
 .modal-scroll-container::-webkit-scrollbar-thumb {
-  background: #C9A24D;
+  background: #c9a24d;
   border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 .modal-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #9E7F3A;
+  background: #9e7f3a;
 }
 
 /* Hero анимации */
 @keyframes shake-light {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
-  20%, 40%, 60%, 80% { transform: translateX(3px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-3px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(3px);
+  }
 }
 
 @keyframes soft-bounce {
-  0% { transform: scale(0.9); opacity: 0; }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .shake-light {
@@ -293,7 +729,6 @@ header {
 
 /* Разделение desktop и mobile логики для карточек */
 @media (max-width: 1023px) {
-  /* Mobile: скрываем desktop-блоки полностью для ВСЕХ карточек */
   .test-cards-container .card-desktop-full,
   .test-card-slide .card-desktop-full,
   .card-desktop-full {
@@ -308,8 +743,7 @@ header {
     position: absolute;
     left: -9999px;
   }
-  
-  /* Mobile: скрываем desktop-версию карточек полностью */
+
   div[class*="hidden"][class*="lg:grid"],
   div.hidden.lg\\:grid,
   .hidden.lg\\:grid,
@@ -326,8 +760,7 @@ header {
     padding: 0;
     pointer-events: none;
   }
-  
-  /* Mobile: скрываем все карточки внутри desktop-версии */
+
   div[class*="hidden"][class*="lg:grid"] > div,
   div[class*="hidden lg:grid"] > div,
   .hidden.lg\\:grid > div,
@@ -337,74 +770,67 @@ header {
     height: 0;
     overflow: hidden;
   }
-  
-  /* Mobile: скрываем старые мобильные версии-accordion внутри desktop-карточек */
+
   .hidden.lg\\:grid [class*="hidden"] {
     display: none;
     visibility: hidden;
     height: 0;
     overflow: hidden;
   }
-  
-  /* Mobile: показываем только mobile-блоки из нового свайпера */
+
   .test-cards-container {
     display: flex;
     visibility: visible;
   }
-  
+
   .test-cards-container .card-mobile-header,
   .test-cards-container .card-mobile-summary,
   .test-cards-container .card-mobile-toggle {
     display: block;
     visibility: visible;
   }
-  
-  /* Mobile: гарантируем, что мобильная версия видна */
+
   div.lg\\:hidden[class*="lg:hidden"],
   .lg\\:hidden {
     display: block;
     visibility: visible;
   }
-  
-  /* Mobile-extra блок: скрыт по умолчанию */
+
   .card-mobile-extra {
     max-height: 0;
     overflow: hidden;
     opacity: 0;
     transition: max-height 0.35s ease, opacity 0.3s ease;
   }
-  
-  /* Mobile-extra блок: раскрыт при .is-open */
+
   .card.is-open .card-mobile-extra {
     max-height: 2000px;
     opacity: 1;
   }
-  
-  /* Стрелка в кнопке поворачивается при раскрытии */
+
   .card.is-open .card-mobile-toggle svg,
   .card.is-open .card-mobile-toggle .w-4 {
     transform: rotate(180deg);
   }
-  
-  /* Улучшение читаемости */
+
   .test-card-slide .card {
     height: auto;
     overflow: visible;
   }
-  
+
   .card-mobile-header {
     margin-bottom: 16px;
   }
-  
+
   .card-mobile-summary {
     margin-bottom: 12px;
   }
-  
+
   .card li {
     line-height: 1.6;
     margin-bottom: 6px;
   }
-  
+
   .card-action {
     padding: 16px;
     font-size: 16px;
@@ -423,7 +849,7 @@ header {
     max-height: 0;
     overflow: hidden;
   }
-  
+
   .test-cards-container .card-desktop-full {
     display: block;
     visibility: visible;
@@ -432,8 +858,7 @@ header {
     overflow: visible;
     opacity: 1;
   }
-  
-  /* На desktop показываем desktop-full, переопределяя inline style */
+
   .test-cards-container .card-desktop-full[style*="display: none"] {
     display: block;
   }
@@ -455,9 +880,75 @@ header {
 }
 
 .levels-mobile .swiper-pagination-bullet-active {
-  background-color: #C9A24D;
+  background-color: #c9a24d;
   width: 24px;
   border-radius: 4px;
+}
+
+/* Кастомная пагинация для уровней навигации (CSS Scroll Snap) */
+.levels-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1rem;
+  padding: 0 1rem;
+}
+
+.levels-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(201, 162, 77, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.levels-pagination-bullet-active {
+  width: 24px;
+  border-radius: 4px;
+  background-color: rgba(201, 162, 77, 0.3);
+}
+
+.levels-pagination-bullet-active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background-color: #c9a24d;
+  border-radius: 4px;
+  animation: pagination-progress 3s linear forwards;
+}
+
+.levels-pagination-bullet-active.paused::after {
+  animation-play-state: paused;
+}
+
+/* Перезапуск анимации при смене слайда */
+.levels-pagination-bullet-active:not(.paused)::after {
+  animation: pagination-progress 3s linear forwards;
+}
+
+@keyframes pagination-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* Отключение анимации для reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .levels-pagination-bullet-active::after {
+    animation: none;
+    width: 100%;
+  }
 }
 
 /* Mobile-only стили для CSS Scroll Snap карусели */
@@ -467,6 +958,8 @@ header {
     max-width: 100%;
     overflow: hidden;
     position: relative;
+    /* Предотвращаем горизонтальный скролл страницы */
+    contain: layout style;
   }
 
   .levels-mobile-scroll {
@@ -474,46 +967,398 @@ header {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    gap: 16px;
-    padding: 0 16px 3rem 16px;
-  }
-
-  /* Используем общий класс scrollbar-hide */
-  .levels-mobile-scroll {
+    gap: 14px;
+    padding: 0 6% 2rem 6%;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    /* Длительность анимации скролла через CSS (браузерная анимация обычно ~400ms) */
+  }
+  
+  /* Для более точного контроля можно использовать scroll-padding, но smooth scroll работает хорошо */
+  @supports (scroll-behavior: smooth) {
+    .levels-mobile-scroll {
+      scroll-behavior: smooth;
+    }
+  }
+
+  .levels-mobile-scroll::-webkit-scrollbar {
+    display: none;
   }
 
   .level-card-snap {
-    flex: 0 0 97%;
+    flex: 0 0 88%;
     scroll-snap-align: center;
     height: auto;
+    min-height: 0;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .levels-mobile-scroll {
+    /* Фиксируем минимальную высоту по самому высокому слайду */
+    align-items: stretch;
   }
 
   .level-card-mobile {
     width: 100%;
     height: 100%;
+    min-height: 0;
     box-sizing: border-box;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+  }
+
+  .level-card-mobile > *:last-child {
+    margin-bottom: 0;
+  }
+
+  .level-card-mobile .flex-1 {
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }
 
-/* Hero секция на мобильных - полная высота viewport */
+/* =========================================================
+   HERO — FIX (ВАЖНО: убрать лишнюю пустоту и огромные разрывы)
+   ========================================================= */
+
+/* 1) На mobile/tablet НЕ фиксируем hero в 100svh — это и создаёт «пустоту» */
+/* ИСКЛЮЧЕНИЕ: во время анимации (pain/transition) hero-section должен быть fixed и fullscreen */
+/* Используем svh/dvh с учетом высоты header для корректной работы на iOS */
 @media (max-width: 1023px) {
-  /* Hero занимает 100svh на мобильных */
   .hero-section {
-    height: 100svh;
-    min-height: 100svh;
-    max-height: 100svh;
+    height: auto !important;
+    /* Используем svh с fallback на vh, учитывая высоту header */
+    min-height: calc(100svh - var(--header-h)) !important;
+    min-height: calc(100vh - var(--header-h)) !important; /* fallback для старых браузеров */
+    max-height: none !important;
     position: relative;
     overflow: hidden;
+    /* Прозрачный фон - единый фон на body */
+    background-color: transparent;
   }
 
-  /* Гарантируем, что hero не показывает следующий контент */
+  /* Во время анимации hero-section должен быть fixed и fullscreen */
+  .hero-section.fixed.inset-0 {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    width: 100% !important; /* Заменено с 100vw на 100% чтобы убрать шов справа */
+    z-index: 100 !important;
+    background-color: #111827 !important; /* bg-gray-900 - темный фон для анимации */
+  }
+
+  /* Внутренний wrapper во время анимации должен занимать весь экран */
+  .hero-section.fixed.inset-0 > div.lg\\:hidden {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    width: 100% !important; /* Заменено с 100vw на 100% чтобы убрать шов справа */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Внутренний wrapper hero (mobile) тоже «по контенту» */
+  .hero-section > div.lg\\:hidden {
+    height: auto !important;
+    min-height: unset !important;
+    max-height: none !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  /* Контент hero: убираем лишнее вертикальное центрирование и уменьшаем паддинги */
+  .hero-mobile-content {
+    height: auto !important;
+    min-height: unset !important;
+    max-height: none !important;
+    justify-content: flex-start !important;
+    align-items: center !important; /* центр по горизонтали оставить */
+    padding-top: var(--hero-pad-top-mobile) !important;
+    padding-bottom: var(--hero-pad-bottom-mobile) !important;
+  }
+}
+
+/* 2) Планшеты: уже было — оставляем, но не трогаем лишний раз */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .hero-section {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .hero-section > div.lg\\:hidden {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+  }
+
+  .hero-mobile-content {
+    height: auto !important;
+    min-height: auto !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+}
+
+/* 3) iPad landscape: уже было, но оставляем без агрессии */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+  .hero-section {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+
+  .hero-section > div.lg\\:hidden {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+  }
+
+  .hero-mobile-content {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+  }
+
+  .hero-mobile-content > div.relative {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Поджать секцию formats на landscape tablet */
+  section#formats.container-balanced {
+    padding-top: var(--section-gap-tablet) !important;
+  }
+}
+
+/* =========================================================
+   MOBILE LANDSCAPE COMPACT — спец-режим для маленькой высоты экрана
+   (особенно iPhone в landscape: max-height: 430px)
+   ========================================================= */
+@media (max-width: 1023px) and (orientation: landscape) and (max-height: 600px) {
+  .hero-section {
+    /* Используем svh с учетом header, fallback на vh */
+    height: calc(100svh - var(--header-h)) !important;
+    height: calc(100vh - var(--header-h)) !important; /* fallback */
+    min-height: calc(100svh - var(--header-h)) !important;
+    min-height: calc(100vh - var(--header-h)) !important; /* fallback */
+    max-height: calc(100svh - var(--header-h)) !important;
+    max-height: calc(100vh - var(--header-h)) !important; /* fallback */
+    /* Убираем overflow-y: auto - скроллим только body */
+    overflow: visible;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .hero-mobile-content {
+    min-height: calc(100svh - var(--header-h));
+    min-height: calc(100vh - var(--header-h)); /* fallback */
+    justify-content: center !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    /* Убираем overflow-y: auto - скроллим только body */
+    overflow: visible;
+  }
+
+  .hero-mobile-content h1 {
+    font-size: clamp(20px, 3.2vw, 28px) !important;
+    line-height: 1.1 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .hero-mobile-content p.text-base,
+  .hero-mobile-content p.text-sm,
+  .hero-mobile-content p {
+    font-size: clamp(12px, 2vw, 16px) !important;
+    margin-bottom: 0.75rem !important;
+    line-height: 1.4 !important;
+    max-width: 560px !important; /* Ограничиваем ширину текста */
+  }
+
+  .hero-mobile-content button {
+    padding-top: 0.625rem !important;
+    padding-bottom: 0.625rem !important;
+    font-size: 0.875rem !important;
+    min-height: 44px !important;
+    max-height: 48px !important;
+  }
+
+  .hero-mobile-logo {
+    background-size: contain !important;
+    background-position: center 10% !important;
+    background-repeat: no-repeat !important;
+    opacity: 0.08 !important;
+    /* Ограничиваем максимальный размер для читаемости текста */
+    max-width: min(70vh, 520px);
+    max-height: min(70vh, 520px);
+    margin: 0 auto;
+  }
+}
+
+/* Специальный режим для очень маленькой высоты (iPhone landscape) */
+@media (max-width: 1023px) and (orientation: landscape) and (max-height: 430px) {
+  .hero-section {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .hero-mobile-content {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .hero-mobile-content h1 {
+    font-size: clamp(20px, 3.2vw, 28px) !important;
+    line-height: 1.15 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .hero-mobile-content p.text-base,
+  .hero-mobile-content p.text-sm,
+  .hero-mobile-content p {
+    font-size: clamp(12px, 2vw, 16px) !important;
+    margin-bottom: 0.5rem !important;
+    line-height: 1.3 !important;
+    max-width: 560px !important;
+  }
+
+  .hero-mobile-content button {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    font-size: 0.875rem !important;
+    min-height: 44px !important;
+    max-height: 48px !important;
+  }
+
+  .hero-mobile-content .hero-cta-container {
+    gap: 0.5rem !important;
+  }
+
+  .hero-mobile-content .hero-free-label,
+  .hero-mobile-content .hero-format-label {
+    font-size: 0.625rem !important;
+    margin-top: 0.25rem !important;
+  }
+
+  /* Фоновый логотип - contain для landscape mobile */
+  .hero-mobile-logo {
+    background-size: contain !important;
+    background-position: center 10% !important;
+    background-repeat: no-repeat !important;
+    /* Ограничиваем размер для читаемости текста в узкой высоте */
+    max-width: min(60vh, 400px) !important;
+    max-height: min(60vh, 400px) !important;
+    opacity: 0.08 !important;
+    /* Убеждаемся что лого не перекрывает текст */
+    z-index: 0 !important;
+  }
+
+  /* Усиливаем читаемость текста поверх логотипа */
+  .hero-mobile-content > .relative.z-10 {
+    position: relative !important;
+    z-index: 10 !important;
+    /* Легкая тень для контраста если нужно */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+}
+
+/* Фоновый логотип hero - используем contain чтобы не обрезался */
+/* Базовые стили для всех мобильных устройств */
+.hero-mobile-logo {
+  background-size: contain !important;
+  background-position: center top !important;
+  background-repeat: no-repeat !important;
+  background-origin: content-box;
+}
+
+/* Мобильные устройства (portrait и landscape) */
+@media (max-width: 767px) {
+  .hero-mobile-logo {
+    background-size: contain !important;
+    background-position: center top !important;
+    background-repeat: no-repeat !important;
+    /* Добавляем padding чтобы лого не упиралось в края */
+    padding: 1rem;
+  }
+}
+
+/* Планшеты */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hero-mobile-logo {
+    background-size: contain !important;
+    background-position: center 18% !important;
+    background-repeat: no-repeat !important;
+    padding: 1.5rem;
+  }
+}
+
+/* =========================================================
+   РАССТОЯНИЕ МЕЖДУ HERO И "УРОВНИ НАВИГАЦИИ" (главная фикса)
+   ========================================================= */
+
+/* 1) На mobile убираем/сжимаем промежуточный "spacer div" после hero */
+@media (max-width: 767px) {
+  /* Если между hero и formats вставлен div.lg:hidden (градиент/разделитель) — делаем минимальный */
+  .hero-section + div.lg\\:hidden {
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .hero-section + div.lg\\:hidden > div:first-child {
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 2) Секция formats — задаём нормальный mobile gap сверху */
+  #formats.container-balanced {
+    margin-top: var(--section-gap-mobile) !important;
+    padding-top: 0 !important;
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  #formats {
+    overflow: hidden;
+    max-width: 100%;
+  }
+}
+
+/* 3) На tablet можно чуть больше gap, но без "пустыни" */
+@media (min-width: 768px) and (max-width: 1023px) {
+  #formats.container-balanced {
+    margin-top: var(--section-gap-tablet) !important;
+    padding-top: 0 !important;
+  }
+}
+
+/* =========================================================
+   ПРОЧИЕ MOBILE ФИКСЫ (кнопки/компоновка)
+   ========================================================= */
+@media (max-width: 1023px) {
   .hero-section::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -521,15 +1366,15 @@ header {
     height: 1px;
     background: transparent;
     pointer-events: none;
+    /* Убеждаемся что псевдоэлемент не блокирует события */
+    z-index: -1;
   }
 
-  /* Плавный переход от hero к следующей секции */
   .hero-section + div {
     position: relative;
     z-index: 1;
   }
 
-  /* Гарантируем правильную высоту секции "Кому подойдёт" */
   section.container-balanced {
     height: auto;
     min-height: auto;
@@ -537,46 +1382,45 @@ header {
     overflow: visible;
   }
 
-  /* Гарантируем отображение секции с заголовком "Кому подойдёт" */
   section.container-balanced:has(h2) {
     display: block;
     visibility: visible;
     opacity: 1;
   }
-  
-  /* Уменьшаем отступы внутри hero на мобильных */
-  .hero-section > div.lg\\:hidden {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-  
-  /* Убираем justify-center на мобильных, чтобы контент был сверху */
-  .hero-section {
-    justify-content: flex-start;
-  }
-  
-  /* Устанавливаем небольшой отступ у секции "Уровни навигации" на мобильных */
-  #formats.container-balanced {
-    margin-top: 3rem;
-    padding-top: 0;
-    overflow: hidden;
-    max-width: 100%;
-  }
-  
-  /* Ограничиваем overflow для контейнера уровней навигации */
-  #formats {
-    overflow: hidden;
-    max-width: 100%;
-  }
-  
-  /* Убираем лишние отступы у контейнера внутри hero на мобильных */
-  .hero-section .lg\\:hidden {
-    min-height: auto;
-  }
-}
 
-/* Swiper pagination стили для мобильной версии "Кому подойдет" */
-@media (max-width: 767px) {
+  .hero-mobile-content button {
+    max-width: 100%;
+  }
+
+  .hero-mobile-content .btn-primary {
+    font-size: 0.875rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+    min-height: 44px !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .hero-mobile-content .btn-ghost {
+    font-size: 0.875rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+    min-height: 44px !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .hero-mobile-content .flex.gap-4 {
+    gap: 0.75rem !important;
+  }
+
+  .hero-mobile-content .flex.gap-2 {
+    gap: 0.5rem !important;
+  }
+
+  /* Swiper pagination стили для мобильной версии "Кому подойдет" */
   .md\\:hidden .swiper-pagination {
     position: relative;
     margin-top: 1rem;
@@ -589,12 +1433,47 @@ header {
     height: 8px;
     border-radius: 50%;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
   }
 
   .md\\:hidden .swiper-pagination-bullet-active {
-    background-color: #C9A24D;
     width: 24px;
     border-radius: 4px;
+    background-color: rgba(201, 162, 77, 0.3);
+  }
+
+  .md\\:hidden .swiper-pagination-bullet-active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background-color: #c9a24d;
+    border-radius: 4px;
+    animation: pagination-progress-whofor 3s linear forwards;
+  }
+
+  .md\\:hidden .swiper-pagination-bullet-active.paused::after {
+    animation-play-state: paused;
+  }
+
+  @keyframes pagination-progress-whofor {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  /* Отключение анимации для reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .md\\:hidden .swiper-pagination-bullet-active::after {
+      animation: none;
+      width: 100%;
+    }
   }
 
   /* Гарантируем отображение компонента WhoForCards на мобильных */
@@ -609,7 +1488,6 @@ header {
     overflow: visible;
   }
 
-  /* Гарантируем отображение Swiper в WhoForCards на мобильных */
   div.md\\:hidden > .swiper,
   div.md\\:hidden .swiper {
     display: block;
@@ -619,12 +1497,13 @@ header {
     max-width: 100%;
     height: auto;
     min-height: 400px;
-    overflow: visible;
+    max-height: none;
+    overflow: hidden;
     position: relative;
-    touch-action: pan-y pinch-zoom;
+    touch-action: pan-x;
+    overscroll-behavior-y: contain;
   }
 
-  /* Гарантируем отображение SwiperWrapper в WhoForCards на мобильных */
   div.md\\:hidden .swiper-wrapper {
     display: flex;
     visibility: visible;
@@ -632,45 +1511,71 @@ header {
     width: 100%;
     height: auto;
     transform: translate3d(0, 0, 0);
-    touch-action: pan-y pinch-zoom;
+    touch-action: pan-x;
+    overscroll-behavior-y: contain;
+    flex-direction: row;
+    align-items: stretch;
   }
 
-  /* Гарантируем отображение SwiperSlide в WhoForCards на мобильных */
   div.md\\:hidden .swiper-slide {
     display: flex;
     visibility: visible;
     opacity: 1;
-    width: 100%;
+    width: 100% !important;
     max-width: 100%;
     height: auto;
     min-height: 400px;
     flex-shrink: 0;
     box-sizing: border-box;
+    overflow: visible;
+    align-items: stretch;
   }
 
-  /* Убеждаемся, что контент внутри слайдов виден */
   div.md\\:hidden .swiper-slide > * {
     width: 100%;
     height: auto;
     min-height: auto;
+    overflow: visible;
   }
 }
 
 /* Lenis smooth scroll styles - только для desktop */
+/* ВАЖНО: Lenis создает свой скролл-контейнер, но это нормально для desktop */
+/* На mobile используем нативный скролл body */
 html.lenis:not([data-mobile="true"]),
 html.lenis:not([data-mobile="true"]) body {
   height: auto;
-  overflow: hidden; /* Скрываем нативный scrollbar только на desktop */
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  /* Lenis управляет скроллом на desktop через свой внутренний контейнер */
+}
+
+/* На mobile отключаем Lenis и используем нативный скролл */
+html[data-mobile="true"],
+html[data-mobile="true"] body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 html.lenis:not([data-mobile="true"]) {
-  /* Скрываем scrollbar для html когда Lenis активен (только desktop) */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 html.lenis:not([data-mobile="true"])::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
+}
+
+/* Убеждаемся что #root и все layout контейнеры не создают свой скролл когда Lenis активен */
+html.lenis:not([data-mobile="true"]) #root,
+html.lenis:not([data-mobile="true"]) #page-root,
+html.lenis:not([data-mobile="true"]) main,
+html.lenis:not([data-mobile="true"]) #main-content {
+  overflow: visible !important;
+  overflow-y: visible !important;
+  height: auto !important;
+  min-height: 100% !important;
 }
 
 .lenis.lenis-smooth {
@@ -703,4 +1608,605 @@ html.lenis:not([data-mobile="true"])::-webkit-scrollbar {
   animation: fade-out 2s ease-out forwards;
 }
 
+/* ============================
+   HERO GAP FIX (MOBILE)
+   ============================ */
 
+/* Mobile portrait: Hero должен быть по контенту, без 100vh/100svh */
+@media (max-width: 767px) and (orientation: portrait) {
+  section#hero,
+  section[data-section="hero"],
+  .hero-section {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding-top: 16px !important;
+    padding-bottom: 24px !important;
+  }
+
+  /* Во время анимации hero-section должен быть fixed и fullscreen */
+  section#hero.fixed.inset-0,
+  section[data-section="hero"].fixed.inset-0,
+  .hero-section.fixed.inset-0 {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    width: 100% !important; /* Заменено с 100vw на 100% чтобы убрать шов справа */
+    left: 0 !important;
+    right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    z-index: 100 !important;
+    background-color: #111827 !important; /* bg-gray-900 - темный фон для анимации */
+  }
+
+  /* если внутри есть wrapper с h-full/min-h-screen — сбросить */
+  section#hero *[class*="h-full"],
+  section#hero *[class*="min-h"],
+  section[data-section="hero"] *[class*="h-full"],
+  section[data-section="hero"] *[class*="min-h"] {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+}
+
+/* Mobile landscape: используем svh с учетом header */
+/* ИСКЛЮЧЕНИЕ: во время анимации hero-section должен быть fixed и fullscreen */
+@media (max-width: 767px) and (orientation: landscape) and (max-height: 600px) {
+  section#hero,
+  section[data-section="hero"],
+  .hero-section {
+    height: calc(100svh - var(--header-h)) !important;
+    height: calc(100vh - var(--header-h)) !important; /* fallback */
+    min-height: calc(100svh - var(--header-h)) !important;
+    min-height: calc(100vh - var(--header-h)) !important; /* fallback */
+    max-height: calc(100svh - var(--header-h)) !important;
+    max-height: calc(100vh - var(--header-h)) !important; /* fallback */
+    /* Убираем overflow-y: auto - скроллим только body */
+    overflow: visible !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  /* Во время анимации hero-section должен быть fixed и fullscreen */
+  section#hero.fixed.inset-0,
+  section[data-section="hero"].fixed.inset-0,
+  .hero-section.fixed.inset-0 {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    width: 100% !important; /* Заменено с 100vw на 100% чтобы убрать шов справа */
+    overflow: hidden !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    z-index: 100 !important;
+    background-color: #111827 !important; /* bg-gray-900 - темный фон для анимации */
+  }
+}
+
+/* Убрать/сжать возможный spacer между hero и следующей секцией на mobile */
+@media (max-width: 767px) {
+  section#hero + div,
+  section[data-section="hero"] + div,
+  .hero-section + div {
+    margin-top: 0 !important;
+  }
+
+  /* если этот div реально spacer — обнулим высоту, не ломая остальное */
+  section#hero + div.lg\\:hidden,
+  section[data-section="hero"] + div.lg\\:hidden,
+  .hero-section + div.lg\\:hidden {
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+}
+
+/* ===============================
+   OFFSET между header и hero
+   =============================== */
+
+/* Убираем margin-top у hero - отступ обеспечивается padding-top у main */
+/* Убираем визуальный шов между header и hero */
+/* Mobile */
+@media (max-width: 767px) {
+  .hero-section {
+    margin-top: 0 !important;
+    background-color: transparent; /* Прозрачный - фон на body */
+    padding-top: 16px;
+    /* Убираем subpixel gaps */
+    position: relative;
+    top: 0;
+    transform: translateZ(0);
+  }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hero-section {
+    margin-top: 0 !important;
+    background-color: transparent; /* Прозрачный - фон на body */
+    position: relative;
+    top: 0;
+    transform: translateZ(0);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .hero-section {
+    margin-top: 0 !important;
+    background-color: transparent; /* Прозрачный - фон на body */
+    position: relative;
+    top: 0;
+    transform: translateZ(0);
+  }
+}
+
+/* ===============================
+   ДОПОЛНИТЕЛЬНЫЕ ФИКСЫ ДЛЯ iOS LANDSCAPE
+   =============================== */
+
+/* Предотвращение прыжков высоты hero при скролле на iOS */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 1023px) and (orientation: landscape) {
+    .hero-section {
+      /* Фиксируем высоту для предотвращения прыжков */
+      height: calc(100svh - var(--header-h));
+      height: calc(100vh - var(--header-h)); /* fallback */
+      min-height: calc(100svh - var(--header-h));
+      min-height: calc(100vh - var(--header-h)); /* fallback */
+    }
+  }
+}
+
+/* =========================================================
+   HEADER - Единые стили с плотным фоном для всех устройств
+   ========================================================= */
+
+/* Базовые стили header (все устройства) */
+header.header-base {
+  background-color: var(--header-bg);
+  backdrop-filter: var(--header-blur);
+  -webkit-backdrop-filter: var(--header-blur);
+  border-bottom: var(--header-border);
+  box-shadow: var(--header-shadow);
+  transition: background-color 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease;
+  /* Важно: НЕ используем opacity на весь header, только rgba() у background */
+  /* Убираем subpixel gaps и проблемы с рендерингом */
+  top: 0;
+  transform: translateZ(0);
+  will-change: background-color, backdrop-filter, box-shadow;
+  /* Убеждаемся что header не блокирует скролл */
+  background-clip: padding-box;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Декоративные элементы header не должны блокировать события */
+header.header-base::before,
+header.header-base::after {
+  pointer-events: none;
+}
+
+/* Внутренние элементы header должны получать события (по умолчанию они получают) */
+/* Но убеждаемся что нет конфликтов */
+header.header-base > *,
+header.header-base .container-balanced {
+  position: relative;
+  z-index: 1;
+}
+
+/* Убираем возможные зазоры между header и hero */
+header.header-base + main,
+header.header-base ~ main {
+  margin-top: 0;
+  padding-top: var(--header-h);
+  /* Убираем subpixel gaps */
+  transform: translateZ(0);
+}
+
+/* Состояние при скролле */
+header.header-base.is-scrolled {
+  background-color: var(--header-bg-scrolled);
+  backdrop-filter: var(--header-blur-scrolled);
+  -webkit-backdrop-filter: var(--header-blur-scrolled);
+  box-shadow: var(--header-shadow-scrolled);
+  /* Убираем subpixel gaps при скролле */
+  transform: translateZ(0);
+}
+
+/* Desktop (>=1024px) - можно чуть больше blur, но заливка плотная */
+@media (min-width: 1024px) {
+  :root {
+    --header-bg: rgba(255, 255, 255, 0.84);
+    --header-bg-scrolled: rgba(255, 255, 255, 0.92);
+    --header-blur: blur(10px);
+    --header-blur-scrolled: blur(8px);
+  }
+}
+
+/* Tablet (768px - 1023px) - средняя плотность */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --header-bg: rgba(255, 255, 255, 0.88);
+    --header-bg-scrolled: rgba(255, 255, 255, 0.94);
+    --header-blur: blur(8px);
+    --header-blur-scrolled: blur(6px);
+  }
+}
+
+/* Mobile (<=767px) - blur поменьше, фон плотнее */
+@media (max-width: 767px) {
+  :root {
+    --header-bg: rgba(255, 255, 255, 0.90);
+    --header-bg-scrolled: rgba(255, 255, 255, 0.95);
+    --header-blur: blur(6px);
+    --header-blur-scrolled: blur(4px);
+  }
+}
+
+/* Mobile landscape с низкой высотой - максимально плотный */
+@media (max-width: 767px) and (max-height: 430px) and (orientation: landscape) {
+  :root {
+    --header-bg: rgba(255, 255, 255, 0.92);
+    --header-bg-scrolled: rgba(255, 255, 255, 0.96);
+    --header-blur: blur(4px);
+    --header-blur-scrolled: blur(4px);
+  }
+}
+
+/* =========================================================
+   DESKTOP LAYOUT ДЛЯ MOBILE LANDSCAPE (max-height: 430px)
+   ========================================================= */
+
+@media (max-height: 430px) and (orientation: landscape) {
+  /* Переопределяем общие правила для mobile - показываем desktop элементы */
+  div[class*="hidden"][class*="lg:grid"],
+  .hidden.lg\\:grid,
+  div.hidden.lg\\:grid {
+    display: grid !important;
+    visibility: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    left: auto !important;
+    width: auto !important;
+    margin: inherit !important;
+    padding: inherit !important;
+    pointer-events: auto !important;
+  }
+
+  div[class*="hidden"][class*="lg:grid"] > div,
+  .hidden.lg\\:grid > div,
+  .hidden.lg\\:grid > div.card {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .hidden.lg\\:grid [class*="hidden"][class*="lg:flex"] {
+    display: flex !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Показываем desktop hero вместо mobile */
+  .hero-section > div[class*="lg:hidden"] {
+    display: none !important;
+  }
+
+  .hero-section > div[class*="hidden"][class*="lg:flex"] {
+    display: flex !important;
+    visibility: visible !important;
+    height: auto !important;
+    opacity: 1 !important;
+  }
+
+  /* Desktop hero layout для landscape */
+  .hero-section {
+    min-height: calc(100svh - var(--header-h)) !important;
+    min-height: calc(100dvh - var(--header-h)) !important;
+    min-height: calc(100vh - var(--header-h)) !important; /* fallback */
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  /* Используем desktop контейнер */
+  .container-balanced {
+    max-width: 1280px !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+
+  /* Desktop grid для hero */
+  .hero-section .grid[class*="lg:grid-cols-2"] {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 2rem !important;
+  }
+
+  /* Заголовки с clamp() */
+  .hero-section h1 {
+    font-size: clamp(24px, 4vw, 36px) !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .hero-section p {
+    font-size: clamp(14px, 2vw, 18px) !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Кнопки сохраняем большими для тача */
+  .hero-section button {
+    min-height: 44px !important;
+    padding: 0.75rem 1.25rem !important;
+    font-size: clamp(14px, 1.8vw, 16px) !important;
+  }
+
+  /* Показываем desktop карточки вместо mobile */
+  .levels-mobile[class*="lg:hidden"],
+  .levels-mobile.lg\\:hidden {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .levels-desktop[class*="hidden"][class*="lg:grid"],
+  .levels-desktop.hidden.lg\\:grid {
+    display: grid !important;
+    visibility: visible !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 1.5rem !important;
+    height: auto !important;
+    opacity: 1 !important;
+    position: static !important;
+  }
+
+  /* Показываем внутренние desktop элементы карточек */
+  .levels-desktop[class*="lg:grid"] .card > div[class*="hidden"][class*="lg:flex"],
+  .levels-desktop .card > div.hidden.lg\\:flex {
+    display: flex !important;
+    visibility: visible !important;
+    height: auto !important;
+    opacity: 1 !important;
+  }
+
+  /* Убираем min-height для карточек в landscape */
+  .levels-desktop[class*="lg:grid"] .card,
+  .levels-desktop .card {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Desktop grid для карточек "Кому подойдет" */
+  [class*="hidden"][class*="md:grid"],
+  div[class*="hidden"][class*="md:grid"] {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem !important;
+  }
+
+  /* Заголовки секций с clamp() */
+  section h2 {
+    font-size: clamp(20px, 3.5vw, 28px) !important;
+    line-height: 1.3 !important;
+  }
+
+  section h3 {
+    font-size: clamp(16px, 2.5vw, 20px) !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Текст в карточках с clamp() */
+  .card p,
+  .card span {
+    font-size: clamp(13px, 1.8vw, 15px) !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Кнопки в карточках сохраняем большими */
+  .card button {
+    min-height: 44px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: clamp(14px, 1.8vw, 16px) !important;
+  }
+
+  /* Убираем разделитель между hero и formats */
+  .hero-section + div[class*="lg:hidden"] {
+    display: none !important;
+  }
+
+  /* Убеждаемся что все desktop элементы показываются */
+  section .hidden.lg\\:block,
+  section [class*="hidden"][class*="lg:block"] {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Показываем подзаголовок секции formats */
+  section#formats p.hidden.lg\\:block {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Уменьшаем вертикальные отступы */
+  section {
+    padding-top: clamp(1rem, 2vh, 1.5rem) !important;
+    padding-bottom: clamp(1rem, 2vh, 1.5rem) !important;
+  }
+
+  /* Desktop метки над карточками */
+  [class*="hidden"][class*="lg:grid"][class*="grid-cols-3"],
+  .hidden.lg\\:grid.grid-cols-3 {
+    display: grid !important;
+    visibility: visible !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    height: auto !important;
+    opacity: 1 !important;
+    position: static !important;
+  }
+
+  /* Используем svh/dvh вместо vh */
+  html,
+  body {
+    height: 100svh;
+    height: 100dvh;
+    height: 100vh; /* fallback */
+  }
+
+  /* Скрываем mobile swiper для карточек */
+  div[class*="md:hidden"] {
+    display: none !important;
+  }
+
+  /* Убираем лишние отступы в hero */
+  .hero-section .container-balanced {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Улучшаем читаемость текста в desktop hero */
+  .hero-section .grid[class*="lg:grid-cols-2"] h1 {
+    font-size: clamp(22px, 3.5vw, 32px) !important;
+  }
+
+  .hero-section .grid[class*="lg:grid-cols-2"] p {
+    font-size: clamp(13px, 1.8vw, 16px) !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Кнопки в desktop hero layout */
+  .hero-section .grid[class*="lg:grid-cols-2"] button {
+    min-height: 48px !important;
+    padding: 0.875rem 1.5rem !important;
+    font-size: clamp(14px, 1.8vw, 16px) !important;
+  }
+
+  /* Карточки уровней - уменьшаем вертикальные отступы и размеры */
+  .levels-desktop[class*="lg:grid"] .card {
+    padding: 1rem !important;
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Уменьшаем размеры изображений в карточках */
+  .levels-desktop[class*="lg:grid"] .card img {
+    height: clamp(80px, 12vh, 120px) !important;
+    max-height: 120px !important;
+  }
+
+  /* Уменьшаем отступы внутри карточек */
+  .levels-desktop[class*="lg:grid"] .card > div[class*="lg:flex"] {
+    gap: 0.75rem !important;
+  }
+
+  .levels-desktop[class*="lg:grid"] .card > div[class*="lg:flex"] > div {
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Уменьшаем размеры текста в карточках */
+  .levels-desktop[class*="lg:grid"] .card h3 {
+    font-size: clamp(16px, 2.2vw, 18px) !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .levels-desktop[class*="lg:grid"] .card p {
+    font-size: clamp(11px, 1.5vw, 13px) !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .levels-desktop[class*="lg:grid"] .card ul {
+    font-size: clamp(11px, 1.4vw, 12px) !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .levels-desktop[class*="lg:grid"] .card li {
+    margin-bottom: 0.25rem !important;
+  }
+
+  /* Кнопки в карточках */
+  .levels-desktop[class*="lg:grid"] .card button {
+    min-height: 44px !important;
+    padding: 0.625rem 1rem !important;
+    font-size: clamp(12px, 1.5vw, 14px) !important;
+  }
+
+  /* Уменьшаем gap между кнопками */
+  .levels-desktop[class*="lg:grid"] .card .flex.gap-3 {
+    gap: 0.5rem !important;
+    margin-top: 0.75rem !important;
+  }
+
+  /* Заголовки в карточках */
+  .levels-desktop[class*="lg:grid"] .card h3 {
+    font-size: clamp(16px, 2.2vw, 20px) !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Текст в карточках */
+  .levels-desktop[class*="lg:grid"] .card p {
+    font-size: clamp(12px, 1.6vw, 14px) !important;
+    line-height: 1.5 !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Кнопки в карточках уровней */
+  .levels-desktop[class*="lg:grid"] .card button {
+    min-height: 44px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: clamp(13px, 1.6vw, 15px) !important;
+  }
+
+  /* Карточки "Кому подойдет" - адаптивные размеры */
+  [class*="md:grid"][class*="grid-cols-2"] .card h3 {
+    font-size: clamp(16px, 2vw, 18px) !important;
+  }
+
+  [class*="md:grid"][class*="grid-cols-2"] .card p {
+    font-size: clamp(12px, 1.5vw, 14px) !important;
+  }
+
+  [class*="md:grid"][class*="grid-cols-2"] .card button {
+    min-height: 44px !important;
+    font-size: clamp(13px, 1.6vw, 15px) !important;
+  }
+
+  /* Убираем большие вертикальные отступы между секциями */
+  section + section {
+    margin-top: clamp(1rem, 2vh, 1.5rem) !important;
+  }
+}
+
+/* Улучшаем читаемость текста в hero на landscape */
+@media (max-width: 1023px) and (orientation: landscape) and (max-height: 430px) {
+  .hero-mobile-content .relative.z-10 {
+    max-width: 100%;
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Центрирование контента */
+  .hero-mobile-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}

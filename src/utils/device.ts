@@ -23,28 +23,78 @@ const updateDeviceCache = () => {
   cachedIsDesktop = width >= 1024 || (!hasTouch && width >= 768);
 };
 
-// Инициализация при загрузке
-if (typeof window !== 'undefined') {
+// Обработчики событий и таймеры
+let resizeTimeout: NodeJS.Timeout | null = null;
+let orientationTimeout: NodeJS.Timeout | null = null;
+let resizeHandler: (() => void) | null = null;
+let orientationHandler: (() => void) | null = null;
+
+// Функция инициализации обработчиков
+const initDeviceListeners = () => {
+  if (typeof window === 'undefined') return;
+  
+  // Очистка предыдущих обработчиков, если есть
+  cleanupDeviceListeners();
+  
   updateDeviceCache();
   
   // Обработчик resize с debounce
-  let resizeTimeout: NodeJS.Timeout;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
+  resizeHandler = () => {
+    if (resizeTimeout) {
+      clearTimeout(resizeTimeout);
+    }
     resizeTimeout = setTimeout(() => {
       updateDeviceCache();
-      // Уведомляем о изменении размера (для компонентов, которые подписаны)
       window.dispatchEvent(new CustomEvent('devicechange'));
     }, 150);
-  });
+  };
   
   // Обработчик изменения ориентации
-  window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
+  orientationHandler = () => {
+    if (orientationTimeout) {
+      clearTimeout(orientationTimeout);
+    }
+    orientationTimeout = setTimeout(() => {
       updateDeviceCache();
       window.dispatchEvent(new CustomEvent('devicechange'));
     }, 100);
-  });
+  };
+  
+  window.addEventListener('resize', resizeHandler);
+  window.addEventListener('orientationchange', orientationHandler);
+};
+
+// Функция очистки обработчиков
+const cleanupDeviceListeners = () => {
+  if (typeof window === 'undefined') return;
+  
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = null;
+  }
+  
+  if (orientationTimeout) {
+    clearTimeout(orientationTimeout);
+    orientationTimeout = null;
+  }
+  
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler);
+    resizeHandler = null;
+  }
+  
+  if (orientationHandler) {
+    window.removeEventListener('orientationchange', orientationHandler);
+    orientationHandler = null;
+  }
+};
+
+// Инициализация при загрузке
+if (typeof window !== 'undefined') {
+  initDeviceListeners();
+  
+  // Очистка при выгрузке страницы
+  window.addEventListener('beforeunload', cleanupDeviceListeners);
 }
 
 export const isMobile = (): boolean => {

@@ -24,7 +24,8 @@ export const fadeUpBlur = {
     y: 0,
     filter: 'blur(0px)',
     // приведение типа нужно из-за союзного Transition в framer-motion
-    transition: { duration: 0.7, ease: easeInOutQuart as any }
+    // Используем unknown вместо any для большей типобезопасности
+    transition: { duration: 0.7, ease: easeInOutQuart as unknown as [number, number, number, number] }
   }
 };
 

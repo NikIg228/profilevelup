@@ -3,7 +3,7 @@ import type { QuestionLetter } from './types';
 /**
  * Разрешает позицию 4 (J/P/W) из ответов на вопросы 1 и 4
  * 
- * Правила:
+ * Правила согласно free_rules.md:
  * - Если answer_q1 === answer_q4 → использовать эту букву (J или P)
  * - Если answer_q1 !== answer_q4 → использовать "W"
  * 

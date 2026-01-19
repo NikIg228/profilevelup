@@ -1,62 +1,101 @@
-import type { Tariff, AgeGroup, TestConfig } from './types';
+import type { Tariff, FreeAgeGroup, ExtendedAgeGroup, TestConfig, FreeTestConfig, ExtendedTestConfig } from './types';
 
 // Импорты FREE тестовых конфигураций
-import free13_17 from '../tests/FREE/13-17';
-import free18_24 from '../tests/FREE/18-24';
-import free25_34 from '../tests/FREE/25-34';
-import free35_45 from '../tests/FREE/35-45';
+import free12_17 from '../tests/FREE/12-17.json';
+import free18_20 from '../tests/FREE/18-20.json';
+import free21plus from '../tests/FREE/21plus.json';
 
-// Импорты EXTENDED тестовых конфигураций
-import extended13_17 from '../tests/EXTENDED/13-17';
-import extended18_24 from '../tests/EXTENDED/18-24';
-import extended25_34 from '../tests/EXTENDED/25-34';
-import extended35_45 from '../tests/EXTENDED/35-45';
-
-// Импорты PREMIUM тестовых конфигураций
-import premium13_17 from '../tests/PREMIUM/13-17';
-import premium18_24 from '../tests/PREMIUM/18-24';
-import premium25_34 from '../tests/PREMIUM/25-34';
-import premium35_45 from '../tests/PREMIUM/35-45';
+// Импорты VIP (EXTENDED/PREMIUM) тестовых конфигураций
+import vip12_17 from '../tests/VIP/12-17.json';
+import vip18_20 from '../tests/VIP/18-20.json';
+import vip21plus from '../tests/VIP/21plus.json';
 
 /**
- * Загружает конфигурацию теста по параметрам (синхронная версия)
+ * Загружает конфигурацию FREE теста по возрастной группе
  * 
- * @param tariff Тариф теста ('FREE' | 'EXTENDED' | 'PREMIUM')
- * @param ageGroup Возрастная группа ('13-17' | '18-24' | '25-34' | '35-45')
- *   Является ключом выбора конфигурации для всех тарифов
- * @returns Конфигурация теста
+ * @param ageGroup Возрастная группа ('12-17' | '18-20' | '21+')
+ * @returns Конфигурация FREE теста
  * 
- * @throws Error если конфигурация не найдена для данного tariff и ageGroup
+ * @throws Error если конфигурация не найдена
  */
-export function getTestConfig(
-  tariff: Tariff,
-  ageGroup: AgeGroup
-): TestConfig {
-  const configMap: Record<string, TestConfig> = {
-    'FREE/13-17': free13_17,
-    'FREE/18-24': free18_24,
-    'FREE/25-34': free25_34,
-    'FREE/35-45': free35_45,
-    'EXTENDED/13-17': extended13_17,
-    'EXTENDED/18-24': extended18_24,
-    'EXTENDED/25-34': extended25_34,
-    'EXTENDED/35-45': extended35_45,
-    'PREMIUM/13-17': premium13_17,
-    'PREMIUM/18-24': premium18_24,
-    'PREMIUM/25-34': premium25_34,
-    'PREMIUM/35-45': premium35_45,
+function getFreeTestConfig(ageGroup: FreeAgeGroup): FreeTestConfig {
+  const configMap: Record<FreeAgeGroup, FreeTestConfig> = {
+    '12-17': free12_17 as FreeTestConfig,
+    '18-20': free18_20 as FreeTestConfig,
+    '21+': free21plus as FreeTestConfig,
   };
   
-  const key = `${tariff}/${ageGroup}`;
-  const config = configMap[key];
+  const config = configMap[ageGroup];
   
   if (!config) {
-    throw new Error(`Test config not found for tariff=${tariff}, ageGroup=${ageGroup}`);
+    throw new Error(`FREE test config not found for ageGroup=${ageGroup}`);
   }
   
   if (!config.meta || !config.questions || !config.resultMapping) {
-    throw new Error(`Invalid test config for tariff=${tariff}, ageGroup=${ageGroup}`);
+    throw new Error(`Invalid FREE test config for ageGroup=${ageGroup}`);
   }
   
   return config;
 }
+
+/**
+ * Загружает конфигурацию VIP (EXTENDED/PREMIUM) теста по возрастной группе
+ * 
+ * @param ageGroup Возрастная группа ('12-17' | '18-20' | '21+')
+ * @returns Конфигурация VIP теста
+ * 
+ * @throws Error если конфигурация не найдена
+ */
+function getExtendedTestConfig(ageGroup: ExtendedAgeGroup): ExtendedTestConfig {
+  const configMap: Record<ExtendedAgeGroup, ExtendedTestConfig> = {
+    '12-17': vip12_17 as ExtendedTestConfig,
+    '18-20': vip18_20 as ExtendedTestConfig,
+    '21+': vip21plus as ExtendedTestConfig,
+  };
+  
+  const config = configMap[ageGroup];
+  
+  if (!config) {
+    throw new Error(`VIP test config not found for ageGroup=${ageGroup}`);
+  }
+  
+  if (!config.meta || !config.questions || !config.resultMapping) {
+    throw new Error(`Invalid VIP test config for ageGroup=${ageGroup}`);
+  }
+  
+  return config;
+}
+
+/**
+ * Загружает конфигурацию теста по параметрам
+ * 
+ * @param tariff Тариф теста ('FREE' | 'EXTENDED' | 'PREMIUM')
+ * @param ageGroup Возрастная группа
+ * @returns Конфигурация теста
+ * 
+ * @throws Error если конфигурация не найдена
+ */
+export function getTestConfig(
+  tariff: Tariff,
+  ageGroup: string
+): TestConfig {
+  if (tariff === 'FREE') {
+    // Валидация и преобразование возрастной группы для FREE теста
+    if (ageGroup === '12-17' || ageGroup === '18-20' || ageGroup === '21+') {
+      return getFreeTestConfig(ageGroup as FreeAgeGroup);
+    }
+    throw new Error(`Invalid FREE ageGroup: ${ageGroup}. Expected: 12-17, 18-20, or 21+`);
+  }
+  
+  if (tariff === 'EXTENDED' || tariff === 'PREMIUM') {
+    // Для EXTENDED и PREMIUM используются одинаковые VIP тесты
+    // Валидация и преобразование возрастной группы для VIP теста
+    if (ageGroup === '12-17' || ageGroup === '18-20' || ageGroup === '21+') {
+      return getExtendedTestConfig(ageGroup as ExtendedAgeGroup);
+    }
+    throw new Error(`Invalid VIP ageGroup: ${ageGroup}. Expected: 12-17, 18-20, or 21+`);
+  }
+  
+  throw new Error(`Test config not implemented for tariff=${tariff}`);
+}
+

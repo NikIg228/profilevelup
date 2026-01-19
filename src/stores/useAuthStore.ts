@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import { logger } from '../utils/logger';
 
 export interface User {
   id: string;
@@ -23,7 +24,7 @@ interface AuthState {
   checkSession: () => Promise<void>;
   updateProfile: (fullName?: string) => Promise<{ success: boolean; error?: string }>;
   changeEmail: (newEmail: string, password: string) => Promise<{ success: boolean; error?: string; requiresConfirmation?: boolean }>;
-  changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string; requiresConfirmation?: boolean }>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -71,7 +72,7 @@ export const useAuthStore = create<AuthState>()(
               
               profile = profileData;
             } catch (profileError) {
-              console.error('Ошибка загрузки профиля:', profileError);
+              logger.error('Ошибка загрузки профиля:', profileError);
             }
 
             const user: User = {
@@ -93,9 +94,10 @@ export const useAuthStore = create<AuthState>()(
 
           set({ isLoading: false });
           return { success: false, error: 'Ошибка входа' };
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({ isLoading: false });
-          return { success: false, error: error.message || 'Ошибка входа' };
+          const errorMessage = error instanceof Error ? error.message : 'Ошибка входа';
+          return { success: false, error: errorMessage };
         }
       },
 
@@ -153,9 +155,10 @@ export const useAuthStore = create<AuthState>()(
             success: true, 
             error: 'Проверьте почту и подтвердите регистрацию' 
           };
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({ isLoading: false });
-          return { success: false, error: error.message || 'Ошибка регистрации' };
+          const errorMessage = error instanceof Error ? error.message : 'Ошибка регистрации';
+          return { success: false, error: errorMessage };
         }
       },
 
@@ -168,7 +171,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
           });
         } catch (error) {
-          console.error('Ошибка выхода:', error);
+          logger.error('Ошибка выхода:', error);
           // Все равно очищаем состояние
           set({
             user: null,
@@ -189,8 +192,9 @@ export const useAuthStore = create<AuthState>()(
           }
 
           return { success: true };
-        } catch (error: any) {
-          return { success: false, error: error.message || 'Ошибка сброса пароля' };
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Ошибка сброса пароля';
+          return { success: false, error: errorMessage };
         }
       },
 
@@ -199,7 +203,7 @@ export const useAuthStore = create<AuthState>()(
           const { data: { session }, error } = await supabase.auth.getSession();
           
           if (error) {
-            console.error('Ошибка проверки сессии:', error);
+            logger.error('Ошибка проверки сессии:', error);
             return;
           }
 
@@ -215,7 +219,7 @@ export const useAuthStore = create<AuthState>()(
               
               profile = profileData;
             } catch (profileError) {
-              console.error('Ошибка загрузки профиля:', profileError);
+              logger.error('Ошибка загрузки профиля:', profileError);
             }
 
             const user: User = {
@@ -267,8 +271,9 @@ export const useAuthStore = create<AuthState>()(
           });
 
           return { success: true };
-        } catch (error: any) {
-          return { success: false, error: error.message || 'Ошибка обновления профиля' };
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Ошибка обновления профиля';
+          return { success: false, error: errorMessage };
         }
       },
 
@@ -328,8 +333,9 @@ export const useAuthStore = create<AuthState>()(
             requiresConfirmation: true,
             error: 'Проверьте новую почту и подтвердите изменение email'
           };
-        } catch (error: any) {
-          return { success: false, error: error.message || 'Ошибка изменения email' };
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Ошибка изменения email';
+          return { success: false, error: errorMessage };
         }
       },
 
@@ -360,24 +366,28 @@ export const useAuthStore = create<AuthState>()(
             return { success: false, error: 'Пароль должен содержать минимум 6 символов' };
           }
 
-          // Обновляем пароль
-          const { error } = await supabase.auth.updateUser({
-            password: newPassword,
+          // Вместо немедленного изменения пароля, отправляем письмо с подтверждением
+          // Сохраняем новый пароль в sessionStorage для последующего использования
+          sessionStorage.setItem('pending_password_change', newPassword);
+          
+          const { error } = await supabase.auth.resetPasswordForEmail(state.user.email, {
+            redirectTo: `${window.location.origin}/account?mode=change-password`,
           });
 
           if (error) {
-            let errorMessage = 'Ошибка изменения пароля';
-            if (error.message.includes('same')) {
-              errorMessage = 'Новый пароль должен отличаться от текущего';
-            } else {
-              errorMessage = error.message;
-            }
-            return { success: false, error: errorMessage };
+            sessionStorage.removeItem('pending_password_change');
+            return { success: false, error: error.message || 'Ошибка отправки письма' };
           }
 
-          return { success: true };
-        } catch (error: any) {
-          return { success: false, error: error.message || 'Ошибка изменения пароля' };
+          return { 
+            success: true,
+            requiresConfirmation: true,
+            error: 'Проверьте почту и подтвердите изменение пароля по ссылке в письме'
+          };
+        } catch (error: unknown) {
+          sessionStorage.removeItem('pending_password_change');
+          const errorMessage = error instanceof Error ? error.message : 'Ошибка изменения пароля';
+          return { success: false, error: errorMessage };
         }
       },
     }),
@@ -394,7 +404,7 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Слушаем изменения аутентификации
-supabase.auth.onAuthStateChange((event: string, session: any) => {
+supabase.auth.onAuthStateChange((event: string, session: unknown) => {
   const state = useAuthStore.getState();
   
   if (event === 'SIGNED_IN' && session?.user) {

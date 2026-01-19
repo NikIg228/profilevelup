@@ -4,7 +4,12 @@
 
 export type Tariff = 'FREE' | 'PRO' | 'PREMIUM' | 'EXTENDED';
 
-export type AgeGroup = '13-17' | '18-24' | '25-34' | '35-45';
+// Возрастные группы для FREE тестов
+export type FreeAgeGroup = '12-17' | '18-20' | '21+';
+// Возрастные группы для EXTENDED/PREMIUM тестов (VIP тесты)
+export type ExtendedAgeGroup = '12-17' | '18-20' | '21+';
+// Общий тип возрастной группы
+export type AgeGroup = FreeAgeGroup | ExtendedAgeGroup;
 
 export type Gender = 'male' | 'female';
 
@@ -14,14 +19,6 @@ export type ResultLetter = 'E' | 'I' | 'N' | 'S' | 'T' | 'F' | 'J' | 'P' | 'W' |
 
 /**
  * Финальный результат теста в виде строки (например: "ESTW", "INFP", "EXTP", "ZNFW")
- * 
- * ⚠️ ВАЖНО: resultIndex НЕ отображается пользователю в продакшене.
- * Используется только для:
- * - отладки логики тестирования
- * - передачи на бэкенд для генерации отчётов (PDF / email)
- * - внутренней обработки результатов
- * 
- * НЕ добавлять UI-зависимости от resultIndex.
  */
 export type ResultIndex = string;
 
@@ -57,7 +54,7 @@ export interface QuestionOption {
  * Вопрос теста
  */
 export interface Question {
-  id: number; // 1-5 для FREE, 1-28 для EXTENDED/PREMIUM
+  id: number; // 1-5 для FREE
   text: string;
   options: QuestionOption[];
 }
@@ -72,7 +69,6 @@ export interface ExtendedQuestionOption {
 
 /**
  * Вопрос для EXTENDED/PREMIUM теста
- * Вопросы НЕ знают, к какой дихотомии они относятся - это определяется только через resultMapping
  */
 export interface ExtendedQuestion {
   id: number; // 1-28
@@ -85,7 +81,7 @@ export interface ExtendedQuestion {
  */
 export interface TestMeta {
   tariff: Tariff;
-  ageGroup: AgeGroup; // Возрастная группа является ключом выбора конфигурации
+  ageGroup: AgeGroup;
 }
 
 /**
@@ -126,7 +122,7 @@ export interface BlockResultMapping {
  * Конфигурация FREE теста
  */
 export interface FreeTestConfig {
-  meta: TestMeta;
+  meta: TestMeta & { ageGroup: FreeAgeGroup };
   questions: Question[];
   resultMapping: PositionalResultMapping;
 }
@@ -135,7 +131,7 @@ export interface FreeTestConfig {
  * Конфигурация EXTENDED/PREMIUM теста
  */
 export interface ExtendedTestConfig {
-  meta: TestMeta;
+  meta: TestMeta & { ageGroup: ExtendedAgeGroup };
   questions: ExtendedQuestion[];
   resultMapping: BlockResultMapping;
 }
@@ -151,3 +147,4 @@ export type TestConfig = FreeTestConfig | ExtendedTestConfig;
 export interface TestResult {
   resultIndex: ResultIndex;
 }
+

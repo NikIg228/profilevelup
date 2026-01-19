@@ -1,25 +1,98 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
+import { supabase } from '../lib/supabase';
 import LoginForm from '../components/forms/LoginForm';
 import RegisterForm from '../components/forms/RegisterForm';
 import ForgotPasswordForm from '../components/forms/ForgotPasswordForm';
 import ChangeEmailForm from '../components/forms/ChangeEmailForm';
 import ChangePasswordForm from '../components/forms/ChangePasswordForm';
-import TestHistory from '../components/TestHistory';
-import { User, LogOut, History, Settings } from 'lucide-react';
+import ChangeNameForm from '../components/forms/ChangeNameForm';
+import { logger } from '../utils/logger';
+import { User, LogOut, Settings, Check, AlertCircle } from 'lucide-react';
 
 type ViewMode = 'login' | 'register' | 'forgot-password' | 'account';
-type AccountSection = 'settings' | 'history';
+type AccountSection = 'settings';
 
 export default function AccountPage() {
   const { user, isAuthenticated, logout, checkSession } = useAuthStore();
   const [viewMode, setViewMode] = useState<ViewMode>('login');
-  const [section, setSection] = useState<AccountSection>('history');
+  const [section, setSection] = useState<AccountSection>('settings');
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   // Проверяем сессию при загрузке
   useEffect(() => {
     checkSession();
+  }, [checkSession]);
+
+  // Обработка подтверждения изменения email и пароля
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      // Проверяем URL параметры для подтверждения изменения email
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
+      const urlParams = new URLSearchParams(window.location.search);
+      const mode = urlParams.get('mode');
+
+      // Обработка подтверждения изменения email
+      // Supabase автоматически обрабатывает токен через URL hash при загрузке страницы
+      if (accessToken && (type === 'email_change' || type === 'email')) {
+        try {
+          // Обновляем сессию, чтобы получить обновленный email
+          await checkSession();
+          setEmailConfirmed(true);
+          // Очищаем URL
+          window.history.replaceState({}, document.title, '/account');
+          // Скрываем сообщение через 5 секунд
+          setTimeout(() => setEmailConfirmed(false), 5000);
+        } catch (error) {
+          logger.error('Ошибка при подтверждении email:', error);
+        }
+      }
+
+      // Обработка подтверждения смены пароля
+      if (mode === 'change-password' && accessToken) {
+        try {
+          const pendingPassword = sessionStorage.getItem('pending_password_change');
+          
+          if (!pendingPassword) {
+            logger.error('Новый пароль не найден в sessionStorage');
+            window.history.replaceState({}, document.title, '/account');
+            return;
+          }
+
+          // Обновляем пароль
+          const { error } = await supabase.auth.updateUser({
+            password: pendingPassword
+          });
+
+          if (error) {
+            logger.error('Ошибка изменения пароля:', error);
+            sessionStorage.removeItem('pending_password_change');
+            window.history.replaceState({}, document.title, '/account');
+            return;
+          }
+
+          // Пароль успешно изменен
+          sessionStorage.removeItem('pending_password_change');
+          setPasswordChanged(true);
+          window.history.replaceState({}, document.title, '/account');
+          
+          // Обновляем сессию
+          await checkSession();
+          // Скрываем сообщение через 5 секунд
+          setTimeout(() => setPasswordChanged(false), 5000);
+        } catch (error) {
+          logger.error('Ошибка при изменении пароля:', error);
+          sessionStorage.removeItem('pending_password_change');
+          window.history.replaceState({}, document.title, '/account');
+        }
+      }
+    };
+
+    handleAuthCallback();
   }, [checkSession]);
 
   // Обновляем viewMode при изменении авторизации
@@ -82,7 +155,7 @@ export default function AccountPage() {
 
   // Если авторизован, показываем личный кабинет
   return (
-    <div className="container-balanced py-8">
+      <div className="container-balanced py-8">
       <div className="max-w-3xl mx-auto">
         {/* Заголовок */}
         <div className="mb-6">
@@ -90,25 +163,44 @@ export default function AccountPage() {
           <p className="text-sm text-muted">Управление профилем и история тестов</p>
         </div>
 
+        {/* Уведомления об успешном подтверждении */}
+        {emailConfirmed && (
+          <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-600 flex items-start gap-3">
+            <Check className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium mb-1">Email успешно изменен!</p>
+              <p className="text-sm">Ваш email был обновлен на {user?.email}</p>
+            </div>
+          </div>
+        )}
+
+        {passwordChanged && (
+          <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-600 flex items-start gap-3">
+            <Check className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium mb-1">Пароль успешно изменен!</p>
+              <p className="text-sm">Ваш пароль был обновлен</p>
+            </div>
+          </div>
+        )}
+
         {/* Информация о пользователе */}
         <div className="bg-white rounded-xl p-4 border border-secondary/40 shadow-sm mb-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 flex-shrink-0">
                 <User className="w-6 h-6 text-primary" />
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-heading">
-                  {user?.fullName || user?.email}
-                </h2>
-                <p className="text-xs text-muted">
+              <div className="flex-1 min-w-0">
+                <ChangeNameForm />
+                <p className="text-xs text-muted mt-1">
                   {user?.email} • Зарегистрирован: {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('ru-RU') : '—'}
                 </p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+              className="px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm flex-shrink-0"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Выйти</span>
@@ -116,41 +208,11 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Навигация по разделам */}
-        <div className="flex gap-2 mb-4 border-b border-secondary/40">
-          <button
-            onClick={() => setSection('settings')}
-            className={`px-4 py-2 rounded-t-lg font-medium transition-all flex items-center gap-2 text-sm ${
-              section === 'settings'
-                ? 'bg-white text-primary border-b-2 border-primary shadow-sm'
-                : 'text-muted hover:text-heading hover:bg-secondary/10'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Настройки
-          </button>
-          <button
-            onClick={() => setSection('history')}
-            className={`px-4 py-2 rounded-t-lg font-medium transition-all flex items-center gap-2 text-sm ${
-              section === 'history'
-                ? 'bg-white text-primary border-b-2 border-primary shadow-sm'
-                : 'text-muted hover:text-heading hover:bg-secondary/10'
-            }`}
-          >
-            <History className="w-4 h-4" />
-            История тестов
-          </button>
-        </div>
-
         {/* Контент */}
-        {section === 'settings' ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            <ChangeEmailForm />
-            <ChangePasswordForm />
-          </div>
-        ) : (
-          <TestHistory />
-        )}
+        <div className="grid md:grid-cols-2 gap-4">
+          <ChangeEmailForm />
+          <ChangePasswordForm />
+        </div>
       </div>
     </div>
   );

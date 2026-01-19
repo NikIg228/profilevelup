@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Check, FileText, HelpCircle, CheckSquare, Users, Star, GraduationCap, Briefcase, Target, Lightbulb, Heart, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
@@ -11,9 +11,13 @@ import Modal from '../components/Modal';
 import Select from '../components/Select';
 import CountUp from '../components/CountUp';
 import ReviewForm from '../components/ReviewForm';
+import IntroOverlay from '../components/IntroOverlay';
 import { getReviews } from '../utils/reviewsStorage';
 import { useLenis } from '../contexts/LenisContext';
 import { scrollLockManager } from '../utils/scrollLock';
+import { useAutoSlider } from '../hooks/useAutoSlider';
+import { useSwiperAutoSlider } from '../hooks/useSwiperAutoSlider';
+import { logger } from '../utils/logger';
 
 type FormErrorKey = 'name' | 'age' | 'gender' | 'testType' | 'email' | 'emailConfirm' | 'parentEmail' | 'parentEmailConfirm' | 'consent';
 
@@ -27,6 +31,36 @@ export default function HomePage() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [premiumSlideIndex, setPremiumSlideIndex] = useState(0); // 0 - подросток, 1 - родитель
   
+  // Ref для мобильной версии уровней навигации
+  const levelsMobileRef = useRef<HTMLDivElement>(null);
+  const SLIDE_COUNT = 3;
+  
+  // Определяем, мобильное ли устройство
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 1023;
+  });
+  
+  // Отслеживаем изменение размера окна
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 1023);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Используем хук автопрокрутки для мобильной версии
+  const { currentIndex, goToSlide, pause, isPaused } = useAutoSlider({
+    enabled: isMobile,
+    intervalMs: 2500,
+    pauseMs: 15000,
+    visibilityThreshold: 0.65,
+    containerRef: levelsMobileRef,
+    slideCount: SLIDE_COUNT,
+  });
+  
   // Обработчик раскрытия mobile-extra блока
   const handleMobileExtraToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
     const card = e.currentTarget.closest('.card');
@@ -39,224 +73,41 @@ export default function HomePage() {
   const location = useLocation();
   const lenis = useLenis();
 
-  // Состояния для Hero анимации
-  // Логика:
-  // - При первом входе на сайт (нет флага) - показываем анимацию, устанавливаем флаг
-  // - При закрытии вкладки и повторном открытии (sessionStorage очищается) - показываем анимацию
-  // - При переходе через роутинг (флаг уже есть) - НЕ показываем анимацию
-  // - При перезагрузке страницы (F5) - показываем анимацию, но флаг устанавливается после завершения
-  const [shouldShowAnimation] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    
-    // Сначала проверяем флаг в sessionStorage
-    // Если флаг есть - пользователь уже был на главной в этой сессии, не показываем анимацию
-    // Это предотвратит показ анимации при переходах через роутинг
-    const hasSeenInSession = sessionStorage.getItem('heroAnimationSeenInSession') === 'true';
-    
-    // Если флаг есть - это переход через роутинг, не показываем анимацию
-    if (hasSeenInSession) {
-      return false;
-    }
-    
-    // Если флага нет - проверяем тип навигации
-    // При перезагрузке страницы (F5) - всегда показываем анимацию
-    let isReload = false;
-    try {
-      const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      isReload = navigationEntry?.type === 'reload';
-    } catch {
-      // Если не удалось определить тип навигации, считаем что это не перезагрузка
-    }
-    
-    // Показываем анимацию если:
-    // 1. Это перезагрузка страницы (F5)
-    // 2. ИЛИ это первое открытие (флага нет)
-    return isReload || !hasSeenInSession;
-  });
-  
-  // Устанавливаем флаг при посещении главной страницы
-  // Используем useRef для отслеживания, был ли флаг установлен при этом монтировании компонента
-  const flagSetThisMountRef = useRef(false);
-  
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    // Проверяем, находимся ли мы на главной странице
-    if (location.pathname !== '/') {
-      // При уходе с главной страницы сбрасываем флаг для следующего возврата
-      flagSetThisMountRef.current = false;
-      return;
-    }
-    
-    // Если флаг уже установлен при этом монтировании, не устанавливаем его повторно
-    if (flagSetThisMountRef.current) return;
-    
-    // Проверяем тип навигации только при первом монтировании на главной
-    let isReload = false;
-    try {
-      const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      isReload = navigationEntry?.type === 'reload';
-    } catch {
-      // Если не удалось определить тип навигации, считаем что это не перезагрузка
-    }
-    
-    const hasSeenInSession = sessionStorage.getItem('heroAnimationSeenInSession') === 'true';
-    
-    // Устанавливаем флаг в двух случаях:
-    // 1. При перезагрузке страницы (F5) - устанавливаем сразу, чтобы при следующем переходе через роутинг анимация не показывалась
-    // 2. При первом посещении главной (если это не перезагрузка и флага нет)
-    // Это предотвратит показ анимации при переходах через роутинг после перезагрузки
-    if (isReload || !hasSeenInSession) {
-      // Устанавливаем флаг сразу при посещении главной
-      // При перезагрузке это предотвратит показ анимации при следующем переходе через роутинг
-      sessionStorage.setItem('heroAnimationSeenInSession', 'true');
-      flagSetThisMountRef.current = true;
-    }
-  }, [location.pathname]); // При изменении пути
-
-  const [heroStage, setHeroStage] = useState<'pain' | 'transition' | 'solution' | 'complete'>(() => {
-    // Если нужно показать анимацию, начинаем с 'pain', иначе сразу 'solution'
-    return shouldShowAnimation ? 'pain' : 'solution';
-  });
-  const [currentPainIndex, setCurrentPainIndex] = useState(-1); // -1 означает задержку перед первой фразой
-  const [animationSkipped, setAnimationSkipped] = useState(!shouldShowAnimation);
-  const [showDarkOverlay, setShowDarkOverlay] = useState(false);
-  const [maskRadius, setMaskRadius] = useState(0);
-  const [logoPosition, setLogoPosition] = useState({ x: '75%', y: '50%' }); // Desktop по умолчанию
-  const logoRef = useRef<HTMLImageElement>(null);
-  
-  const painPhrases = [
-    'Выбери нормальную профессию!',
-    'На этом денег не заработаешь!',
-    'Какие таланты? Главное — диплом!'
-  ];
-
-  // Блокировка скролла во время анимации боли через менеджер
-  useEffect(() => {
-    if (heroStage === 'pain' || heroStage === 'transition') {
-      scrollLockManager.lock('hero');
-    } else {
-      scrollLockManager.unlock('hero');
-    }
-    
-    return () => {
-      scrollLockManager.unlock('hero');
-    };
-  }, [heroStage]);
-
-  // Получение позиции существующего логотипа в hero (только для desktop версии)
-  useLayoutEffect(() => {
-    const isMobile = window.innerWidth < 1024;
-    if (heroStage === 'solution' && logoRef.current && !animationSkipped && !isMobile) {
-      const logo = logoRef.current;
-      const rect = logo.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      // Вычисляем позицию в процентах от viewport
-      const xPercent = ((rect.left + rect.width / 2) / viewportWidth) * 100;
-      const yPercent = ((rect.top + rect.height / 2) / viewportHeight) * 100;
-      
-      setLogoPosition({ 
-        x: `${xPercent}%`, 
-        y: `${yPercent}%` 
-      });
-    }
-  }, [heroStage, animationSkipped]);
-
-  // Эффект "выход из тени" - затемнение с расширяющимся светом из лого (только для desktop)
-  useLayoutEffect(() => {
-    const isMobile = window.innerWidth < 1024;
-    if (heroStage === 'solution' && !animationSkipped && logoRef.current && !isMobile) {
-      // Небольшая задержка, чтобы убедиться, что логотип в DOM
-      const timer = setTimeout(() => {
-        setShowDarkOverlay(true);
-        setMaskRadius(0);
-        
-        // Анимация расширения mask с плавным easing
-        const startTime = Date.now();
-        const duration = 2000;
-        const keyframes = [0, 0.1, 0.3, 0.6, 1];
-        const radiusValues = [0, 5, 25, 60, 150];
-        
-        const easeOut = (t: number) => {
-          return 1 - Math.pow(1 - t, 3);
-        };
-        
-        const animate = () => {
-          const elapsed = Date.now() - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const easedProgress = easeOut(progress);
-          
-          // Интерполяция между ключевыми кадрами
-          let radius = 0;
-          if (easedProgress <= keyframes[0]) {
-            radius = radiusValues[0];
-          } else if (easedProgress >= keyframes[keyframes.length - 1]) {
-            radius = radiusValues[radiusValues.length - 1];
-          } else {
-            for (let i = 0; i < keyframes.length - 1; i++) {
-              if (easedProgress >= keyframes[i] && easedProgress <= keyframes[i + 1]) {
-                const localProgress = (easedProgress - keyframes[i]) / (keyframes[i + 1] - keyframes[i]);
-                radius = radiusValues[i] + (radiusValues[i + 1] - radiusValues[i]) * localProgress;
-                break;
-              }
-            }
-          }
-          
-          setMaskRadius(radius);
-          
-          if (progress < 1) {
-            requestAnimationFrame(animate);
-          } else {
-            setTimeout(() => {
-              setShowDarkOverlay(false);
-              setMaskRadius(0);
-            }, 100);
-          }
-        };
-        
-        requestAnimationFrame(animate);
-      }, 50);
-      
-      return () => clearTimeout(timer);
-    } else {
-      setShowDarkOverlay(false);
-      setMaskRadius(0);
-    }
-  }, [heroStage, animationSkipped, logoPosition]);
 
   // Принудительный пересчёт layout при загрузке страницы для мобильных устройств
   useEffect(() => {
     // Флаг для предотвращения рекурсии
     let isResizing = false;
+    const timers: NodeJS.Timeout[] = [];
 
     // Триггерим resize для пересчёта размеров всех компонентов
     const triggerResize = () => {
       if (isResizing) return;
       isResizing = true;
       window.dispatchEvent(new Event('resize'));
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         isResizing = false;
       }, 100);
+      timers.push(timer);
     };
 
     // Выполняем после полной загрузки страницы
     if (document.readyState === 'complete') {
-      setTimeout(triggerResize, 100);
-      setTimeout(triggerResize, 300);
+      timers.push(setTimeout(triggerResize, 100));
+      timers.push(setTimeout(triggerResize, 300));
     } else {
-      window.addEventListener('load', () => {
-        setTimeout(triggerResize, 100);
-        setTimeout(triggerResize, 300);
-      }, { once: true });
+      const loadHandler = () => {
+        timers.push(setTimeout(triggerResize, 100));
+        timers.push(setTimeout(triggerResize, 300));
+      };
+      window.addEventListener('load', loadHandler, { once: true });
     }
 
     // Также триггерим при изменении ориентации
     const handleOrientationChange = () => {
       // Увеличиваем задержку для корректного определения размеров после поворота
-      setTimeout(triggerResize, 200);
-      setTimeout(triggerResize, 400);
+      timers.push(setTimeout(triggerResize, 200));
+      timers.push(setTimeout(triggerResize, 400));
     };
 
     window.addEventListener('orientationchange', handleOrientationChange);
@@ -269,57 +120,13 @@ export default function HomePage() {
     window.addEventListener('resize', handleResize);
 
     return () => {
+      // Очищаем все таймеры
+      timers.forEach(timer => clearTimeout(timer));
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
 
-  // Задержка перед первой фразой (2 секунды)
-  useEffect(() => {
-    if (animationSkipped || heroStage !== 'pain' || currentPainIndex !== -1) return;
-    
-    const initialDelay = setTimeout(() => {
-      setCurrentPainIndex(0);
-    }, 2000); // 2 секунды задержка перед первой фразой
-    
-    return () => clearTimeout(initialDelay);
-  }, [currentPainIndex, heroStage, animationSkipped]);
-
-  // Управление анимацией фраз боли
-  useEffect(() => {
-    if (animationSkipped || heroStage !== 'pain' || currentPainIndex < 0) return;
-
-    if (currentPainIndex < painPhrases.length) {
-      // Каждая фраза показывается 2 сек + интервал 0.8 сек = 2.8 сек
-      const showTimer = setTimeout(() => {
-        if (currentPainIndex === painPhrases.length - 1) {
-          // Последняя фраза - переход к следующей стадии
-          setTimeout(() => {
-            setHeroStage('transition');
-            setTimeout(() => {
-              setHeroStage('solution');
-              // Сохраняем, что анимация была показана в этой сессии
-              sessionStorage.setItem('heroAnimationSeenInSession', 'true');
-            }, 33);
-          }, 27);
-        } else {
-          setCurrentPainIndex(prev => prev + 1);
-        }
-      }, 2800); // 2 сек показ + 0.8 сек интервал
-
-      return () => clearTimeout(showTimer);
-    }
-  }, [currentPainIndex, heroStage, animationSkipped, painPhrases.length]);
-
-  // Пропуск анимации по тапу
-  const skipAnimation = () => {
-    if (heroStage === 'pain' || heroStage === 'transition') {
-      setAnimationSkipped(true);
-      setHeroStage('solution');
-      // Сохраняем, что анимация была показана в этой сессии (даже если пропущена)
-      sessionStorage.setItem('heroAnimationSeenInSession', 'true');
-    }
-  };
 
 
   const trimmedEmail = form.email.trim();
@@ -367,10 +174,10 @@ export default function HomePage() {
       formatsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-  // TEMPORARY TESTING: Быстрый переход к тесту без заполнения формы
+  // Быстрый переход к FREE тесту без заполнения формы
   const startTestQuick = () => {
     // Запрашиваем возраст у пользователя
-    const ageInput = prompt('Введите возраст (от 13 до 45):');
+    const ageInput = prompt('Введите возраст (от 12 до 70):');
     
     if (!ageInput) {
       return; // Пользователь отменил ввод
@@ -378,30 +185,27 @@ export default function HomePage() {
     
     const ageNum = parseInt(ageInput.trim(), 10);
     
-    // Валидация возраста
-    if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
-      alert('Возраст должен быть от 13 до 45 лет');
+    // Валидация возраста для FREE теста
+    if (isNaN(ageNum) || ageNum < 12 || ageNum > 70) {
+      alert('Возраст должен быть от 12 до 70 лет');
       return;
     }
     
-    // Определяем возрастную группу
-    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
-    if (ageNum >= 13 && ageNum <= 17) {
-      ageGroup = '13-17';
-    } else if (ageNum >= 18 && ageNum <= 24) {
-      ageGroup = '18-24';
-    } else if (ageNum >= 25 && ageNum <= 34) {
-      ageGroup = '25-34';
+    // Определяем возрастную группу для FREE теста
+    let ageGroup: '12-17' | '18-20' | '21+';
+    if (ageNum >= 12 && ageNum <= 17) {
+      ageGroup = '12-17';
+    } else if (ageNum >= 18 && ageNum <= 20) {
+      ageGroup = '18-20';
     } else {
-      ageGroup = '35-45';
+      ageGroup = '21+';
     }
     
     // Устанавливаем тестовые данные для FREE теста
-    // ⚠️ ВРЕМЕННОЕ РЕШЕНИЕ: При клике на кнопку "Тест" начинается запись данных теста в localStorage
     sessionStorage.setItem('profi.user', JSON.stringify({ 
       plan: 'free',
       name: 'Тестовый пользователь',
-      ageGroup: ageGroup, // Используем ageGroup вместо age
+      ageGroup: ageGroup,
       gender: 'male',
       testType: 'Первичное понимание',
       email: 'test@test.com'
@@ -411,7 +215,7 @@ export default function HomePage() {
 
   const startTestQuickExtended = () => {
     // Запрашиваем возраст у пользователя
-    const ageInput = prompt('Введите возраст (от 13 до 45):');
+    const ageInput = prompt('Введите возраст (от 12 до 70):');
     
     if (!ageInput) {
       return; // Пользователь отменил ввод
@@ -419,22 +223,20 @@ export default function HomePage() {
     
     const ageNum = parseInt(ageInput.trim(), 10);
     
-    // Валидация возраста
-    if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
-      alert('Возраст должен быть от 13 до 45 лет');
+    // Валидация возраста для VIP теста
+    if (isNaN(ageNum) || ageNum < 12 || ageNum > 70) {
+      alert('Возраст должен быть от 12 до 70 лет');
       return;
     }
     
-    // Определяем возрастную группу
-    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
-    if (ageNum >= 13 && ageNum <= 17) {
-      ageGroup = '13-17';
-    } else if (ageNum >= 18 && ageNum <= 24) {
-      ageGroup = '18-24';
-    } else if (ageNum >= 25 && ageNum <= 34) {
-      ageGroup = '25-34';
+    // Определяем возрастную группу для VIP теста
+    let ageGroup: '12-17' | '18-20' | '21+';
+    if (ageNum >= 12 && ageNum <= 17) {
+      ageGroup = '12-17';
+    } else if (ageNum >= 18 && ageNum <= 20) {
+      ageGroup = '18-20';
     } else {
-      ageGroup = '35-45';
+      ageGroup = '21+';
     }
     
     // Устанавливаем тестовые данные для EXTENDED теста
@@ -451,7 +253,7 @@ export default function HomePage() {
 
   const startTestQuickPremium = () => {
     // Запрашиваем возраст у пользователя
-    const ageInput = prompt('Введите возраст (от 13 до 45):');
+    const ageInput = prompt('Введите возраст (от 12 до 70):');
     
     if (!ageInput) {
       return; // Пользователь отменил ввод
@@ -459,22 +261,20 @@ export default function HomePage() {
     
     const ageNum = parseInt(ageInput.trim(), 10);
     
-    // Валидация возраста
-    if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
-      alert('Возраст должен быть от 13 до 45 лет');
+    // Валидация возраста для VIP теста
+    if (isNaN(ageNum) || ageNum < 12 || ageNum > 70) {
+      alert('Возраст должен быть от 12 до 70 лет');
       return;
     }
     
-    // Определяем возрастную группу
-    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
-    if (ageNum >= 13 && ageNum <= 17) {
-      ageGroup = '13-17';
-    } else if (ageNum >= 18 && ageNum <= 24) {
-      ageGroup = '18-24';
-    } else if (ageNum >= 25 && ageNum <= 34) {
-      ageGroup = '25-34';
+    // Определяем возрастную группу для VIP теста
+    let ageGroup: '12-17' | '18-20' | '21+';
+    if (ageNum >= 12 && ageNum <= 17) {
+      ageGroup = '12-17';
+    } else if (ageNum >= 18 && ageNum <= 20) {
+      ageGroup = '18-20';
     } else {
-      ageGroup = '35-45';
+      ageGroup = '21+';
     }
     
     // Устанавливаем тестовые данные для PREMIUM теста
@@ -553,19 +353,6 @@ export default function HomePage() {
 
     setErrors({});
     
-    // Преобразуем возраст в возрастную группу
-    const ageNum = parseInt(form.age, 10);
-    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
-    if (ageNum >= 13 && ageNum <= 17) {
-      ageGroup = '13-17';
-    } else if (ageNum >= 18 && ageNum <= 24) {
-      ageGroup = '18-24';
-    } else if (ageNum >= 25 && ageNum <= 34) {
-      ageGroup = '25-34';
-    } else {
-      ageGroup = '35-45';
-    }
-    
     // Определяем plan на основе testType
     let finalPlan: 'free' | 'extended' | 'premium';
     if (form.testType === 'Первичное понимание') {
@@ -577,6 +364,19 @@ export default function HomePage() {
     } else {
       // Fallback: используем plan из state или по умолчанию 'free'
       finalPlan = plan === 'pro' ? 'extended' : 'free';
+    }
+    
+    // Преобразуем возраст в возрастную группу
+    const ageNum = parseInt(form.age, 10);
+    let ageGroup: string;
+    
+    // Для всех тестов (FREE, EXTENDED, PREMIUM) используем одинаковые возрастные группы
+    if (ageNum >= 12 && ageNum <= 17) {
+      ageGroup = '12-17';
+    } else if (ageNum >= 18 && ageNum <= 20) {
+      ageGroup = '18-20';
+    } else {
+      ageGroup = '21+';
     }
     
     const { emailConfirm, parentEmailConfirm, age, ...formWithoutConfirm } = form;
@@ -592,101 +392,35 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Overlay затемнения с расширяющимся светом из лого */}
-      {showDarkOverlay && (
-        <motion.div
-          className="fixed inset-0 pointer-events-none z-[70]"
-          style={{
-            background: 'rgba(0, 0, 0, 0.85)',
-            maskImage: `radial-gradient(circle at ${logoPosition.x} ${logoPosition.y}, transparent 0%, transparent ${maskRadius}%, black ${maskRadius}%)`,
-            WebkitMaskImage: `radial-gradient(circle at ${logoPosition.x} ${logoPosition.y}, transparent 0%, transparent ${maskRadius}%, black ${maskRadius}%)`,
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{ duration: 2, times: [0, 0.1, 1], ease: 'easeOut' }}
-          onAnimationComplete={() => setShowDarkOverlay(false)}
-        />
-      )}
-
       {/* Hero */}
       <section 
-        className={`hero-section ${heroStage === 'pain' || heroStage === 'transition' ? 'fixed inset-0' : 'relative'} ${heroStage === 'pain' || heroStage === 'transition' ? 'z-[60]' : 'z-0'} h-[100svh] lg:min-h-[80vh] flex flex-col items-center ${heroStage === 'solution' ? 'justify-start lg:pt-8' : 'justify-center'} ${heroStage === 'pain' || heroStage === 'transition' ? 'overflow-hidden' : ''} transition-all duration-1000 ${
-          heroStage === 'pain' || heroStage === 'transition' 
-            ? 'bg-gray-900' 
-            : 'bg-base'
-        }`}
-        onClick={skipAnimation}
-        style={{ 
-          cursor: heroStage === 'pain' || heroStage === 'transition' ? 'pointer' : 'default',
-        }}
+        id="hero"
+        data-section="hero"
+        className="hero-section relative md:h-auto md:min-h-0 lg:min-h-[80vh] flex flex-col items-center justify-start lg:pt-8 bg-transparent"
       >
 
         {/* Мобильная версия - Full Viewport Hero */}
-        <div className="lg:hidden w-full h-[100svh] flex flex-col relative z-10">
-          {/* Стадия 1: Фразы боли */}
-          {heroStage === 'pain' && currentPainIndex >= 0 && (
-            <motion.div
-              key={currentPainIndex}
-              className="absolute inset-0 flex items-center justify-center text-center px-4"
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ 
-                opacity: [0, 1, 1, 0],
-                scale: [0.7, 1, 1, 0.8],
-              }}
-              transition={{
-                duration: 2.8,
-                times: [0, 0.179, 0.714, 1],
-                ease: [0.34, 1.56, 0.64, 1],
-              }}
-            >
-              <motion.h2
-                className="text-2xl sm:text-3xl font-bold text-white leading-relaxed"
-                animate={{
-                  x: [0, -4, 4, -3, 3, -2, 2, -1, 1, 0],
+        <div className="lg:hidden w-full md:h-auto md:min-h-0 flex flex-col relative z-10">
+          {/* Action-Oriented Hero */}
+          <div className="flex flex-col items-center px-4 relative hero-mobile-content">
+              {/* Фон с логотипом для мобильной версии */}
+              <div 
+                className="absolute inset-0 pointer-events-none opacity-10 hero-mobile-logo"
+                style={{
+                  backgroundImage: 'url(/logomain.png)',
+                  backgroundSize: 'contain',
+                  backgroundPosition: 'center top',
+                  backgroundRepeat: 'no-repeat',
                 }}
-                transition={{
-                  duration: 0.4,
-                  delay: 0.15,
-                  ease: 'easeInOut',
-                }}
-              >
-                {painPhrases[currentPainIndex]}
-              </motion.h2>
-            </motion.div>
-          )}
-          
-          {/* Подсказка о пропуске - внизу экрана, еле заметная */}
-          {heroStage === 'pain' && currentPainIndex >= 0 && (
-            <motion.p
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-white/20 text-center pointer-events-none z-[80]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2.5 }}
-            >
-              Нажмите, чтобы пропустить
-            </motion.p>
-          )}
-
-          {/* Переход: затемнение и переход к свету */}
-          {heroStage === 'transition' && (
-            <motion.div
-              className="absolute inset-0 bg-gray-900 z-[100]"
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 0 }}
-              transition={{ duration: 0.6, ease: 'easeInOut' }}
-            />
-          )}
-
-          {/* Стадия 2: Решение - Action-Oriented Hero */}
-          {heroStage === 'solution' && (
-            <div className="h-full flex flex-col items-center justify-center px-4 relative">
+              />
+              
               {/* Абстрактный эмоциональный фон - мягкое пятно с градиентом */}
               <div 
                 className="absolute inset-0 pointer-events-none"
                 style={{
                   background: `
                     radial-gradient(
-                      120% 60% at 50% 20%,
+                      156% 78% at 50% 20%,
                       rgba(201, 162, 77, 0.12),
                       transparent 60%
                     )
@@ -699,55 +433,60 @@ export default function HomePage() {
                 className="absolute inset-0 pointer-events-none opacity-[0.03]"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                  backgroundSize: '200px 200px'
+                  backgroundSize: '260px 260px'
                 }}
               />
 
-              {/* Контент - вертикально центрирован */}
-              <div className="relative z-10 w-full max-w-md mx-auto flex flex-col items-center">
-                {/* Заголовок - один сильный заголовок */}
+              {/* Контент - вертикально центрирован с ограничением ширины */}
+              <div className="relative z-10 w-full max-w-[680px] mx-auto flex flex-col items-center px-4">
+                {/* Заголовок - такой же как на desktop */}
                 <motion.h1
                   className="text-3xl sm:text-4xl font-semibold text-heading text-center leading-tight mb-4"
+                  style={{ textWrap: 'balance' }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
                 >
-                  Узнай себя глубже
+                  <span className="block">Характер — это система.</span>
+                  <span className="block">Когда понимаешь систему, начинаешь управлять.</span>
                 </motion.h1>
 
-                {/* Обещание - одно четкое обещание */}
+                {/* Описание - такое же как на desktop */}
                 <motion.p
-                  className="text-base sm:text-lg text-muted text-center leading-relaxed mb-8 max-w-sm"
+                  className="text-base sm:text-lg text-muted text-center leading-relaxed mb-8 max-w-[560px]"
+                  style={{ textWrap: 'balance' }}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
                 >
-                  Короткий тест покажет твои сильные стороны и роли, в которых тебе естественно быть собой.
+                  Навигационная система для понимания мышления, решений и поведения в реальной жизни.
                 </motion.p>
 
                 {/* Primary CTA - две кнопки */}
                 <motion.div
-                  className="w-full flex flex-col gap-4"
+                  className="w-full flex flex-col gap-4 hero-cta-container"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
                 >
-                  <div className="flex flex-col w-full">
-                    <button 
-                      className="btn btn-primary px-8 py-4 text-center text-lg font-bold rounded-xl transition-all duration-300 w-full min-h-[56px] shadow-lg hover:shadow-xl"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openFor('free');
-                      }}
-                    >
-                      Начать с первичного понимания
-                    </button>
-                    <span className="text-sm text-muted mt-2 text-center">Бесплатно</span>
+                  <div className="flex flex-col w-full hero-primary-buttons">
+                    <div className="flex gap-2 w-full hero-buttons-row">
+                      <button 
+                        className="btn btn-primary w-full px-4 py-3 text-center text-sm font-semibold rounded-lg transition-all duration-300 min-h-[44px] shadow-md hover:shadow-lg hero-primary-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openFor('free');
+                        }}
+                      >
+                        Начать с первичного понимания
+                      </button>
+                    </div>
+                    <span className="text-xs text-muted mt-1.5 text-center hero-free-label">Бесплатно</span>
                   </div>
                   
-                  <div className="flex flex-col w-full">
+                  <div className="flex flex-col w-full hero-secondary-buttons">
                     <button 
-                      className="btn btn-ghost px-8 py-4 text-center text-lg font-bold rounded-xl transition-all duration-300 w-full min-h-[56px]"
+                      className="btn btn-ghost px-4 py-3 text-center text-sm font-semibold rounded-lg transition-all duration-300 w-full min-h-[44px] hero-ghost-btn"
                       onClick={(e) => {
                         e.stopPropagation();
                         scrollToFormats();
@@ -755,77 +494,18 @@ export default function HomePage() {
                     >
                      Уровни навигации
                     </button>
-                    <span className="text-sm text-muted mt-2 text-center">Выбери формат, который подходит под твою задачу</span>
+                    <span className="text-xs text-muted mt-1.5 text-center hero-format-label">Выбери формат, который подходит под твою задачу</span>
                   </div>
                   
-                  {/* Доверительный микротекст под CTA */}
-                  <p className="text-xs text-muted/70 text-center mt-3">
-                    Более 8 200 человек уже прошли тест
-                  </p>
                 </motion.div>
               </div>
             </div>
-          )}
         </div>
 
         {/* Desktop версия */}
         <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-start w-full container-balanced relative z-10 pt-4 lg:pt-6">
-          {/* Стадия 1: Фразы боли */}
-          {heroStage === 'pain' && currentPainIndex >= 0 && (
-            <motion.div
-              key={currentPainIndex}
-              className="text-center px-4"
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ 
-                opacity: [0, 1, 1, 0],
-                scale: [0.7, 1, 1, 0.8],
-              }}
-              transition={{
-                duration: 2.8,
-                times: [0, 0.179, 0.714, 1], // pop-in 0.5 сек, показ 2 сек, fade-out 0.8 сек
-                ease: [0.34, 1.56, 0.64, 1], // pop-in
-              }}
-            >
-              <motion.h2
-                className="text-4xl lg:text-5xl font-bold text-white leading-relaxed"
-                animate={{
-                  x: [0, -4, 4, -3, 3, -2, 2, -1, 1, 0],
-                }}
-                transition={{
-                  duration: 0.4,
-                  delay: 0.15,
-                  ease: 'easeInOut',
-                }}
-              >
-                {painPhrases[currentPainIndex]}
-              </motion.h2>
-            </motion.div>
-          )}
-          
-          {/* Подсказка о пропуске - внизу экрана, еле заметная */}
-          {heroStage === 'pain' && currentPainIndex >= 0 && (
-            <motion.p
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 text-xs text-white/20 text-center pointer-events-none z-[80]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2.5 }}
-            >
-              Нажмите, чтобы пропустить
-            </motion.p>
-          )}
-
-          {/* Переход: затемнение и переход к свету */}
-          {heroStage === 'transition' && (
-            <motion.div
-              className="absolute inset-0 bg-gray-900"
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: 'easeInOut' }}
-            />
-          )}
-
-          {/* Стадия 2: Решение */}
-          {heroStage === 'solution' && (
+          {/* Решение */}
+          <div className="w-full">
             <div className="relative w-full">
               <div className="grid lg:grid-cols-2 items-center gap-8 w-full">
               <motion.div
@@ -869,7 +549,6 @@ export default function HomePage() {
                 >
                   <div className="rounded-2xl overflow-visible flex items-center justify-center">
                     <img 
-                      ref={logoRef}
                       src="/LOGO W TEXT AND BG HERO.png" 
                       alt="Логотип PROFILEVELUP" 
                       className="w-[91%] h-[91%] max-w-[520px] max-h-[520px] object-contain" 
@@ -877,17 +556,15 @@ export default function HomePage() {
                     />
           </div>
                 </motion.div>
+              </div>
             </div>
           </div>
-
-            </div>
-          )}
+        </div>
         </div>
       </section>
 
-      {/* Остальной контент - показывается только после анимации */}
-      {(heroStage === 'solution' || animationSkipped) && (
-        <>
+      {/* Остальной контент */}
+      <>
       {/* Визуальное разделение между Hero и следующей секцией - только на мобильных */}
       <div className="lg:hidden relative">
         {/* Мягкий градиентный переход для четкого окончания hero */}
@@ -897,18 +574,13 @@ export default function HomePage() {
       </div>
 
       {/* Formats */}
-          <section id="formats" className="container-balanced pt-4 pb-8 lg:pt-8 lg:pb-12">
+          <section id="formats" className="container-balanced pt-2 pb-8 md:pt-6 lg:pt-4 lg:pb-12">
             <div className="relative mb-4 sm:mb-5 lg:mb-6">
-              {/* Верхняя золотая полоса */}
-              <div className="absolute -top-3 sm:-top-4 left-1/2 lg:left-0 -translate-x-1/2 lg:translate-x-0 w-20 sm:w-24 h-0.5 sm:h-1 bg-primary rounded-full opacity-60"></div>
-              
-              {/* Заголовок между полосами */}
+              {/* Заголовок */}
               <div className="relative flex flex-col items-center lg:items-start">
                 <h2 className="text-2xl sm:text-3xl font-semibold text-heading relative z-10">Уровни навигации</h2>
-                {/* Нижняя золотая полоса */}
-                <div className="w-12 sm:w-16 h-0.5 bg-primary/40 mt-2 mb-2"></div>
                 {/* Подзаголовок скрыт на мобильных, так как он теперь в каждой карточке Swiper */}
-                <p className="hidden lg:block text-sm sm:text-base text-muted">От первого понимания — к глубокой работе с собой и отношениями</p>
+                <p className="hidden lg:block text-sm sm:text-base text-muted mt-2">От первого понимания — к глубокой работе с собой и отношениями</p>
               </div>
             </div>
             
@@ -986,15 +658,27 @@ export default function HomePage() {
                   Это первая карта: где ты сейчас и как ты устроен.
                 </p>
               </div>
-              <button
-                className="mt-auto px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openFor('free', 'Первичное понимание');
-                }}
-              >
-                 Получить первичное понимание
-              </button>
+              <div className="mt-auto flex gap-3">
+                <button
+                  className="flex-1 px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFor('free', 'Первичное понимание');
+                  }}
+                >
+                   Получить первичное понимание
+                </button>
+                <button
+                  className="px-6 py-3 border-2 border-primary/30 rounded-xl bg-transparent text-primary font-semibold transition-all duration-300 hover:bg-primary/10 hover:border-primary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startTestQuick();
+                  }}
+                  title="Быстрый тест без заполнения формы"
+                >
+                  Тест
+                </button>
+              </div>
             </div>
 
           </div>
@@ -1450,7 +1134,7 @@ export default function HomePage() {
         </div>
 
         {/* Mobile версия - CSS Scroll Snap */}
-        <div className="levels-mobile lg:hidden w-full">
+        <div ref={levelsMobileRef} className="levels-mobile lg:hidden w-full">
           <div className="levels-mobile-scroll">
             {/* Карточка 1: Первичное понимание */}
             <div className="level-card-snap">
@@ -1505,16 +1189,28 @@ export default function HomePage() {
                   Это первая карта: где ты сейчас и как ты устроен.
                 </p>
                 
-                {/* Кнопка */}
-                <button
-                  className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto mt-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openFor('free', 'Первичное понимание');
-                  }}
-                >
-                   Получить первичное понимание
-                </button>
+                {/* Кнопки */}
+                <div className="flex gap-3 mt-auto">
+                  <button
+                    className="flex-1 px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openFor('free', 'Первичное понимание');
+                    }}
+                  >
+                     Получить первичное понимание
+                  </button>
+                  <button
+                    className="px-6 py-4 border-2 border-primary/30 rounded-xl bg-transparent text-primary font-semibold transition-all duration-300 hover:bg-primary/10 hover:border-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startTestQuick();
+                    }}
+                    title="Быстрый тест без заполнения формы"
+                  >
+                    Тест
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1566,7 +1262,7 @@ export default function HomePage() {
                   </ul>
                 </div>
                 
-                <p className="text-sm text-muted italic mb-8">
+                <p className="text-sm text-muted italic mb-4">
                   Это не типология и не приговор.<br/>
                   Это навигационная система под твою реальную жизнь.
                 </p>
@@ -1693,7 +1389,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 
-                <p className="text-sm text-muted italic mb-8">
+                <p className="text-sm text-muted italic mb-4">
                   Это не про «воспитание».<br/>
                   Это про язык понимания.
                 </p>
@@ -1710,6 +1406,23 @@ export default function HomePage() {
                 </button>
               </div>
             </div>
+          </div>
+          
+          {/* Пагинация для мобильной версии */}
+          <div className="levels-pagination">
+            {Array.from({ length: SLIDE_COUNT }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  goToSlide(index);
+                  pause();
+                }}
+                className={`levels-pagination-bullet ${
+                  currentIndex === index ? 'levels-pagination-bullet-active' : ''
+                } ${isPaused && currentIndex === index ? 'paused' : ''}`}
+                aria-label={`Перейти к слайду ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -1826,8 +1539,7 @@ export default function HomePage() {
       </section>
 
       {/* anchors удалены по просьбе пользователя */}
-        </>
-      )}
+      </>
 
       <Modal
         open={modalOpen}
@@ -2336,7 +2048,8 @@ function ReviewsSection() {
       cardElement.removeEventListener('touchmove', handleTouchMove);
       cardElement.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [reviews.length, currentIndex]);
+    // currentIndex не нужен в зависимостях, так как используется функциональная форма setState
+  }, [reviews.length]);
 
   if (reviews.length === 0) {
     return (
@@ -2476,28 +2189,75 @@ function WhoForCards() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const swiperRef = useRef<SwiperType | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
-
-  // Обработчик тапа для паузы
-  const handleTouchStart = () => {
-    if (swiperRef.current?.autoplay) {
-      swiperRef.current.autoplay.pause();
-      setIsPaused(true);
-    }
-  };
-
-  // Возобновление автоплея через 5 секунд после паузы
+  const containerRef = useRef<HTMLDivElement>(null);
+  const SLIDE_COUNT = 4; // Ученикам, Студентам, Родителям, Взрослым
+  
+  // Определяем, мобильное ли устройство
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 1023;
+  });
+  
+  // Отслеживаем изменение размера окна
   useEffect(() => {
-    if (isPaused) {
-      const timer = setTimeout(() => {
-        if (swiperRef.current?.autoplay) {
-          swiperRef.current.autoplay.resume();
-          setIsPaused(false);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 1023);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Используем хук автопрокрутки для мобильной версии
+  const { isPaused } = useSwiperAutoSlider({
+    enabled: isMobile,
+    intervalMs: 2500,
+    pauseMs: 15000,
+    visibilityThreshold: 0.65,
+    containerRef,
+    swiperRef,
+    slideCount: SLIDE_COUNT,
+  });
+
+  // Обновление класса пагинации при паузе и смене слайда
+  useEffect(() => {
+    if (!swiperRef.current?.pagination?.el) return;
+
+    const updatePagination = () => {
+      const paginationEl = swiperRef.current?.pagination?.el;
+      if (!paginationEl) return;
+
+      // Убираем класс paused со всех буллетов
+      const bullets = paginationEl.querySelectorAll('.swiper-pagination-bullet');
+      bullets.forEach((bullet) => {
+        (bullet as HTMLElement).classList.remove('paused');
+      });
+
+      const activeBullet = paginationEl.querySelector('.swiper-pagination-bullet-active') as HTMLElement;
+      if (activeBullet) {
+        if (isPaused) {
+          activeBullet.classList.add('paused');
+        } else {
+          // Перезапускаем анимацию прогресса
+          activeBullet.style.animation = 'none';
+          setTimeout(() => {
+            activeBullet.style.animation = '';
+          }, 10);
         }
-      }, 5000);
-      return () => clearTimeout(timer);
+      }
+    };
+
+    updatePagination();
+
+    // Обновляем при смене слайда
+    const swiper = swiperRef.current;
+    if (swiper) {
+      swiper.on('slideChangeTransitionEnd', updatePagination);
+      return () => {
+        swiper.off('slideChangeTransitionEnd', updatePagination);
+      };
     }
-  }, [isPaused]);
+  }, [isPaused, swiperRef]);
 
   // Принудительный пересчёт layout при монтировании компонента
   useEffect(() => {
@@ -2518,28 +2278,26 @@ function WhoForCards() {
             }
           }
         } catch (error) {
-          // Логируем только в dev режиме
-          if (import.meta.env.DEV) {
-            console.warn('Swiper update error:', error);
-          }
+          logger.warn('Swiper update error:', error);
         }
       }
     };
 
     // Обновляем с задержками для надёжности
-    const timer1 = setTimeout(updateSwiper, 500);
-    const timer2 = setTimeout(updateSwiper, 1000);
+    const timers: NodeJS.Timeout[] = [];
+    timers.push(setTimeout(updateSwiper, 500));
+    timers.push(setTimeout(updateSwiper, 1000));
 
     // Также обновляем при изменении ориентации
     const handleOrientationChange = () => {
-      setTimeout(updateSwiper, 300);
+      const timer = setTimeout(updateSwiper, 300);
+      timers.push(timer);
     };
 
     window.addEventListener('orientationchange', handleOrientationChange);
 
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
+      timers.forEach(timer => clearTimeout(timer));
       window.removeEventListener('orientationchange', handleOrientationChange);
     };
   }, []);
@@ -2764,8 +2522,9 @@ function WhoForCards() {
           modules={[Autoplay, Pagination]}
           spaceBetween={16}
           slidesPerView={1}
+          loop={true}
           autoplay={{
-            delay: 5000,
+            delay: 3000,
             disableOnInteraction: false,
             pauseOnMouseEnter: false,
           }}
@@ -2774,15 +2533,17 @@ function WhoForCards() {
             bulletClass: 'swiper-pagination-bullet !bg-primary/30 !w-2 !h-2 !rounded-full',
             bulletActiveClass: 'swiper-pagination-bullet-active !bg-primary !w-6',
           }}
-          // Настройки для мобильных touch-событий
+          // Настройки для мобильных touch-событий - только горизонтальная прокрутка
           touchEventsTarget="container"
           allowTouchMove={true}
           simulateTouch={true}
           touchRatio={1}
-          touchAngle={45}
-          threshold={5}
+          touchAngle={15}
+          threshold={10}
           longSwipesRatio={0.5}
           longSwipesMs={300}
+          resistance={true}
+          resistanceRatio={0.85}
           onSwiper={(swiper) => {
             swiperRef.current = swiper;
           }}
@@ -2803,16 +2564,13 @@ function WhoForCards() {
                   }
                 }
               } catch (error) {
-                // Логируем только в dev режиме
-                if (import.meta.env.DEV) {
-                  console.warn('Swiper init update error:', error);
-                }
+                logger.warn('Swiper init update error:', error);
               }
             }, 300);
           }}
-          onTouchStart={handleTouchStart}
           className="!pb-12"
-          style={{ touchAction: 'pan-y pinch-zoom' }}
+          style={{ touchAction: 'pan-x' }}
+          direction="horizontal"
         >
           {/* Карточка 1: Ученикам старших классов */}
           <SwiperSlide>

@@ -5,13 +5,14 @@ import Footer from '../components/Footer';
 import ScrollToTop from '../components/ScrollToTop';
 import SkipLink from '../components/SkipLink';
 import StructuredData from '../components/StructuredData';
+import IntroOverlay from '../components/IntroOverlay';
 import { useLenisSmoothScroll } from '../hooks/useLenisSmoothScroll';
 import { LenisContext } from '../contexts/LenisContext';
-import { isMobile } from '../utils/device';
 
 export default function AppLayout() {
   const location = useLocation();
   const isTestPage = location.pathname === '/test' || location.pathname.startsWith('/test');
+  const isHomePage = location.pathname === '/';
 
   // Подключаем Lenis для плавного скролла
   const lenis = useLenisSmoothScroll();
@@ -24,20 +25,31 @@ export default function AppLayout() {
     }
   }, []);
 
-  return (
+  const content = (
     <LenisContext.Provider value={{ lenis }}>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col" id="page-root">
         <SkipLink />
         <StructuredData />
         <ScrollToTop />
         <Header />
-        <main id="main-content" className="flex-1 pt-20">{/* отступ под фиксированный header */}
+        <main id="main-content" className="flex-1" style={{ paddingTop: 'var(--header-h)' }}>
           <Outlet />
         </main>
         {!isTestPage && <Footer />}
       </div>
     </LenisContext.Provider>
   );
+
+  // IntroOverlay только для главной страницы
+  if (isHomePage) {
+    return (
+      <IntroOverlay storageKey="intro_seen_v1">
+        {content}
+      </IntroOverlay>
+    );
+  }
+
+  return content;
 }
 
 

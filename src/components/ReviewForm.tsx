@@ -3,6 +3,7 @@ import { X, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { addReview } from '../utils/reviewsStorage';
 import { sanitizeName, sanitizeReviewText } from '../utils/sanitize';
+import { logger } from '../utils/logger';
 
 interface ReviewFormProps {
   open: boolean;
@@ -61,7 +62,7 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
         if (onSuccess) onSuccess();
       }, 2000);
     } catch (error) {
-      console.error('Ошибка при отправке отзыва:', error);
+      logger.error('Ошибка при отправке отзыва:', error);
       setErrors({ submit: 'Произошла ошибка. Попробуйте позже.' });
     } finally {
       setIsSubmitting(false);
