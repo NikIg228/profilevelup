@@ -408,21 +408,25 @@ supabase.auth.onAuthStateChange((event: string, session: { user: { id: string; e
   const state = useAuthStore.getState();
   
   if (event === 'SIGNED_IN' && session?.user) {
+    const user = session.user;
+    // Дополнительная проверка для TypeScript
+    if (!user) return;
+    
     // Загружаем профиль при входе
     supabase
       .from('profiles')
       .select('full_name')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .maybeSingle()
       .then(({ data: profile }: { data: { full_name?: string } | null }) => {
-        const user: User = {
-          id: session.user.id,
-          email: session.user.email || '',
+        const userData: User = {
+          id: user.id,
+          email: user.email || '',
           fullName: profile?.full_name || undefined,
-          createdAt: session.user.created_at || new Date().toISOString(),
+          createdAt: user.created_at || new Date().toISOString(),
         };
 
-        state.user = user;
+        state.user = userData;
         state.token = session.access_token || null;
         state.isAuthenticated = true;
       });
