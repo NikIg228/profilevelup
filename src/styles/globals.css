@@ -12,7 +12,7 @@
   --section-gap-desktop: clamp(28px, 2vw, 48px);
 
   /* Внутренние паддинги hero на mobile */
-  --hero-pad-top-mobile: clamp(10px, 3.5vw, 18px);
+  --hero-pad-top-mobile: clamp(128px, 32vw, 224px);
   --hero-pad-bottom-mobile: clamp(14px, 4.5vw, 24px);
 
   /* Высота header для desktop */
@@ -261,6 +261,27 @@ header.header-base .header-container nav {
   }
 }
 
+/* =========================================================
+   MOBILE HEADER
+   ========================================================= */
+@media (max-width: 1023px) {
+  header.header-base {
+    height: 56px; /* h-14 = 3.5rem = 56px */
+  }
+
+  header.header-base .header-container {
+    justify-content: space-between;
+    padding-left: clamp(0.75rem, 4vw, 1.5rem);
+    padding-right: clamp(0.75rem, 4vw, 1.5rem);
+  }
+
+  /* Padding для main контента на мобилках, чтобы не перекрывался header */
+  main#main-content,
+  #main-content {
+    padding-top: 56px !important;
+  }
+}
+
 /* Скрываем footer и main во время анимации hero (pain/transition стадии) */
 body[data-hero-animating="true"] footer,
 body[data-hero-animating="true"] main {
@@ -287,10 +308,8 @@ body[data-hero-animating="true"] {
     position: fixed !important;
     top: 0 !important;
     right: 0 !important;
-    transform: translateX(100%);
-    /* Убеждаемся что закрытое меню не создает скролл */
-    pointer-events: none;
-    visibility: hidden;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+    z-index: 50;
   }
 
   /* Когда меню открыто - показываем и включаем pointer-events */
@@ -331,7 +350,8 @@ body[data-hero-animating="true"] {
     gap: 1rem;
   }
 
-  .drawer-nav-links a {
+  .drawer-nav-links a,
+  .drawer-nav-links button {
     font-size: 1rem;
     line-height: 1.5;
     padding: 0.75rem 1rem;
@@ -340,6 +360,10 @@ body[data-hero-animating="true"] {
     min-height: 44px;
     display: flex;
     align-items: center;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
   }
 
   .drawer-auth {
@@ -927,7 +951,8 @@ body[data-hero-animating="true"] {
     max-height: none !important;
     justify-content: flex-start !important;
     align-items: center !important; /* центр по горизонтали оставить */
-    padding-top: var(--hero-pad-top-mobile) !important;
+    /* Объединяем декоративную пустоту и внутренний padding-top - чтобы декоративные фоны покрывали всю область */
+    padding-top: calc(var(--hero-pad-top-mobile) + clamp(64px, 16vw, 128px)) !important;
     padding-bottom: var(--hero-pad-bottom-mobile) !important;
   }
 }

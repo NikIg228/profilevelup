@@ -54,8 +54,8 @@ export default function HomePage() {
   // Используем хук автопрокрутки для мобильной версии
   const { currentIndex, goToSlide, pause, isPaused } = useAutoSlider({
     enabled: isMobile,
-    intervalMs: 2500,
-    pauseMs: 15000,
+    intervalMs: 2000,
+    pauseMs: 20000,
     visibilityThreshold: 0.65,
     containerRef: levelsMobileRef,
     slideCount: SLIDE_COUNT,
@@ -650,25 +650,15 @@ export default function HomePage() {
                   Это первая карта: где ты сейчас и как ты устроен.
                 </p>
               </div>
-              <div className="mt-auto flex gap-3">
+              <div className="mt-auto">
                 <button
-                  className="flex-1 px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
+                  className="w-full px-6 py-3 border border-primary rounded-xl bg-base text-primary font-semibold transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-md"
                   onClick={(e) => {
                     e.stopPropagation();
                     openFor('free', 'Первичное понимание');
                   }}
                 >
                    Получить первичное понимание
-                </button>
-                <button
-                  className="px-6 py-3 border-2 border-primary/30 rounded-xl bg-transparent text-primary font-semibold transition-all duration-300 hover:bg-primary/10 hover:border-primary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startTestQuick();
-                  }}
-                  title="Быстрый тест без заполнения формы"
-                >
-                  Тест
                 </button>
               </div>
             </div>
@@ -1165,28 +1155,16 @@ export default function HomePage() {
                   Это первая карта: где ты сейчас и как ты устроен.
                 </p>
                 
-                {/* Кнопки */}
-                <div className="flex gap-3 mt-auto">
-                  <button
-                    className="flex-1 px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openFor('free', 'Первичное понимание');
-                    }}
-                  >
-                     Получить первичное понимание
-                  </button>
-                  <button
-                    className="px-6 py-4 border-2 border-primary/30 rounded-xl bg-transparent text-primary font-semibold transition-all duration-300 hover:bg-primary/10 hover:border-primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startTestQuick();
-                    }}
-                    title="Быстрый тест без заполнения формы"
-                  >
-                    Тест
-                  </button>
-                </div>
+                {/* Кнопка */}
+                <button
+                  className="w-full px-6 py-4 bg-primary text-white font-semibold rounded-xl transition-all duration-300 hover:bg-primary/90 hover:shadow-md mt-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFor('free', 'Первичное понимание');
+                  }}
+                >
+                   Получить первичное понимание
+                </button>
               </div>
             </div>
 
@@ -2187,8 +2165,8 @@ function WhoForCards() {
   // Используем хук автопрокрутки для мобильной версии
   const { isPaused } = useSwiperAutoSlider({
     enabled: isMobile,
-    intervalMs: 2500,
-    pauseMs: 15000,
+    intervalMs: 2000,
+    pauseMs: 20000,
     visibilityThreshold: 0.65,
     containerRef,
     swiperRef,
