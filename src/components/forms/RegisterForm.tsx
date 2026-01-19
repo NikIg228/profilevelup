@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../stores/useAuthStore';
 
 interface RegisterFormProps {

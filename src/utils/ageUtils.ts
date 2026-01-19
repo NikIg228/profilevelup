@@ -25,14 +25,12 @@ export function getFreeAgeGroup(age: number): FreeAgeGroup {
  * @returns Возрастная группа для EXTENDED/PREMIUM теста
  */
 export function getExtendedAgeGroup(age: number): ExtendedAgeGroup {
-  if (age >= 13 && age <= 17) {
-    return '13-17';
-  } else if (age >= 18 && age <= 24) {
-    return '18-24';
-  } else if (age >= 25 && age <= 34) {
-    return '25-34';
+  if (age >= 12 && age <= 17) {
+    return '12-17';
+  } else if (age >= 18 && age <= 20) {
+    return '18-20';
   } else {
-    return '35-45';
+    return '21+';
   }
 }
 

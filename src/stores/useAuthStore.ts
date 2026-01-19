@@ -404,7 +404,7 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Слушаем изменения аутентификации
-supabase.auth.onAuthStateChange((event: string, session: unknown) => {
+supabase.auth.onAuthStateChange((event: string, session: { user: { id: string; email?: string | null; created_at?: string } | null; access_token?: string | null } | null) => {
   const state = useAuthStore.getState();
   
   if (event === 'SIGNED_IN' && session?.user) {
@@ -423,7 +423,7 @@ supabase.auth.onAuthStateChange((event: string, session: unknown) => {
         };
 
         state.user = user;
-        state.token = session.access_token;
+        state.token = session.access_token || null;
         state.isAuthenticated = true;
       });
   } else if (event === 'SIGNED_OUT') {
