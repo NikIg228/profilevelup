@@ -47,7 +47,14 @@ export function initHeaderHeightObserver() {
       // Функция для обновления высоты
       const updateHeaderHeight = () => {
         try {
-          const height = (header as HTMLElement).offsetHeight;
+          // На desktop фиксируем высоту на 64px, так как header статичный
+          if (window.innerWidth >= 1024) {
+            document.documentElement.style.setProperty('--header-h', '64px');
+            return;
+          }
+          
+          // На мобильных используем реальную высоту
+          const height = (header as HTMLElement).getBoundingClientRect().height;
           document.documentElement.style.setProperty('--header-h', `${height}px`);
         } catch (error) {
           // Игнорируем ошибки при обновлении (может быть связано с расширениями браузера)
@@ -60,13 +67,26 @@ export function initHeaderHeightObserver() {
       // Инициализация при загрузке
       updateHeaderHeight();
 
-      // Используем ResizeObserver для отслеживания изменений
+      // Используем ResizeObserver для отслеживания изменений (только на мобильных)
       let resizeObserver: ResizeObserver | null = null;
       try {
+        // На desktop не нужен ResizeObserver, так как высота фиксирована
+        if (window.innerWidth >= 1024) {
+          updateHeaderHeight(); // Устанавливаем фиксированное значение
+          return; // Не создаем observer для desktop
+        }
+
         resizeObserver = new ResizeObserver((entries) => {
           try {
+            // На desktop фиксируем высоту
+            if (window.innerWidth >= 1024) {
+              document.documentElement.style.setProperty('--header-h', '64px');
+              return;
+            }
+            
+            // На мобильных используем реальную высоту
             for (const entry of entries) {
-              const height = entry.target.clientHeight;
+              const height = entry.target.getBoundingClientRect().height;
               document.documentElement.style.setProperty('--header-h', `${height}px`);
             }
           } catch (error) {
@@ -85,7 +105,7 @@ export function initHeaderHeightObserver() {
         }
       }
 
-      // Также отслеживаем изменения ориентации экрана
+      // Также отслеживаем изменения ориентации экрана и размера окна
       let orientationTimeout: NodeJS.Timeout | null = null;
       const handleOrientationChange = () => {
         if (orientationTimeout) {
@@ -95,6 +115,37 @@ export function initHeaderHeightObserver() {
         orientationTimeout = setTimeout(() => {
           try {
             updateHeaderHeight();
+            // Если переключились на desktop - отключаем ResizeObserver
+            if (window.innerWidth >= 1024 && resizeObserver) {
+              resizeObserver.disconnect();
+              resizeObserver = null;
+            }
+            // Если переключились на mobile - создаем ResizeObserver если его нет
+            else if (window.innerWidth < 1024 && !resizeObserver) {
+              try {
+                resizeObserver = new ResizeObserver((entries) => {
+                  try {
+                    if (window.innerWidth >= 1024) {
+                      document.documentElement.style.setProperty('--header-h', '64px');
+                      return;
+                    }
+                    for (const entry of entries) {
+                      const height = entry.target.getBoundingClientRect().height;
+                      document.documentElement.style.setProperty('--header-h', `${height}px`);
+                    }
+                  } catch (error) {
+                    if (import.meta.env.DEV) {
+                      console.warn('Error in ResizeObserver callback:', error);
+                    }
+                  }
+                });
+                resizeObserver.observe(header);
+              } catch (error) {
+                if (import.meta.env.DEV) {
+                  console.warn('ResizeObserver not supported:', error);
+                }
+              }
+            }
           } catch (error) {
             if (import.meta.env.DEV) {
               console.warn('Error in orientation change handler:', error);
@@ -103,8 +154,41 @@ export function initHeaderHeightObserver() {
         }, 100);
       };
 
+      const handleResize = () => {
+        updateHeaderHeight();
+        // Проверяем, нужно ли переключить ResizeObserver
+        if (window.innerWidth >= 1024 && resizeObserver) {
+          resizeObserver.disconnect();
+          resizeObserver = null;
+        } else if (window.innerWidth < 1024 && !resizeObserver) {
+          try {
+            resizeObserver = new ResizeObserver((entries) => {
+              try {
+                if (window.innerWidth >= 1024) {
+                  document.documentElement.style.setProperty('--header-h', '64px');
+                  return;
+                }
+                for (const entry of entries) {
+                  const height = entry.target.getBoundingClientRect().height;
+                  document.documentElement.style.setProperty('--header-h', `${height}px`);
+                }
+              } catch (error) {
+                if (import.meta.env.DEV) {
+                  console.warn('Error in ResizeObserver callback:', error);
+                }
+              }
+            });
+            resizeObserver.observe(header);
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.warn('ResizeObserver not supported:', error);
+            }
+          }
+        }
+      };
+
       window.addEventListener('orientationchange', handleOrientationChange, { passive: true });
-      window.addEventListener('resize', updateHeaderHeight, { passive: true });
+      window.addEventListener('resize', handleResize, { passive: true });
 
       // Cleanup функция
       return () => {
@@ -116,7 +200,7 @@ export function initHeaderHeightObserver() {
             clearTimeout(orientationTimeout);
           }
           window.removeEventListener('orientationchange', handleOrientationChange);
-          window.removeEventListener('resize', updateHeaderHeight);
+          window.removeEventListener('resize', handleResize);
         } catch (error) {
           if (import.meta.env.DEV) {
             console.warn('Error during cleanup:', error);

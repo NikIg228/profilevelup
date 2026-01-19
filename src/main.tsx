@@ -6,7 +6,6 @@ import PreviewGate from './components/PreviewGate';
 import AppLayout from './ui/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initializeDefaultReviews } from './utils/reviewsStorage';
-import { initHeaderHeightObserver } from './utils/headerHeight';
 
 // Lazy loading для всех страниц
 const HomePage = lazy(() => import('./pages/Home'));
@@ -171,41 +170,6 @@ initializeDefaultReviews();
 import { useAuthStore } from './stores/useAuthStore';
 useAuthStore.getState().checkSession();
 
-// Инициализация динамического обновления высоты header после загрузки DOM
-// Используем requestAnimationFrame для гарантии, что React отрендерил header
-if (typeof window !== 'undefined') {
-  try {
-    const initObserver = () => {
-      try {
-        // Используем requestAnimationFrame для ожидания рендера React
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            // Двойной RAF гарантирует что React компоненты отрендерились
-            initHeaderHeightObserver();
-          });
-        });
-      } catch (error) {
-        // Игнорируем ошибки инициализации (могут быть связаны с расширениями браузера)
-        if (import.meta.env.DEV) {
-          console.warn('Error initializing header height observer:', error);
-        }
-      }
-    };
-
-    // Используем DOMContentLoaded для гарантии, что DOM готов
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initObserver, { once: true });
-    } else {
-      // DOM уже загружен - используем RAF для ожидания React рендера
-      initObserver();
-    }
-  } catch (error) {
-    // Игнорируем ошибки инициализации
-    if (import.meta.env.DEV) {
-      console.warn('Error setting up header height observer:', error);
-    }
-  }
-}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

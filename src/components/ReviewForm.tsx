@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { X, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { CheckCircle } from 'lucide-react';
+import Modal from './Modal';
 import { addReview } from '../utils/reviewsStorage';
 import { sanitizeName, sanitizeReviewText } from '../utils/sanitize';
 import { logger } from '../utils/logger';
@@ -69,27 +69,11 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
     }
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-card rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-heading">Оставить отзыв</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-secondary/50 rounded-lg transition-colors"
-              aria-label="Закрыть"
-            >
-              <X className="w-5 h-5 text-ink" />
-            </button>
-          </div>
+    <Modal open={open} onClose={onClose}>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-heading mb-6">Оставить отзыв</h2>
 
           {isSuccess ? (
             <div className="flex flex-col items-center justify-center py-12">
@@ -177,8 +161,8 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
             </form>
           )}
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </Modal>
   );
 }
 

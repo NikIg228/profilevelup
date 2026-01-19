@@ -6,18 +6,6 @@
    GLOBAL RHYTHM TOKENS (единая система отступов)
    ========================================================= */
 :root {
-  /* Высота header (h-16 = 64px) */
-  --header-h: 64px;
-  
-  /* Header - плотность фона и blur (единые токены) */
-  --header-bg: rgba(255, 255, 255, 0.88);
-  --header-bg-scrolled: rgba(255, 255, 255, 0.94);
-  --header-blur: blur(8px);
-  --header-blur-scrolled: blur(6px);
-  --header-border: 1px solid rgba(0, 0, 0, 0.06);
-  --header-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-  --header-shadow-scrolled: 0 8px 24px rgba(0, 0, 0, 0.08);
-  
   /* Между секциями (mobile / tablet / desktop) */
   --section-gap-mobile: clamp(16px, 4vw, 28px);
   --section-gap-tablet: clamp(20px, 3vw, 36px);
@@ -26,19 +14,9 @@
   /* Внутренние паддинги hero на mobile */
   --hero-pad-top-mobile: clamp(10px, 3.5vw, 18px);
   --hero-pad-bottom-mobile: clamp(14px, 4.5vw, 24px);
-}
 
-/* Адаптивная высота header для разных брейкпоинтов */
-@media (max-width: 767px) {
-  :root {
-    --header-h: 64px; /* h-16 на мобильных */
-  }
-}
-
-@media (min-width: 768px) {
-  :root {
-    --header-h: 64px; /* h-16 на планшетах и десктопе */
-  }
+  /* Высота header для desktop */
+  --header-h: 64px;
 }
 
 /* Screen reader only - для доступности */
@@ -94,7 +72,7 @@ body {
   overflow-x: hidden;
   /* overflow-y управляется динамически: на desktop через Lenis (hidden), на mobile (auto) */
   overflow-y: auto;
-  /* Единый фон для всей страницы - убирает "шов" между header и hero */
+  /* Единый фон для всей страницы */
   background-color: #F7F7F5; /* bg-base */
 }
 
@@ -111,54 +89,13 @@ body {
   }
 }
 
-/* КРИТИЧНО: В mobile landscape принудительно один скролл (body) */
-@media (max-height: 430px) and (orientation: landscape) {
-  /* Принудительно отключаем Lenis и используем нативный скролл */
-  html,
-  html.lenis,
-  html[class*="lenis"] {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    height: auto !important;
-  }
-
-  body,
-  body.lenis {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    height: auto !important;
-  }
-
-  /* Убираем класс lenis если он есть */
-  html.lenis {
-    overflow-y: auto !important;
-  }
-
-  /* Убеждаемся что Lenis не создает свой контейнер */
-  .lenis,
-  .lenis-wrapper,
-  [class*="lenis"] {
-    overflow: visible !important;
-    overflow-y: visible !important;
-    height: auto !important;
-  }
-}
-
 /* На desktop Lenis управляет скроллом через JS, но если Lenis не активен - используем нативный */
-html:not([data-mobile]) {
-  /* Lenis будет устанавливать overflow: hidden через JS, но если Lenis не работает - оставляем auto */
-}
+/* Lenis будет устанавливать overflow: hidden через JS, но если Lenis не работает - оставляем auto */
 
 /* Safe area для iPhone с вырезами - только на мобильных */
 @supports (padding: max(0px)) {
   @media (max-width: 1023px) {
     body {
-      padding-left: max(0px, env(safe-area-inset-left));
-      padding-right: max(0px, env(safe-area-inset-right));
-    }
-
-    header {
-      padding-top: max(0px, env(safe-area-inset-top));
       padding-left: max(0px, env(safe-area-inset-left));
       padding-right: max(0px, env(safe-area-inset-right));
     }
@@ -202,6 +139,8 @@ html:not([data-mobile]) {
   position: relative;
   overflow: visible;
   /* Убираем внутренний скролл - скроллим только body */
+  /* Защита от transform для стабильности position: fixed у header */
+  transform: none;
 }
 
 /* Убираем внутренний скролл у layout контейнеров */
@@ -211,6 +150,8 @@ html:not([data-mobile]) {
   height: auto;
   overflow: visible;
   /* Убираем внутренний скролл - скроллим только body */
+  /* Защита от transform для стабильности position: fixed у header */
+  transform: none;
 }
 
 main,
@@ -219,7 +160,6 @@ main,
   height: auto;
   min-height: 100%;
   overflow: visible;
-  /* Отступ под header через padding-top, не через отдельный scroll-контейнер */
 }
 
 /* Убираем внутренний скролл у всех wrapper'ов и контейнеров */
@@ -231,146 +171,6 @@ main,
   height: auto;
   min-height: 100%;
   overflow: visible;
-}
-
-/* =========================================================
-   КРИТИЧНО: Убираем второй скролл в MOBILE LANDSCAPE
-   Специфично для (max-height: 430px) and (orientation: landscape)
-   ========================================================= */
-@media (max-height: 430px) and (orientation: landscape) {
-  /* КРИТИЧНО: Принудительно убираем overflow-y у всех layout контейнеров */
-  #root,
-  #page-root,
-  .page-root,
-  main,
-  #main-content,
-  .main-content,
-  .layout,
-  .page,
-  .content,
-  .wrapper {
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-    height: auto !important;
-    max-height: none !important;
-    min-height: 100% !important;
-  }
-
-  /* Убираем скролл у всех секций и основных блоков */
-  section:not(.swiper-slide):not([class*="swiper"]),
-  article,
-  aside {
-    overflow-y: visible !important;
-    overflow-x: hidden !important;
-  }
-
-  /* Исключения: только для элементов, которым действительно нужен скролл */
-  .modal-scroll-container,
-  .swiper-wrapper,
-  .levels-mobile-scroll,
-  [class*="swiper-wrapper"],
-  [class*="swiper-container"] {
-    overflow-y: auto !important;
-    overflow-x: auto !important;
-  }
-
-  /* Убеждаемся что body/html скроллятся, а не внутренние контейнеры */
-  html {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-  }
-
-  body {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-  }
-
-  /* Убираем любые height: 100vh/100dvh у layout элементов */
-  #root[style*="height"],
-  #page-root[style*="height"],
-  main[style*="height"] {
-    height: auto !important;
-  }
-
-  /* КРИТИЧНО: Убираем правый шов - заменяем 100vw на 100% для fixed элементов */
-  header.header-base,
-  header[data-site-header],
-  header#site-header,
-  header {
-    width: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    max-width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  /* Убираем правый шов у всех fixed элементов */
-  [class*="fixed"],
-  .fixed,
-  [class*="inset-0"],
-  .inset-0,
-  [style*="position: fixed"],
-  [style*="position:fixed"] {
-    width: 100% !important;
-    max-width: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  /* Убираем правый шов у overlay элементов */
-  [role="dialog"],
-  .mobile-drawer,
-  [class*="overlay"],
-  [class*="backdrop"],
-  [class*="modal"] {
-    width: 100% !important;
-    max-width: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  /* IntroOverlay fixed overlay */
-  div[class*="fixed"][class*="inset-0"][class*="z-[9999]"] {
-    width: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    max-width: 100% !important;
-  }
-
-  /* Убираем overflow у меню когда оно закрыто */
-  .mobile-drawer:not([aria-hidden="false"]):not([aria-expanded="true"]),
-  [role="dialog"][aria-hidden="true"] {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-    overflow: hidden !important;
-  }
-
-  /* Убираем все возможные источники горизонтального скролла */
-  * {
-    max-width: 100% !important;
-  }
-
-  /* Исключение для контента внутри контейнеров */
-  .container-balanced *,
-  main *,
-  #main-content * {
-    max-width: none;
-  }
-
-  /* Но сам контейнер ограничен */
-  .container-balanced {
-    max-width: 100% !important;
-    width: 100% !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-    box-sizing: border-box !important;
-  }
 }
 
 /* Исключение: только горизонтальный скролл для Swiper и подобных */
@@ -400,23 +200,67 @@ h4 {
   }
 }
 
-/* Фиксация header */
-header {
-  max-width: 100%;
-  width: 100%;
+/* =========================================================
+   DESKTOP HEADER
+   ========================================================= */
+header.header-base {
+  height: var(--header-h);
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
   left: 0;
   right: 0;
-  /* Убираем subpixel gaps */
-  top: 0;
-  /* Убеждаемся что border не создает визуальный шов */
-  border-bottom-color: rgba(0, 0, 0, 0.06);
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  /* Убираем 100vw чтобы не было шва справа */
+  width: 100%;
+  max-width: 100vw;
+  z-index: 50;
+  background-color: #F7F7F5; /* bg-base */
+  border-bottom: 1px solid rgba(227, 227, 225, 0.3); /* border-secondary/30 */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow-x: clip;
+  overflow-y: visible;
+  margin: 0;
+  padding: 0;
 }
 
-/* Скрываем header, footer и main во время анимации hero (pain/transition стадии) */
-body[data-hero-animating="true"] header,
+header.header-base .header-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1152px; /* max-w-6xl = 72rem = 1152px */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 4vw, 2rem);
+  padding-right: clamp(1rem, 4vw, 2rem);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+header.header-base .header-container nav {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* Safe area для header на desktop (если нужно) */
+@supports (padding: max(0px)) {
+  @media (min-width: 1024px) {
+    header.header-base .container-balanced {
+      padding-top: max(0px, env(safe-area-inset-top, 0px));
+    }
+  }
+}
+
+/* Padding для main контента на desktop, чтобы не перекрывался header */
+@media (min-width: 1024px) {
+  main#main-content,
+  #main-content {
+    padding-top: var(--header-h) !important;
+  }
+}
+
+/* Скрываем footer и main во время анимации hero (pain/transition стадии) */
 body[data-hero-animating="true"] footer,
 body[data-hero-animating="true"] main {
   opacity: 0 !important;
@@ -1030,13 +874,13 @@ body[data-hero-animating="true"] {
 
 /* 1) На mobile/tablet НЕ фиксируем hero в 100svh — это и создаёт «пустоту» */
 /* ИСКЛЮЧЕНИЕ: во время анимации (pain/transition) hero-section должен быть fixed и fullscreen */
-/* Используем svh/dvh с учетом высоты header для корректной работы на iOS */
+/* Используем svh/dvh для корректной работы на iOS */
 @media (max-width: 1023px) {
   .hero-section {
     height: auto !important;
-    /* Используем svh с fallback на vh, учитывая высоту header */
-    min-height: calc(100svh - var(--header-h)) !important;
-    min-height: calc(100vh - var(--header-h)) !important; /* fallback для старых браузеров */
+    /* Используем svh с fallback на vh */
+    min-height: 100svh !important;
+    min-height: 100vh !important; /* fallback для старых браузеров */
     max-height: none !important;
     position: relative;
     overflow: hidden;
@@ -1111,174 +955,6 @@ body[data-hero-animating="true"] {
   }
 }
 
-/* 3) iPad landscape: уже было, но оставляем без агрессии */
-@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
-  .hero-section {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    padding-top: 1.25rem !important;
-    padding-bottom: 1.25rem !important;
-  }
-
-  .hero-section > div.lg\\:hidden {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-  }
-
-  .hero-mobile-content {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-  }
-
-  .hero-mobile-content > div.relative {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
-  /* Поджать секцию formats на landscape tablet */
-  section#formats.container-balanced {
-    padding-top: var(--section-gap-tablet) !important;
-  }
-}
-
-/* =========================================================
-   MOBILE LANDSCAPE COMPACT — спец-режим для маленькой высоты экрана
-   (особенно iPhone в landscape: max-height: 430px)
-   ========================================================= */
-@media (max-width: 1023px) and (orientation: landscape) and (max-height: 600px) {
-  .hero-section {
-    /* Используем svh с учетом header, fallback на vh */
-    height: calc(100svh - var(--header-h)) !important;
-    height: calc(100vh - var(--header-h)) !important; /* fallback */
-    min-height: calc(100svh - var(--header-h)) !important;
-    min-height: calc(100vh - var(--header-h)) !important; /* fallback */
-    max-height: calc(100svh - var(--header-h)) !important;
-    max-height: calc(100vh - var(--header-h)) !important; /* fallback */
-    /* Убираем overflow-y: auto - скроллим только body */
-    overflow: visible;
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-
-  .hero-mobile-content {
-    min-height: calc(100svh - var(--header-h));
-    min-height: calc(100vh - var(--header-h)); /* fallback */
-    justify-content: center !important;
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-    /* Убираем overflow-y: auto - скроллим только body */
-    overflow: visible;
-  }
-
-  .hero-mobile-content h1 {
-    font-size: clamp(20px, 3.2vw, 28px) !important;
-    line-height: 1.1 !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .hero-mobile-content p.text-base,
-  .hero-mobile-content p.text-sm,
-  .hero-mobile-content p {
-    font-size: clamp(12px, 2vw, 16px) !important;
-    margin-bottom: 0.75rem !important;
-    line-height: 1.4 !important;
-    max-width: 560px !important; /* Ограничиваем ширину текста */
-  }
-
-  .hero-mobile-content button {
-    padding-top: 0.625rem !important;
-    padding-bottom: 0.625rem !important;
-    font-size: 0.875rem !important;
-    min-height: 44px !important;
-    max-height: 48px !important;
-  }
-
-  .hero-mobile-logo {
-    background-size: contain !important;
-    background-position: center 10% !important;
-    background-repeat: no-repeat !important;
-    opacity: 0.08 !important;
-    /* Ограничиваем максимальный размер для читаемости текста */
-    max-width: min(70vh, 520px);
-    max-height: min(70vh, 520px);
-    margin: 0 auto;
-  }
-}
-
-/* Специальный режим для очень маленькой высоты (iPhone landscape) */
-@media (max-width: 1023px) and (orientation: landscape) and (max-height: 430px) {
-  .hero-section {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-
-  .hero-mobile-content {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-    gap: 0.5rem !important;
-  }
-
-  .hero-mobile-content h1 {
-    font-size: clamp(20px, 3.2vw, 28px) !important;
-    line-height: 1.15 !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .hero-mobile-content p.text-base,
-  .hero-mobile-content p.text-sm,
-  .hero-mobile-content p {
-    font-size: clamp(12px, 2vw, 16px) !important;
-    margin-bottom: 0.5rem !important;
-    line-height: 1.3 !important;
-    max-width: 560px !important;
-  }
-
-  .hero-mobile-content button {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-    font-size: 0.875rem !important;
-    min-height: 44px !important;
-    max-height: 48px !important;
-  }
-
-  .hero-mobile-content .hero-cta-container {
-    gap: 0.5rem !important;
-  }
-
-  .hero-mobile-content .hero-free-label,
-  .hero-mobile-content .hero-format-label {
-    font-size: 0.625rem !important;
-    margin-top: 0.25rem !important;
-  }
-
-  /* Фоновый логотип - contain для landscape mobile */
-  .hero-mobile-logo {
-    background-size: contain !important;
-    background-position: center 10% !important;
-    background-repeat: no-repeat !important;
-    /* Ограничиваем размер для читаемости текста в узкой высоте */
-    max-width: min(60vh, 400px) !important;
-    max-height: min(60vh, 400px) !important;
-    opacity: 0.08 !important;
-    /* Убеждаемся что лого не перекрывает текст */
-    z-index: 0 !important;
-  }
-
-  /* Усиливаем читаемость текста поверх логотипа */
-  .hero-mobile-content > .relative.z-10 {
-    position: relative !important;
-    z-index: 10 !important;
-    /* Легкая тень для контраста если нужно */
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-  }
-}
 
 /* Фоновый логотип hero - используем contain чтобы не обрезался */
 /* Базовые стили для всех мобильных устройств */
@@ -1289,7 +965,7 @@ body[data-hero-animating="true"] {
   background-origin: content-box;
 }
 
-/* Мобильные устройства (portrait и landscape) */
+/* Мобильные устройства */
 @media (max-width: 767px) {
   .hero-mobile-logo {
     background-size: contain !important;
@@ -1542,13 +1218,19 @@ body[data-hero-animating="true"] {
 /* Lenis smooth scroll styles - только для desktop */
 /* ВАЖНО: Lenis создает свой скролл-контейнер, но это нормально для desktop */
 /* На mobile используем нативный скролл body */
-html.lenis:not([data-mobile="true"]),
+html.lenis:not([data-mobile="true"]) {
+  height: auto;
+  overflow-x: hidden !important;
+  /* НЕ скрываем overflow-y полностью - оставляем scroll чтобы показать кастомный скроллбар */
+  overflow-y: scroll !important;
+  /* Lenis управляет скроллом на desktop через свой внутренний контейнер */
+}
+
 html.lenis:not([data-mobile="true"]) body {
   height: auto;
-  overflow: hidden !important;
-  overflow-y: hidden !important;
   overflow-x: hidden !important;
-  /* Lenis управляет скроллом на desktop через свой внутренний контейнер */
+  /* Убираем скроллбар с body - скроллим только через html */
+  overflow-y: visible !important;
 }
 
 /* На mobile отключаем Lenis и используем нативный скролл */
@@ -1558,13 +1240,145 @@ html[data-mobile="true"] body {
   overflow-x: hidden !important;
 }
 
+/* Кастомный скроллбар для Lenis (desktop) - ТОЛЬКО на html */
 html.lenis:not([data-mobile="true"]) {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: #C9A24D rgba(201, 162, 77, 0.12);
 }
 
 html.lenis:not([data-mobile="true"])::-webkit-scrollbar {
-  display: none;
+  width: 10px;
+  height: 10px;
+}
+
+html.lenis:not([data-mobile="true"])::-webkit-scrollbar-track {
+  background: rgba(201, 162, 77, 0.08);
+  border-radius: 10px;
+  margin: 2px;
+}
+
+html.lenis:not([data-mobile="true"])::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #C9A24D 0%, rgba(201, 162, 77, 0.9) 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
+}
+
+html.lenis:not([data-mobile="true"])::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9E7F3A 0%, rgba(158, 127, 58, 0.95) 100%);
+  background-clip: padding-box;
+}
+
+  /* Убираем скроллбар с body - скроллим только через html */
+  html.lenis:not([data-mobile="true"]) body {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  html.lenis:not([data-mobile="true"]) body::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* Также убираем скроллбар с body для всех случаев на desktop */
+  @media (min-width: 1024px) {
+    body:not([data-mobile="true"]) {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+
+    body:not([data-mobile="true"])::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  }
+
+/* =========================================================
+   КАСТОМНЫЙ СКРОЛЛБАР ДЛЯ DESKTOP
+   Аккуратный скроллбар в стилистике сайта
+   ========================================================= */
+
+/* Для Firefox - тонкий скроллбар (только desktop, не mobile) */
+/* ТОЛЬКО на html, НЕ на body */
+@media (min-width: 1024px) {
+  html:not([data-mobile="true"]),
+  html.lenis:not([data-mobile="true"]) {
+    scrollbar-width: thin !important;
+    scrollbar-color: #C9A24D rgba(201, 162, 77, 0.12) !important;
+  }
+
+  /* Убираем скроллбар с body */
+  body:not([data-mobile="true"]),
+  html.lenis:not([data-mobile="true"]) body {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  /* Для Webkit браузеров (Chrome, Safari, Edge) */
+  html:not([data-mobile="true"])::-webkit-scrollbar,
+  html.lenis:not([data-mobile="true"])::-webkit-scrollbar {
+    width: 10px !important;
+    height: 10px !important;
+    display: block !important;
+  }
+
+  html:not([data-mobile="true"])::-webkit-scrollbar-track,
+  html.lenis:not([data-mobile="true"])::-webkit-scrollbar-track {
+    background: rgba(201, 162, 77, 0.08) !important;
+    border-radius: 10px !important;
+    margin: 2px !important;
+  }
+
+  html:not([data-mobile="true"])::-webkit-scrollbar-thumb,
+  html.lenis:not([data-mobile="true"])::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #C9A24D 0%, rgba(201, 162, 77, 0.9) 100%) !important;
+    border-radius: 10px !important;
+    border: 2px solid transparent !important;
+    background-clip: padding-box !important;
+    transition: background 0.2s ease, border-color 0.2s ease !important;
+  }
+
+  html:not([data-mobile="true"])::-webkit-scrollbar-thumb:hover,
+  html.lenis:not([data-mobile="true"])::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #9E7F3A 0%, rgba(158, 127, 58, 0.95) 100%) !important;
+    background-clip: padding-box !important;
+  }
+
+  html:not([data-mobile="true"])::-webkit-scrollbar-thumb:active,
+  html.lenis:not([data-mobile="true"])::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, #8A6D2F 0%, rgba(138, 109, 47, 0.98) 100%) !important;
+    background-clip: padding-box !important;
+  }
+
+  /* Убираем скроллбар с body - скроллим только через html */
+  body:not([data-mobile="true"])::-webkit-scrollbar,
+  html.lenis:not([data-mobile="true"]) body::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* Горизонтальный скроллбар (если нужен) */
+  html:not([data-mobile="true"])::-webkit-scrollbar:horizontal,
+  html.lenis:not([data-mobile="true"])::-webkit-scrollbar:horizontal {
+    height: 10px !important;
+  }
+
+  /* Улучшенный вид для темной темы (если будет) */
+  @media (prefers-color-scheme: dark) {
+    html:not([data-mobile="true"]),
+    html.lenis:not([data-mobile="true"]) {
+      scrollbar-color: #C9A24D rgba(201, 162, 77, 0.15) !important;
+    }
+
+    html:not([data-mobile="true"])::-webkit-scrollbar-track,
+    html.lenis:not([data-mobile="true"])::-webkit-scrollbar-track {
+      background: rgba(201, 162, 77, 0.1) !important;
+    }
+  }
 }
 
 /* Убеждаемся что #root и все layout контейнеры не создают свой скролл когда Lenis активен */
@@ -1653,42 +1467,6 @@ html.lenis:not([data-mobile="true"]) #main-content {
   }
 }
 
-/* Mobile landscape: используем svh с учетом header */
-/* ИСКЛЮЧЕНИЕ: во время анимации hero-section должен быть fixed и fullscreen */
-@media (max-width: 767px) and (orientation: landscape) and (max-height: 600px) {
-  section#hero,
-  section[data-section="hero"],
-  .hero-section {
-    height: calc(100svh - var(--header-h)) !important;
-    height: calc(100vh - var(--header-h)) !important; /* fallback */
-    min-height: calc(100svh - var(--header-h)) !important;
-    min-height: calc(100vh - var(--header-h)) !important; /* fallback */
-    max-height: calc(100svh - var(--header-h)) !important;
-    max-height: calc(100vh - var(--header-h)) !important; /* fallback */
-    /* Убираем overflow-y: auto - скроллим только body */
-    overflow: visible !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
-  }
-
-  /* Во время анимации hero-section должен быть fixed и fullscreen */
-  section#hero.fixed.inset-0,
-  section[data-section="hero"].fixed.inset-0,
-  .hero-section.fixed.inset-0 {
-    position: fixed !important;
-    inset: 0 !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    max-height: 100vh !important;
-    width: 100% !important; /* Заменено с 100vw на 100% чтобы убрать шов справа */
-    overflow: hidden !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    z-index: 100 !important;
-    background-color: #111827 !important; /* bg-gray-900 - темный фон для анимации */
-  }
-}
-
 /* Убрать/сжать возможный spacer между hero и следующей секцией на mobile */
 @media (max-width: 767px) {
   section#hero + div,
@@ -1710,11 +1488,10 @@ html.lenis:not([data-mobile="true"]) #main-content {
 }
 
 /* ===============================
-   OFFSET между header и hero
+   OFFSET для hero
    =============================== */
 
-/* Убираем margin-top у hero - отступ обеспечивается padding-top у main */
-/* Убираем визуальный шов между header и hero */
+/* Убираем margin-top у hero */
 /* Mobile */
 @media (max-width: 767px) {
   .hero-section {
@@ -1750,124 +1527,11 @@ html.lenis:not([data-mobile="true"]) #main-content {
   }
 }
 
-/* ===============================
-   ДОПОЛНИТЕЛЬНЫЕ ФИКСЫ ДЛЯ iOS LANDSCAPE
-   =============================== */
-
-/* Предотвращение прыжков высоты hero при скролле на iOS */
-@supports (-webkit-touch-callout: none) {
-  @media (max-width: 1023px) and (orientation: landscape) {
-    .hero-section {
-      /* Фиксируем высоту для предотвращения прыжков */
-      height: calc(100svh - var(--header-h));
-      height: calc(100vh - var(--header-h)); /* fallback */
-      min-height: calc(100svh - var(--header-h));
-      min-height: calc(100vh - var(--header-h)); /* fallback */
-    }
-  }
-}
-
 /* =========================================================
-   HEADER - Единые стили с плотным фоном для всех устройств
+   DESKTOP LAYOUT ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ
    ========================================================= */
 
-/* Базовые стили header (все устройства) */
-header.header-base {
-  background-color: var(--header-bg);
-  backdrop-filter: var(--header-blur);
-  -webkit-backdrop-filter: var(--header-blur);
-  border-bottom: var(--header-border);
-  box-shadow: var(--header-shadow);
-  transition: background-color 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease;
-  /* Важно: НЕ используем opacity на весь header, только rgba() у background */
-  /* Убираем subpixel gaps и проблемы с рендерингом */
-  top: 0;
-  transform: translateZ(0);
-  will-change: background-color, backdrop-filter, box-shadow;
-  /* Убеждаемся что header не блокирует скролл */
-  background-clip: padding-box;
-  backface-visibility: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Декоративные элементы header не должны блокировать события */
-header.header-base::before,
-header.header-base::after {
-  pointer-events: none;
-}
-
-/* Внутренние элементы header должны получать события (по умолчанию они получают) */
-/* Но убеждаемся что нет конфликтов */
-header.header-base > *,
-header.header-base .container-balanced {
-  position: relative;
-  z-index: 1;
-}
-
-/* Убираем возможные зазоры между header и hero */
-header.header-base + main,
-header.header-base ~ main {
-  margin-top: 0;
-  padding-top: var(--header-h);
-  /* Убираем subpixel gaps */
-  transform: translateZ(0);
-}
-
-/* Состояние при скролле */
-header.header-base.is-scrolled {
-  background-color: var(--header-bg-scrolled);
-  backdrop-filter: var(--header-blur-scrolled);
-  -webkit-backdrop-filter: var(--header-blur-scrolled);
-  box-shadow: var(--header-shadow-scrolled);
-  /* Убираем subpixel gaps при скролле */
-  transform: translateZ(0);
-}
-
-/* Desktop (>=1024px) - можно чуть больше blur, но заливка плотная */
-@media (min-width: 1024px) {
-  :root {
-    --header-bg: rgba(255, 255, 255, 0.84);
-    --header-bg-scrolled: rgba(255, 255, 255, 0.92);
-    --header-blur: blur(10px);
-    --header-blur-scrolled: blur(8px);
-  }
-}
-
-/* Tablet (768px - 1023px) - средняя плотность */
-@media (min-width: 768px) and (max-width: 1023px) {
-  :root {
-    --header-bg: rgba(255, 255, 255, 0.88);
-    --header-bg-scrolled: rgba(255, 255, 255, 0.94);
-    --header-blur: blur(8px);
-    --header-blur-scrolled: blur(6px);
-  }
-}
-
-/* Mobile (<=767px) - blur поменьше, фон плотнее */
-@media (max-width: 767px) {
-  :root {
-    --header-bg: rgba(255, 255, 255, 0.90);
-    --header-bg-scrolled: rgba(255, 255, 255, 0.95);
-    --header-blur: blur(6px);
-    --header-blur-scrolled: blur(4px);
-  }
-}
-
-/* Mobile landscape с низкой высотой - максимально плотный */
-@media (max-width: 767px) and (max-height: 430px) and (orientation: landscape) {
-  :root {
-    --header-bg: rgba(255, 255, 255, 0.92);
-    --header-bg-scrolled: rgba(255, 255, 255, 0.96);
-    --header-blur: blur(4px);
-    --header-blur-scrolled: blur(4px);
-  }
-}
-
-/* =========================================================
-   DESKTOP LAYOUT ДЛЯ MOBILE LANDSCAPE (max-height: 430px)
-   ========================================================= */
-
-@media (max-height: 430px) and (orientation: landscape) {
+@media (max-height: 430px) {
   /* Переопределяем общие правила для mobile - показываем desktop элементы */
   div[class*="hidden"][class*="lg:grid"],
   .hidden.lg\\:grid,
@@ -1914,11 +1578,11 @@ header.header-base.is-scrolled {
     opacity: 1 !important;
   }
 
-  /* Desktop hero layout для landscape */
+  /* Desktop hero layout */
   .hero-section {
-    min-height: calc(100svh - var(--header-h)) !important;
-    min-height: calc(100dvh - var(--header-h)) !important;
-    min-height: calc(100vh - var(--header-h)) !important; /* fallback */
+    min-height: 100svh !important;
+    min-height: 100dvh !important;
+    min-height: 100vh !important; /* fallback */
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
   }
@@ -1985,7 +1649,7 @@ header.header-base.is-scrolled {
     opacity: 1 !important;
   }
 
-  /* Убираем min-height для карточек в landscape */
+  /* Убираем min-height для карточек */
   .levels-desktop[class*="lg:grid"] .card,
   .levels-desktop .card {
     min-height: auto !important;
@@ -2193,20 +1857,3 @@ header.header-base.is-scrolled {
   }
 }
 
-/* Улучшаем читаемость текста в hero на landscape */
-@media (max-width: 1023px) and (orientation: landscape) and (max-height: 430px) {
-  .hero-mobile-content .relative.z-10 {
-    max-width: 100%;
-    width: 100%;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  /* Центрирование контента */
-  .hero-mobile-content {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-}

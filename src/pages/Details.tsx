@@ -14,7 +14,7 @@ import {
 
 export default function DetailsPage() {
   return (
-    <section className="container-balanced mt-10">
+    <section className="container-balanced pt-6 lg:pt-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

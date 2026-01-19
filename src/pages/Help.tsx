@@ -112,7 +112,7 @@ export default function HelpPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
-    <div className="container-balanced mt-10 sm:mt-16 mb-20 flex flex-col gap-12">
+    <div className="container-balanced pt-6 lg:pt-8 mb-20 flex flex-col gap-12">
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

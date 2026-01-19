@@ -626,14 +626,6 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex-1 relative">
-                    <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 pointer-events-none">
-                      <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] max-w-[320px] relative">
-                        <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
-                        <p className="text-sm font-medium text-heading leading-relaxed">
-                          Точка входа в систему навигации.
-                        </p>
-                      </div>
-                    </div>
                     <h3 className="text-xl font-semibold text-heading mb-1">Первичное понимание</h3>
                   </div>
                   <span className="px-4 py-1.5 bg-primary/10 text-primary text-base font-semibold rounded-lg whitespace-nowrap">
@@ -704,14 +696,6 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex-1 relative">
-                    <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 pointer-events-none">
-                      <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] max-w-[320px] relative">
-                        <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
-                        <p className="text-sm font-medium text-heading leading-relaxed">
-                          Персональная инструкция к твоему характеру, мышлению и стилю жизни.
-                        </p>
-                      </div>
-                    </div>
                     <h3 className="text-xl font-semibold text-heading mb-1">Персональный разбор</h3>
                   </div>
                   <span className="px-4 py-1.5 bg-primary/10 text-primary text-base font-semibold rounded-lg whitespace-nowrap">
@@ -868,14 +852,6 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1 relative">
-                    <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 pointer-events-none">
-                      <div className="bg-white border-2 border-primary/30 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] max-w-[320px] relative">
-                        <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white border-r-2 border-b-2 border-primary/30 rotate-45"></div>
-                        <p className="text-sm font-medium text-heading leading-relaxed">
-                          Чтобы подросток понял себя, а родитель — понял своего ребёнка
-                        </p>
-                      </div>
-                    </div>
                     <h3 className="text-xl font-semibold text-heading mb-1">Семейная навигация</h3>
                   </div>
                   <span className="px-4 py-1.5 bg-primary/10 text-primary text-base font-semibold rounded-lg whitespace-nowrap">

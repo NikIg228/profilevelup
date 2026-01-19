@@ -1,18 +1,23 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Header from '../components/Header';
 import ScrollToTop from '../components/ScrollToTop';
 import SkipLink from '../components/SkipLink';
 import StructuredData from '../components/StructuredData';
 import IntroOverlay from '../components/IntroOverlay';
 import { useLenisSmoothScroll } from '../hooks/useLenisSmoothScroll';
 import { LenisContext } from '../contexts/LenisContext';
+import { initHeaderHeightObserver } from '../utils/headerHeight';
 
 export default function AppLayout() {
   const location = useLocation();
   const isTestPage = location.pathname === '/test' || location.pathname.startsWith('/test');
   const isHomePage = location.pathname === '/';
+  
+  // Проверяем, было ли интро уже показано, чтобы не рендерить IntroOverlay вообще
+  const introSeen = typeof window !== 'undefined' && 
+    localStorage.getItem('intro_seen_v1') === '1';
 
   // Подключаем Lenis для плавного скролла
   const lenis = useLenisSmoothScroll();
@@ -25,6 +30,11 @@ export default function AppLayout() {
     }
   }, []);
 
+  // Инициализация observer для отслеживания высоты header
+  useEffect(() => {
+    initHeaderHeightObserver();
+  }, []);
+
   const content = (
     <LenisContext.Provider value={{ lenis }}>
       <div className="min-h-screen flex flex-col" id="page-root">
@@ -32,7 +42,7 @@ export default function AppLayout() {
         <StructuredData />
         <ScrollToTop />
         <Header />
-        <main id="main-content" className="flex-1" style={{ paddingTop: 'var(--header-h)' }}>
+        <main id="main-content" className="flex-1">
           <Outlet />
         </main>
         {!isTestPage && <Footer />}
@@ -40,8 +50,8 @@ export default function AppLayout() {
     </LenisContext.Provider>
   );
 
-  // IntroOverlay только для главной страницы
-  if (isHomePage) {
+  // IntroOverlay только для главной страницы и только если интро еще не было показано
+  if (isHomePage && !introSeen) {
     return (
       <IntroOverlay storageKey="intro_seen_v1">
         {content}

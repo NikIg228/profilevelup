@@ -94,7 +94,7 @@ const teamMembers: TeamMember[] = [
 
 export default function AboutPage() {
   return (
-    <section className="container-balanced mt-10 mb-16">
+    <section className="container-balanced pt-6 lg:pt-8 mb-16">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

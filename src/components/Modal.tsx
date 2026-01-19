@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useLenis } from '../contexts/LenisContext';
@@ -173,7 +174,7 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
     setDragY(0);
   };
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {open && (
         <motion.div
@@ -182,6 +183,22 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            overflow: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
           onClick={onClose}
         >
           <motion.div
@@ -194,11 +211,13 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
             }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ duration: dragY > 0 ? 0 : 0.2, ease: 'easeOut' }}
-            className={`card w-full max-w-lg flex flex-col max-h-[90vh] my-auto relative ${hideScrollbar ? 'scrollbar-hide' : 'modal-scrollbar'}`}
+            className={`card w-full max-w-lg flex flex-col max-h-[90vh] relative ${hideScrollbar ? 'scrollbar-hide' : 'modal-scrollbar'}`}
             style={{ 
               minHeight: 0,
               height: 'auto',
-              touchAction: 'pan-y'
+              touchAction: 'pan-y',
+              margin: 'auto',
+              position: 'relative',
             }}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={onTouchStart}
@@ -210,10 +229,10 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-secondary/40 rounded-full" />
             )}
             
-            {/* Кнопка закрытия для мобильных устройств */}
+            {/* Кнопка закрытия */}
             <button
               onClick={onClose}
-              className="md:hidden absolute top-4 right-4 z-10 p-2.5 rounded-full bg-black/5 hover:bg-black/10 active:bg-black/15 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-black/5 hover:bg-black/10 active:bg-black/15 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Закрыть"
             >
               <X className="w-5 h-5 text-heading" />
@@ -238,6 +257,13 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
       )}
     </AnimatePresence>
   );
+
+  // Рендерим модальное окно через Portal в body для корректного позиционирования
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return null;
 }
 
 

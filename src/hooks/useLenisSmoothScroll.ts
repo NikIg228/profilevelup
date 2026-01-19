@@ -9,12 +9,11 @@ export function useLenisSmoothScroll() {
 
   useEffect(() => {
     const initLenis = () => {
-      // Проверяем, является ли устройство мобильным ИЛИ находится в landscape режиме с маленькой высотой
+      // Проверяем, является ли устройство мобильным
       const isMobileDevice = isMobile();
-      const isLandscapeMobile = window.innerHeight <= 430 && window.matchMedia('(orientation: landscape)').matches;
       
-      // Отключаем Lenis на мобильных устройствах ИЛИ в mobile landscape режиме
-      if (isMobileDevice || isLandscapeMobile) {
+      // Отключаем Lenis на мобильных устройствах
+      if (isMobileDevice) {
         // Помечаем html как мобильный для CSS
         document.documentElement.setAttribute('data-mobile', 'true');
         // Убеждаемся, что overflow не скрыт на мобильных - используем нативный скролл
@@ -80,16 +79,16 @@ export function useLenisSmoothScroll() {
       lenisRef.current = lenisInstance;
       setLenis(lenisInstance);
 
-      // Убеждаемся, что overflow скрыт для html и body (Lenis управляет скроллом)
+      // Убеждаемся, что overflow настроен правильно для Lenis
       // НО только на desktop, на мобильных оставляем нативный скролл
       requestAnimationFrame(() => {
         if (!isMobile()) {
           // Lenis управляет скроллом через свой внутренний контейнер
-          // Скрываем overflow только у html и body, чтобы не было двойного скролла
-          document.documentElement.style.overflow = 'hidden';
-          document.documentElement.style.overflowY = 'hidden';
-          document.body.style.overflow = 'hidden';
-          document.body.style.overflowY = 'hidden';
+          // Используем overflow-y: scroll на html, но visible на body, чтобы был только один скроллбар
+          document.documentElement.style.overflowX = 'hidden';
+          document.documentElement.style.overflowY = 'scroll'; // scroll на html для показа скроллбара
+          document.body.style.overflowX = 'hidden';
+          document.body.style.overflowY = 'visible'; // visible на body, чтобы не было второго скроллбара
           // Убеждаемся что #root не создает свой скролл
           const root = document.getElementById('root');
           if (root) {

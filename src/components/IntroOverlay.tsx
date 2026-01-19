@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const PAIN_PHRASES = [
   "Выбери нормальную профессию!",
   "На этом денег не заработаешь!",
-  "Какие таланты? Главное — диплом!",
+  ["Какие таланты?", "Главное — диплом!"],
 ] as const;
 
 // Тайминги (≤ 5s total)
@@ -59,7 +59,20 @@ export default function IntroOverlay({
   storageKey = "intro_seen_v1",
   forceShow = false,
 }: IntroOverlayProps) {
-  const [stage, setStage] = useState<Stage>("intro");
+  // Синхронно проверяем localStorage при инициализации, чтобы избежать мигания
+  const getInitialStage = (): Stage => {
+    if (forceShow) return "intro";
+    if (!oncePerDevice) return "intro";
+    
+    try {
+      const seen = typeof window !== 'undefined' && localStorage.getItem(storageKey) === "1";
+      return seen ? "done" : "intro";
+    } catch {
+      return "intro";
+    }
+  };
+
+  const [stage, setStage] = useState<Stage>(getInitialStage);
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [shakePhase, setShakePhase] = useState(false);
   
@@ -88,8 +101,9 @@ export default function IntroOverlay({
   // revealProgress управляет clip-path раскрытия (0 → 1)
   const [revealProgress, setRevealProgress] = useState(0);
 
-  const doneRef = useRef(false);
-  const stageRef = useRef<Stage>("intro");
+  // Инициализируем doneRef на основе начального stage
+  const doneRef = useRef(stage === "done");
+  const stageRef = useRef<Stage>(stage);
   const introTimersRef = useRef<number[]>([]);
   const revealTimersRef = useRef<number[]>([]);
   const rafRef = useRef<number | null>(null);
@@ -173,24 +187,28 @@ export default function IntroOverlay({
     runReveal(true);
   }, [clearAll, oncePerDevice, runReveal, storageKey]);
 
-  // On mount: decide whether to show intro
+  // On mount: дополнительная проверка (на случай если localStorage изменился)
   useEffect(() => {
+    // Если уже done, не проверяем снова
+    if (doneRef.current) return;
+    
     if (forceShow) return; // Если forceShow=true — игнорируем localStorage
 
     if (!oncePerDevice) return;
 
     try {
       const seen = localStorage.getItem(storageKey) === "1";
-      if (seen) {
+      if (seen && stage !== "done") {
         // Без интро: сразу done
         setStage("done");
         doneRef.current = true;
+        stageRef.current = "done";
         return;
       }
     } catch {
       // если localStorage недоступен — просто показываем интро
     }
-  }, [oncePerDevice, storageKey, forceShow]);
+  }, [oncePerDevice, storageKey, forceShow, stage]);
 
   // Main timeline (only if we actually run intro)
   useEffect(() => {
@@ -389,7 +407,15 @@ export default function IntroOverlay({
                           : { duration: 0 },
                       }}
                     >
-                      {PAIN_PHRASES[phraseIndex]}
+                      {Array.isArray(PAIN_PHRASES[phraseIndex]) ? (
+                        <>
+                          {PAIN_PHRASES[phraseIndex][0]}
+                          <br />
+                          {PAIN_PHRASES[phraseIndex][1]}
+                        </>
+                      ) : (
+                        PAIN_PHRASES[phraseIndex]
+                      )}
                     </motion.h2>
                   )}
                 </AnimatePresence>
