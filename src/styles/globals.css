@@ -221,6 +221,7 @@ header.header-base {
   overflow-y: visible;
   margin: 0;
   padding: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 header.header-base .header-container {
