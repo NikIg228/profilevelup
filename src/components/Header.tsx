@@ -10,6 +10,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
+    { to: '/', label: 'Главная' },
     { to: '/reviews', label: 'Отзывы' },
     { to: '/about', label: 'О нас' },
     { to: '/help', label: 'Поддержка' },
