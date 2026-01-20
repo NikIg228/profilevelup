@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 type Option = { value: string; label: string };
@@ -12,7 +12,7 @@ type Props = {
   name?: string;
 };
 
-export default function Select({ value, onChange, placeholder = 'Выберите', options, error = false, id, name }: Props) {
+function Select({ value, onChange, placeholder = 'Выберите', options, error = false, id, name }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -27,6 +27,15 @@ export default function Select({ value, onChange, placeholder = 'Выберит�
 
   const selected = options.find(o => o.value === value)?.label || '';
 
+  const handleToggle = useCallback(() => {
+    setOpen(o => !o);
+  }, []);
+
+  const handleOptionClick = useCallback((optionValue: string) => {
+    onChange(optionValue);
+    setOpen(false);
+  }, [onChange]);
+
   return (
     <div className="relative" ref={containerRef}>
       <button
@@ -34,7 +43,7 @@ export default function Select({ value, onChange, placeholder = 'Выберит�
         id={id}
         name={name}
         className={`w-full px-4 py-3 rounded-xl border border-black/10 bg-white text-left text-ink flex items-center justify-between transition shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/40 min-h-[44px] touch-manipulation ${error ? 'border-red-500' : ''}`}
-        onClick={() => setOpen(o => !o)}
+        onClick={handleToggle}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-invalid={error}
@@ -53,7 +62,7 @@ export default function Select({ value, onChange, placeholder = 'Выберит�
               role="option"
               aria-selected={o.value === value}
               className={`w-full text-left px-4 py-3 transition min-h-[44px] flex items-center touch-manipulation ${o.value === value ? 'bg-primary/10 text-ink' : 'hover:bg-black/5'}`}
-              onClick={() => { onChange(o.value); setOpen(false); }}
+              onClick={() => handleOptionClick(o.value)}
               type="button"
             >
               {o.label}
@@ -64,5 +73,7 @@ export default function Select({ value, onChange, placeholder = 'Выберит�
     </div>
   );
 }
+
+export default memo(Select);
 
 

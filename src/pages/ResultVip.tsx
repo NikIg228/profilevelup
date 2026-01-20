@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Download, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Download, ArrowLeft, RotateCcw } from 'lucide-react';
 import { resolveVipMetrics, type VipMetrics } from '../engine/resolveVipMetrics';
 import { useTestStore } from '../stores/useTestStore';
 import { logger } from '../utils/logger';
@@ -8,7 +8,7 @@ import type { ExtendedAnswers, ExtendedTestConfig } from '../engine/types';
 
 export default function ResultVipPage() {
   const navigate = useNavigate();
-  const { testConfig, answers } = useTestStore();
+  const { testConfig, answers, resetTest } = useTestStore();
   const [metrics, setMetrics] = useState<VipMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -357,10 +357,24 @@ export default function ResultVipPage() {
           </button>
           <button
             onClick={() => {
+              // Сбрасываем состояние теста и переходим к новому прохождению
+              resetTest();
+              // Небольшая задержка для гарантии полного сброса состояния
+              setTimeout(() => {
+                navigate('/test');
+              }, 50);
+            }}
+            className="btn btn-primary px-6 py-3 flex items-center justify-center gap-2"
+          >
+            <RotateCcw className="w-5 h-5" />
+            Пройти тест снова
+          </button>
+          <button
+            onClick={() => {
               // Здесь можно добавить логику скачивания отчета
               alert('Функция скачивания отчета будет доступна в ближайшее время');
             }}
-            className="btn btn-primary px-6 py-3 flex items-center justify-center gap-2"
+            className="btn btn-outline px-6 py-3 flex items-center justify-center gap-2"
           >
             <Download className="w-5 h-5" />
             Скачать отчет

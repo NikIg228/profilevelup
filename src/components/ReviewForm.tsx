@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { CheckCircle } from 'lucide-react';
 import Modal from './Modal';
 import { addReview } from '../utils/reviewsStorage';
@@ -11,13 +11,25 @@ interface ReviewFormProps {
   onSuccess?: () => void;
 }
 
-export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps) {
+function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps) {
   const [form, setForm] = useState({ name: '', testType: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const validate = () => {
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setForm(prev => ({ ...prev, name: newName }));
+    setErrors(prev => prev.name ? { ...prev, name: '' } : prev);
+  }, []);
+
+  const handleTestTypeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newTestType = e.target.value;
+    setForm(prev => ({ ...prev, testType: newTestType }));
+    setErrors(prev => prev.testType ? { ...prev, testType: '' } : prev);
+  }, []);
+
+  const validate = useCallback(() => {
     const newErrors: Record<string, string> = {};
     if (!form.name.trim()) {
       newErrors.name = 'Укажите имя';
@@ -27,9 +39,9 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [form.name, form.testType]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
@@ -67,7 +79,7 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [form, validate, onClose, onSuccess]);
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -94,10 +106,7 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
                   id="review-name"
                   name="name"
                   value={form.name}
-                  onChange={(e) => {
-                    setForm({ ...form, name: e.target.value });
-                    if (errors.name) setErrors({ ...errors, name: '' });
-                  }}
+                  onChange={handleNameChange}
                   className={`w-full px-4 py-3 rounded-xl border transition-all ${
                     errors.name
                       ? 'border-red-500 focus:ring-red-500'
@@ -118,10 +127,7 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
                   id="review-testType"
                   name="testType"
                   value={form.testType}
-                  onChange={(e) => {
-                    setForm({ ...form, testType: e.target.value });
-                    if (errors.testType) setErrors({ ...errors, testType: '' });
-                  }}
+                  onChange={handleTestTypeChange}
                   className={`w-full px-4 py-3 rounded-xl border transition-all ${
                     errors.testType
                       ? 'border-red-500 focus:ring-red-500'
@@ -165,4 +171,6 @@ export default function ReviewForm({ open, onClose, onSuccess }: ReviewFormProps
     </Modal>
   );
 }
+
+export default memo(ReviewForm);
 

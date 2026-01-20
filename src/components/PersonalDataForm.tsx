@@ -41,13 +41,13 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
 
     if (!form.name.trim()) newErrors.name = 'Укажите имя';
     
-    // Валидация возраста (13-45)
+    // Валидация возраста (12-70)
     if (!form.age.trim()) {
       newErrors.age = 'Укажите возраст';
     } else {
       const ageNum = parseInt(form.age, 10);
-      if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
-        newErrors.age = 'Возраст должен быть от 13 до 45 лет';
+      if (isNaN(ageNum) || ageNum < 12 || ageNum > 70) {
+        newErrors.age = 'Возраст должен быть от 12 до 70 лет';
       }
     }
     
@@ -74,17 +74,15 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
 
     setErrors({});
     
-    // Преобразуем возраст в возрастную группу
+    // Преобразуем возраст в возрастную группу (формат должен соответствовать getTestConfig)
     const ageNum = parseInt(form.age, 10);
-    let ageGroup: '13-17' | '18-24' | '25-34' | '35-45';
-    if (ageNum >= 13 && ageNum <= 17) {
-      ageGroup = '13-17';
-    } else if (ageNum >= 18 && ageNum <= 24) {
-      ageGroup = '18-24';
-    } else if (ageNum >= 25 && ageNum <= 34) {
-      ageGroup = '25-34';
+    let ageGroup: '12-17' | '18-20' | '21+';
+    if (ageNum >= 12 && ageNum <= 17) {
+      ageGroup = '12-17';
+    } else if (ageNum >= 18 && ageNum <= 20) {
+      ageGroup = '18-20';
     } else {
-      ageGroup = '35-45';
+      ageGroup = '21+';
     }
     
     // Сохраняем данные для EXTENDED теста (Личный разбор)
@@ -173,8 +171,8 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
                 setErrors(prev => ({ ...prev, age: 'Укажите возраст' }));
               } else {
                 const ageNum = parseInt(form.age, 10);
-                if (isNaN(ageNum) || ageNum < 13 || ageNum > 45) {
-                  setErrors(prev => ({ ...prev, age: 'Возраст должен быть от 13 до 45 лет' }));
+                if (isNaN(ageNum) || ageNum < 12 || ageNum > 70) {
+                  setErrors(prev => ({ ...prev, age: 'Возраст должен быть от 12 до 70 лет' }));
                 }
               }
             }}

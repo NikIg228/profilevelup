@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Download, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Download, ArrowLeft, RotateCcw } from 'lucide-react';
 import { resolveFreeResult } from '../engine/resolveResult';
 import { useTestStore } from '../stores/useTestStore';
 import { logger } from '../utils/logger';
@@ -8,7 +8,7 @@ import type { Answers, FreeTestConfig } from '../engine/types';
 
 export default function ResultFreePage() {
   const navigate = useNavigate();
-  const { testConfig, answers } = useTestStore();
+  const { testConfig, answers, resetTest } = useTestStore();
   const [resultIndex, setResultIndex] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -138,10 +138,24 @@ export default function ResultFreePage() {
           </button>
           <button
             onClick={() => {
+              // Сбрасываем состояние теста и переходим к новому прохождению
+              resetTest();
+              // Небольшая задержка для гарантии полного сброса состояния
+              setTimeout(() => {
+                navigate('/test');
+              }, 50);
+            }}
+            className="btn btn-primary px-6 py-3 flex items-center justify-center gap-2"
+          >
+            <RotateCcw className="w-5 h-5" />
+            Пройти тест снова
+          </button>
+          <button
+            onClick={() => {
               // Здесь можно добавить логику скачивания отчета
               alert('Функция скачивания отчета будет доступна в ближайшее время');
             }}
-            className="btn btn-primary px-6 py-3 flex items-center justify-center gap-2"
+            className="btn btn-outline px-6 py-3 flex items-center justify-center gap-2"
           >
             <Download className="w-5 h-5" />
             Скачать отчет

@@ -173,12 +173,24 @@ main,
   overflow: visible;
 }
 
-/* Исключение: только горизонтальный скролл для Swiper и подобных */
-.levels-mobile-scroll,
-.swiper-wrapper {
+/* Исключение: только горизонтальный скролл для levels-mobile-scroll */
+.levels-mobile-scroll {
   overflow-x: auto;
   overflow-y: visible;
   /* Это нормально - горизонтальный скролл для карточек */
+}
+
+/* Правильные стили для Swiper - Swiper управляет wrapper через transform */
+.swiper {
+  overflow: hidden;
+}
+
+.swiper-wrapper {
+  overflow: visible !important;
+}
+
+.swiper-slide {
+  flex-shrink: 0;
 }
 
 h1,
@@ -279,6 +291,48 @@ header.header-base .header-container nav {
   main#main-content,
   #main-content {
     padding-top: 56px !important;
+  }
+}
+
+/* =========================================================
+   HEADER HIDE/SHOW ON SCROLL
+   ========================================================= */
+
+/* Transition для плавного скрытия/показа header */
+header.header-base {
+  transition: transform 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+  will-change: transform;
+}
+
+/* Скрытие header при скролле вниз */
+header.header-base.Header--hidden {
+  transform: translateY(-100%);
+}
+
+/* Стиль header после скролла (усиленный фон и тень) */
+header.header-base.Header--scrolled {
+  background-color: rgba(247, 247, 245, 0.98); /* bg-base с небольшой прозрачностью */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border-bottom-color: rgba(227, 227, 225, 0.5);
+}
+
+/* Учет prefers-reduced-motion для сокращения анимации */
+@media (prefers-reduced-motion: reduce) {
+  header.header-base {
+    transition-duration: 80ms;
+  }
+  
+  header.header-base.Header--hidden {
+    transition-duration: 80ms;
+  }
+}
+
+/* Safe area для header на мобильных устройствах */
+@supports (padding: max(0px)) {
+  @media (max-width: 1023px) {
+    header.header-base {
+      padding-top: max(0px, env(safe-area-inset-top, 0px));
+    }
   }
 }
 
@@ -470,6 +524,22 @@ body[data-hero-animating="true"] {
   height: 0 !important;
 }
 
+/* Более агрессивное скрытие скроллбара для html и body */
+html.scrollbar-hide,
+body.scrollbar-hide {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  overflow: hidden !important;
+}
+
+html.scrollbar-hide::-webkit-scrollbar,
+body.scrollbar-hide::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
 /* Кастомный скроллбар для модального окна в стилистике сайта */
 .modal-scrollbar {
   scrollbar-width: thin;
@@ -518,6 +588,43 @@ body[data-hero-animating="true"] {
 
 .modal-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #9e7f3a;
+}
+
+/* Анимация shimmer для прогресс-бара */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Кастомный скроллбар для карточки вопроса в тесте */
+.test-question-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 162, 77, 0.3) transparent;
+}
+
+.test-question-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.test-question-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.test-question-scroll::-webkit-scrollbar-thumb {
+  background: rgba(201, 162, 77, 0.3);
+  border-radius: 3px;
+}
+
+.test-question-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 162, 77, 0.5);
 }
 
 /* Hero анимации */
@@ -1238,6 +1345,24 @@ body[data-hero-animating="true"] {
     height: auto;
     min-height: auto;
     overflow: visible;
+
+  }
+
+  /* Точечные стили для Swiper блока "Кому подойдёт" */
+  .whofor-swiper {
+    width: 100% !important;
+    overflow: hidden !important;
+    touch-action: pan-y pan-x !important;
+  }
+
+  .whofor-swiper .swiper-wrapper {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  .whofor-swiper .swiper-slide {
+    width: 100% !important;
   }
 }
 
@@ -1882,4 +2007,16 @@ html.lenis:not([data-mobile="true"]) #main-content {
     margin-top: clamp(1rem, 2vh, 1.5rem) !important;
   }
 }
+
+/* Фоновый логотип на странице теста - увеличен на мобильных */
+.test-bg-logo {
+  background-size: 70%;
+}
+
+@media (min-width: 768px) {
+  .test-bg-logo {
+    background-size: 30%;
+  }
+}
+
 

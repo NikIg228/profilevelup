@@ -162,12 +162,23 @@ const router = createBrowserRouter([
   },
 });
 
-// Инициализация дефолтных отзывов
-initializeDefaultReviews();
+// Инициализация дефолтных отзывов (lazy, не блокирует рендер)
+if (typeof window !== 'undefined') {
+  // Отложенная инициализация для улучшения TTI
+  const initReviews = () => initializeDefaultReviews();
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(initReviews, { timeout: 2000 });
+  } else {
+    setTimeout(initReviews, 100);
+  }
+}
 
-// Инициализация сессии авторизации
-import { useAuthStore } from './stores/useAuthStore';
-useAuthStore.getState().checkSession();
+// Инициализация сессии авторизации (lazy)
+if (typeof window !== 'undefined') {
+  import('./stores/useAuthStore').then(({ useAuthStore }) => {
+    useAuthStore.getState().checkSession();
+  });
+}
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

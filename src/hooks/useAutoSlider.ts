@@ -29,6 +29,11 @@ export function useAutoSlider({
   const observerRef = useRef<IntersectionObserver | null>(null);
   const isVisibleRef = useRef(true);
   const reducedMotionRef = useRef(false);
+  
+  // Отслеживание вертикального скролла страницы
+  const isPageScrollingRef = useRef(false);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const interactionDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Проверка prefers-reduced-motion
   useEffect(() => {
@@ -165,9 +170,81 @@ export function useAutoSlider({
     }, pauseMs);
   }, [stop, pauseMs, enabled, start]);
 
-  // Обработчики взаимодействия пользователя
-  const handleInteraction = useCallback(() => {
-    pause();
+  // Отслеживание вертикального скролла страницы
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let scrollTimer: NodeJS.Timeout | null = null;
+
+    const handlePageScroll = () => {
+      isPageScrollingRef.current = true;
+      
+      // Очищаем предыдущий таймер
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+      }
+      
+      // Определяем направление скролла
+      const currentScrollY = window.scrollY;
+      const scrollDelta = Math.abs(currentScrollY - lastScrollY);
+      
+      // Если скролл значительный (больше 5px), считаем что это вертикальный скролл
+      if (scrollDelta > 5) {
+        isPageScrollingRef.current = true;
+      }
+      
+      lastScrollY = currentScrollY;
+      
+      // Сбрасываем флаг через 300ms после остановки скролла
+      scrollTimer = setTimeout(() => {
+        isPageScrollingRef.current = false;
+      }, 300);
+    };
+
+    window.addEventListener('scroll', handlePageScroll, { passive: true });
+    window.addEventListener('touchmove', handlePageScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handlePageScroll);
+      window.removeEventListener('touchmove', handlePageScroll);
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+      }
+    };
+  }, []);
+
+  // Обработчики взаимодействия пользователя с проверкой направления
+  const handleInteraction = useCallback((event?: TouchEvent | PointerEvent | MouseEvent) => {
+    // Если страница скроллится вертикально, игнорируем взаимодействие
+    if (isPageScrollingRef.current) {
+      return;
+    }
+
+    // Если есть событие, проверяем направление движения
+    if (event && (event instanceof TouchEvent || event instanceof PointerEvent)) {
+      const touch = event instanceof TouchEvent ? (event.touches[0] || event.changedTouches[0]) : event;
+      
+      if (touchStartRef.current && touch) {
+        const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
+        const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+        const deltaTime = Date.now() - touchStartRef.current.time;
+        
+        // Если движение преимущественно вертикальное (вертикальное > горизонтальное * 1.5)
+        // и движение быстрое (меньше 200ms), это скорее всего случайное касание при скролле
+        if (deltaY > deltaX * 1.5 && deltaTime < 200) {
+          return; // Игнорируем вертикальные быстрые касания
+        }
+      }
+    }
+
+    // Очищаем предыдущий debounce таймер
+    if (interactionDebounceRef.current) {
+      clearTimeout(interactionDebounceRef.current);
+    }
+
+    // Добавляем небольшую задержку перед паузой (100ms) для фильтрации случайных касаний
+    interactionDebounceRef.current = setTimeout(() => {
+      pause();
+    }, 100);
   }, [pause]);
 
   // Обработка скролла (для определения когда пользователь скроллит вручную)
@@ -183,12 +260,20 @@ export function useAutoSlider({
     const handleScrollStart = () => {
       isScrollingRef.current = true;
       scrollStartTime = Date.now();
-      handleInteraction();
+      // Не паузим при старте, только при движении
     };
 
-    const handleScroll = () => {
+    const handleScroll = (e?: TouchEvent | PointerEvent | MouseEvent | Event) => {
       if (isScrollingRef.current) {
-        handleInteraction();
+        // Проверяем направление скролла контейнера
+        const scrollLeft = scrollContainer.scrollLeft;
+        const scrollTop = scrollContainer.scrollTop;
+        
+        // Если скролл преимущественно горизонтальный, паузим
+        // Если вертикальный - игнорируем (это случайное касание при скролле страницы)
+        if (Math.abs(scrollLeft) > Math.abs(scrollTop) * 1.5 || scrollTop === 0) {
+          handleInteraction(e as TouchEvent | PointerEvent | MouseEvent | undefined);
+        }
       }
 
       // Очищаем предыдущий таймер
@@ -226,15 +311,66 @@ export function useAutoSlider({
       }, 150);
     };
 
+    const handleTouchStart = (e: TouchEvent) => {
+      // Сохраняем начальную позицию касания
+      if (e.touches && e.touches[0]) {
+        touchStartRef.current = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+          time: Date.now(),
+        };
+      }
+      handleScrollStart();
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // Проверяем направление движения перед паузой
+      if (touchStartRef.current && e.touches && e.touches[0]) {
+        const deltaX = Math.abs(e.touches[0].clientX - touchStartRef.current.x);
+        const deltaY = Math.abs(e.touches[0].clientY - touchStartRef.current.y);
+        
+        // Если движение преимущественно вертикальное, не паузим
+        if (deltaY > deltaX * 1.5) {
+          return;
+        }
+      }
+      handleScroll(e);
+    };
+
+    const handleTouchEnd = () => {
+      touchStartRef.current = null;
+    };
+
     // Touch события
-    scrollContainer.addEventListener('touchstart', handleScrollStart, { passive: true });
-    scrollContainer.addEventListener('touchmove', handleScroll, { passive: true });
-    scrollContainer.addEventListener('touchend', handleScroll, { passive: true });
+    scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+    scrollContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     // Pointer события
-    scrollContainer.addEventListener('pointerdown', handleScrollStart, { passive: true });
-    scrollContainer.addEventListener('pointermove', handleScroll, { passive: true });
-    scrollContainer.addEventListener('pointerup', handleScroll, { passive: true });
+    const handlePointerStart = (e: PointerEvent) => {
+      touchStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        time: Date.now(),
+      };
+      handleScrollStart();
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (touchStartRef.current) {
+        const deltaX = Math.abs(e.clientX - touchStartRef.current.x);
+        const deltaY = Math.abs(e.clientY - touchStartRef.current.y);
+        
+        if (deltaY > deltaX * 1.5) {
+          return;
+        }
+      }
+      handleScroll(e);
+    };
+
+    scrollContainer.addEventListener('pointerdown', handlePointerStart, { passive: true });
+    scrollContainer.addEventListener('pointermove', handlePointerMove, { passive: true });
+    scrollContainer.addEventListener('pointerup', handleTouchEnd, { passive: true });
 
     // Mouse события (для тестирования)
     scrollContainer.addEventListener('mousedown', handleScrollStart);
@@ -245,18 +381,21 @@ export function useAutoSlider({
     scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      scrollContainer.removeEventListener('touchstart', handleScrollStart);
-      scrollContainer.removeEventListener('touchmove', handleScroll);
-      scrollContainer.removeEventListener('touchend', handleScroll);
-      scrollContainer.removeEventListener('pointerdown', handleScrollStart);
-      scrollContainer.removeEventListener('pointermove', handleScroll);
-      scrollContainer.removeEventListener('pointerup', handleScroll);
+      scrollContainer.removeEventListener('touchstart', handleTouchStart);
+      scrollContainer.removeEventListener('touchmove', handleTouchMove);
+      scrollContainer.removeEventListener('touchend', handleTouchEnd);
+      scrollContainer.removeEventListener('pointerdown', handlePointerStart);
+      scrollContainer.removeEventListener('pointermove', handlePointerMove);
+      scrollContainer.removeEventListener('pointerup', handleTouchEnd);
       scrollContainer.removeEventListener('mousedown', handleScrollStart);
       scrollContainer.removeEventListener('mousemove', handleScroll);
       scrollContainer.removeEventListener('mouseup', handleScroll);
       scrollContainer.removeEventListener('scroll', handleScroll);
       if (scrollEndTimer) {
         clearTimeout(scrollEndTimer);
+      }
+      if (interactionDebounceRef.current) {
+        clearTimeout(interactionDebounceRef.current);
       }
     };
   }, [containerRef, handleInteraction]);

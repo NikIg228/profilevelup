@@ -2,12 +2,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useHideOnScroll } from '../hooks/useHideOnScroll';
 
 export default function Header() {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isHidden, isScrolled } = useHideOnScroll();
 
   const navLinks = [
     { to: '/', label: 'Главная' },
@@ -16,11 +18,8 @@ export default function Header() {
     { to: '/help', label: 'Поддержка' },
   ];
 
-  // Ссылки для мобильного меню (с главной страницей первой)
-  const mobileNavLinks = [
-    { to: '/', label: 'Главная' },
-    ...navLinks,
-  ];
+  // Ссылки для мобильного меню (главная уже включена в navLinks)
+  const mobileNavLinks = navLinks;
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -60,7 +59,9 @@ export default function Header() {
       {/* Мобильная версия header - логотип слева, бургер справа */}
       <header
         data-site-header
-        className="header-base flex lg:hidden fixed top-0 left-0 right-0 w-full"
+        className={`header-base flex lg:hidden fixed top-0 left-0 right-0 w-full${
+          isHidden ? ' Header--hidden' : ''
+        }${isScrolled ? ' Header--scrolled' : ''}`}
       >
         <div className="header-container flex items-center justify-between h-14">
           {/* Логотип и название - слева */}
@@ -190,7 +191,9 @@ export default function Header() {
       {/* Десктопная версия header */}
       <header
         data-site-header
-        className="header-base hidden lg:flex fixed top-0 left-0 right-0 w-full"
+        className={`header-base hidden lg:flex fixed top-0 left-0 right-0 w-full${
+          isHidden ? ' Header--hidden' : ''
+        }${isScrolled ? ' Header--scrolled' : ''}`}
       >
         <div className="header-container flex items-center justify-between h-16">
           {/* Логотип и название */}

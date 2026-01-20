@@ -55,14 +55,22 @@ interface IntroOverlayProps {
 
 export default function IntroOverlay({
   children,
-  oncePerDevice = true,
+  oncePerDevice = false,
   storageKey = "intro_seen_v1",
   forceShow = false,
 }: IntroOverlayProps) {
   // Синхронно проверяем localStorage при инициализации, чтобы избежать мигания
   const getInitialStage = (): Stage => {
     if (forceShow) return "intro";
-    if (!oncePerDevice) return "intro";
+    if (!oncePerDevice) {
+      // Если oncePerDevice = false, всегда показываем интро и удаляем старый флаг
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem(storageKey);
+        } catch {}
+      }
+      return "intro";
+    }
     
     try {
       const seen = typeof window !== 'undefined' && localStorage.getItem(storageKey) === "1";
@@ -107,6 +115,8 @@ export default function IntroOverlay({
   const introTimersRef = useRef<number[]>([]);
   const revealTimersRef = useRef<number[]>([]);
   const rafRef = useRef<number | null>(null);
+  // Флаг для защиты от случайных кликов (активируется через 150ms после монтирования overlay)
+  const isClickableRef = useRef(false);
 
   const clearIntroTimers = useCallback(() => {
     introTimersRef.current.forEach((t) => window.clearTimeout(t));
@@ -131,7 +141,19 @@ export default function IntroOverlay({
     if (doneRef.current) return;
     doneRef.current = true;
     clearAll();
-    document.body.style.overflow = "";
+    // Восстанавливаем скролл и убираем класс скрытия скроллбара
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    
+    htmlEl.style.overflow = "";
+    bodyEl.style.overflow = "";
+    htmlEl.style.removeProperty("-ms-overflow-style");
+    htmlEl.style.removeProperty("scrollbar-width");
+    bodyEl.style.removeProperty("-ms-overflow-style");
+    bodyEl.style.removeProperty("scrollbar-width");
+    
+    htmlEl.classList.remove("scrollbar-hide");
+    bodyEl.classList.remove("scrollbar-hide");
     setStage("done");
   }, [clearAll]);
 
@@ -139,6 +161,20 @@ export default function IntroOverlay({
     // Включаем reveal стадии
     setStage("reveal");
     setRevealProgress(0);
+    
+    // Продолжаем скрывать скроллбар на стадии reveal
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    
+    htmlEl.style.overflow = "hidden";
+    bodyEl.style.overflow = "hidden";
+    htmlEl.style.setProperty("-ms-overflow-style", "none", "important");
+    htmlEl.style.setProperty("scrollbar-width", "none", "important");
+    bodyEl.style.setProperty("-ms-overflow-style", "none", "important");
+    bodyEl.style.setProperty("scrollbar-width", "none", "important");
+    
+    htmlEl.classList.add("scrollbar-hide");
+    bodyEl.classList.add("scrollbar-hide");
 
     // Если fast (skip) — раскрываем почти мгновенно
     const duration = fast ? 220 : REVEAL_MS;
@@ -164,10 +200,16 @@ export default function IntroOverlay({
 
     // Гарантированное завершение через таймер (не зависит от RAF)
     const completionTimer = window.setTimeout(() => {
-      // Ставим localStorage флаг (если oncePerDevice и не fast)
+      // Ставим localStorage флаг только если oncePerDevice = true и не fast
+      // Если oncePerDevice = false, не сохраняем флаг, чтобы интро показывалось при следующей загрузке
       if (oncePerDevice && !fast) {
         try {
           localStorage.setItem(storageKey, "1");
+        } catch {}
+      } else {
+        // Удаляем флаг, если он был установлен ранее
+        try {
+          localStorage.removeItem(storageKey);
         } catch {}
       }
       hardDone();
@@ -183,6 +225,11 @@ export default function IntroOverlay({
       try {
         localStorage.setItem(storageKey, "1");
       } catch {}
+    } else {
+      // Удаляем флаг, если он был установлен ранее
+      try {
+        localStorage.removeItem(storageKey);
+      } catch {}
     }
     runReveal(true);
   }, [clearAll, oncePerDevice, runReveal, storageKey]);
@@ -194,7 +241,13 @@ export default function IntroOverlay({
     
     if (forceShow) return; // Если forceShow=true — игнорируем localStorage
 
-    if (!oncePerDevice) return;
+    if (!oncePerDevice) {
+      // Если oncePerDevice = false, удаляем старый флаг при каждом монтировании
+      try {
+        localStorage.removeItem(storageKey);
+      } catch {}
+      return;
+    }
 
     try {
       const seen = localStorage.getItem(storageKey) === "1";
@@ -210,13 +263,53 @@ export default function IntroOverlay({
     }
   }, [oncePerDevice, storageKey, forceShow, stage]);
 
+  // Активация кликабельности через 150ms после появления overlay (защита от случайных кликов)
+  useEffect(() => {
+    if (stage !== "intro") {
+      isClickableRef.current = false;
+      return;
+    }
+
+    // Сбрасываем флаг при переходе в intro
+    isClickableRef.current = false;
+
+    // Активируем кликабельность через 150ms
+    const clickableTimer = window.setTimeout(() => {
+      if (stageRef.current === "intro" && !doneRef.current) {
+        isClickableRef.current = true;
+      }
+    }, 150);
+
+    return () => {
+      window.clearTimeout(clickableTimer);
+    };
+  }, [stage]);
+
   // Main timeline (only if we actually run intro)
   useEffect(() => {
     if (stage !== "intro") return;
     if (doneRef.current) return;
 
-    // lock scroll while intro/reveal
-    document.body.style.overflow = "hidden";
+    // lock scroll while intro/reveal и скрываем скроллбар
+    // Применяем стили напрямую для максимальной надежности
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    
+    // Сохраняем оригинальные стили для восстановления
+    const originalHtmlOverflow = htmlEl.style.overflow;
+    const originalBodyOverflow = bodyEl.style.overflow;
+    
+    // Блокируем скролл и скрываем скроллбар
+    htmlEl.style.overflow = "hidden";
+    bodyEl.style.overflow = "hidden";
+    htmlEl.style.setProperty("-ms-overflow-style", "none", "important");
+    htmlEl.style.setProperty("scrollbar-width", "none", "important");
+    bodyEl.style.setProperty("-ms-overflow-style", "none", "important");
+    bodyEl.style.setProperty("scrollbar-width", "none", "important");
+    
+    // Добавляем классы
+    htmlEl.classList.add("scrollbar-hide");
+    bodyEl.classList.add("scrollbar-hide");
 
     // Сброс индекса фразы на 0 при старте
     setPhraseIndex(0);
@@ -261,7 +354,21 @@ export default function IntroOverlay({
       window.removeEventListener("keydown", onKey);
       // Очищаем только таймеры интро, НЕ трогаем reveal таймеры
       clearIntroTimers();
-      document.body.style.overflow = "";
+      // Восстанавливаем скролл только если интро было прервано (не через hardDone)
+      if (!doneRef.current) {
+        const htmlEl = document.documentElement;
+        const bodyEl = document.body;
+        
+        htmlEl.style.overflow = "";
+        bodyEl.style.overflow = "";
+        htmlEl.style.removeProperty("-ms-overflow-style");
+        htmlEl.style.removeProperty("scrollbar-width");
+        bodyEl.style.removeProperty("-ms-overflow-style");
+        bodyEl.style.removeProperty("scrollbar-width");
+        
+        htmlEl.classList.remove("scrollbar-hide");
+        bodyEl.classList.remove("scrollbar-hide");
+      }
     };
   }, [stage, clearIntroTimers, hardDone, runReveal, skip]);
 
@@ -309,7 +416,7 @@ export default function IntroOverlay({
       <AnimatePresence>
         {showOverlay && (
           <motion.div
-            className="fixed inset-0 z-[9999] grid place-items-center p-6 text-center"
+            className="fixed inset-0 z-[9999] grid place-items-center p-6 text-center scrollbar-hide"
             style={{
               background: "#050B1C",
               touchAction: "manipulation",
@@ -318,13 +425,22 @@ export default function IntroOverlay({
               left: 0,
               right: 0,
               maxWidth: "100%",
+              overflow: "hidden",
               // В reveal overlay исчезает визуально, но не должен ловить клики
               pointerEvents: stage === "reveal" ? "none" : "auto",
-            }}
+              // Скрываем скроллбар для overlay
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+            } as React.CSSProperties}
             role="button"
             tabIndex={0}
             aria-label="Skip intro"
-            onClick={skip}
+            onClick={() => {
+              // Защита от случайных кликов: разрешаем skip только после 150ms после появления overlay
+              if (isClickableRef.current) {
+                skip();
+              }
+            }}
             initial={{ opacity: 1 }}
             animate={{ opacity: showRevealLight ? 0 : 1 }}
             exit={{ opacity: 0 }}
@@ -427,7 +543,7 @@ export default function IntroOverlay({
                   transition={{ delay: 0.5, duration: 0.25 }}
                   style={{ willChange: "opacity" }}
                 >
-                  Нажмите на экран чтобы пропустить
+                  Нажмите на экран, чтобы пропустить
                 </motion.p>
               </>
             )}

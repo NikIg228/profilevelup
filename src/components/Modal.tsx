@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState, useRef } from 'react';
+import { ReactNode, useEffect, useState, useRef, memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -13,7 +13,7 @@ type ModalProps = {
   hideScrollbar?: boolean;
 };
 
-export default function Modal({ open, onClose, children, hideScrollbar = false }: ModalProps) {
+function Modal({ open, onClose, children, hideScrollbar = false }: ModalProps) {
   const lenis = useLenis();
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -265,5 +265,7 @@ export default function Modal({ open, onClose, children, hideScrollbar = false }
 
   return null;
 }
+
+export default memo(Modal);
 
 
