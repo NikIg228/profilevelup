@@ -60,26 +60,31 @@ export default function AppLayout() {
     }
   }
 
-  const isPageReload = isPageReloadRef.current;
+  // Синхронно отслеживаем изменение пути для определения навигации через роутер
+  const previousPath = previousPathRef.current;
+  const pathChanged = previousPath !== null && previousPath !== location.pathname;
+  
+  // Если путь изменился и мы перешли на главную с другой страницы - это навигация через роутер
+  if (pathChanged && isHomePage && previousPath !== '/') {
+    // Это точно навигация через роутер, не перезагрузка
+    isPageReloadRef.current = false;
+    // Помечаем, что был переход на главную через роутер
+    try {
+      sessionStorage.setItem('navigated_to_home', 'true');
+    } catch {}
+  }
+  
+  // Обновляем previousPathRef синхронно
+  if (previousPathRef.current !== location.pathname) {
+    previousPathRef.current = location.pathname;
+  }
 
-  // Отслеживаем навигацию на главную через роутер
+  // Отслеживаем первый рендер
   useEffect(() => {
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
-      previousPathRef.current = location.pathname;
-    } else {
-      // Если путь изменился и мы на главной - это навигация через роутер
-      if (previousPathRef.current !== location.pathname && isHomePage) {
-        previousPathRef.current = location.pathname;
-        // Помечаем, что был переход на главную через роутер
-        try {
-          sessionStorage.setItem('navigated_to_home', 'true');
-        } catch {}
-      } else if (previousPathRef.current !== location.pathname) {
-        previousPathRef.current = location.pathname;
-      }
     }
-  }, [location.pathname, isHomePage]);
+  }, []);
 
   // Инициализация root контейнера (логика overflow теперь в useLenisSmoothScroll)
   useEffect(() => {
@@ -109,8 +114,24 @@ export default function AppLayout() {
     </LenisContext.Provider>
   );
 
+  // Определяем, нужно ли показывать интро
+  // Интро показывается только при перезагрузке страницы, не при навигации через роутер
+  const shouldShowIntro = (() => {
+    if (!isHomePage) {
+      return false;
+    }
+    
+    // Если перешли на главную с другой страницы - это навигация через роутер, не показываем интро
+    if (pathChanged && previousPath !== '/' && previousPath !== null) {
+      return false;
+    }
+    
+    // Используем сохраненное значение
+    return isPageReloadRef.current ?? false;
+  })();
+
   // IntroOverlay показывается только при перезагрузке страницы (не при навигации)
-  if (isHomePage && isPageReload) {
+  if (shouldShowIntro) {
     return (
       <IntroOverlay oncePerDevice={false} storageKey="intro_seen_v1">
         {content}
