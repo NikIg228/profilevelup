@@ -216,22 +216,40 @@ export function useSwiperAutoSlider({
 
     const swiper = swiperRef.current;
 
-    const handleTouchStart = (swiper: SwiperType, event: TouchEvent) => {
+    const handleTouchStart = (swiper: SwiperType, event: Event | TouchEvent | PointerEvent | MouseEvent) => {
       // Сохраняем начальную позицию касания
-      if (event.touches && event.touches[0]) {
+      if (event instanceof TouchEvent && event.touches && event.touches[0]) {
         touchStartRef.current = {
           x: event.touches[0].clientX,
           y: event.touches[0].clientY,
           time: Date.now(),
         };
+      } else if (event instanceof PointerEvent || event instanceof MouseEvent) {
+        touchStartRef.current = {
+          x: event.clientX,
+          y: event.clientY,
+          time: Date.now(),
+        };
       }
     };
 
-    const handleTouchMove = (swiper: SwiperType, event: TouchEvent) => {
+    const handleTouchMove = (swiper: SwiperType, event: Event | TouchEvent | PointerEvent | MouseEvent) => {
       // Проверяем направление движения
-      if (touchStartRef.current && event.touches && event.touches[0]) {
-        const deltaX = Math.abs(event.touches[0].clientX - touchStartRef.current.x);
-        const deltaY = Math.abs(event.touches[0].clientY - touchStartRef.current.y);
+      if (touchStartRef.current) {
+        let clientX: number, clientY: number;
+        
+        if (event instanceof TouchEvent && event.touches && event.touches[0]) {
+          clientX = event.touches[0].clientX;
+          clientY = event.touches[0].clientY;
+        } else if (event instanceof PointerEvent || event instanceof MouseEvent) {
+          clientX = event.clientX;
+          clientY = event.clientY;
+        } else {
+          return;
+        }
+        
+        const deltaX = Math.abs(clientX - touchStartRef.current.x);
+        const deltaY = Math.abs(clientY - touchStartRef.current.y);
         
         // Если движение преимущественно вертикальное, не паузим
         if (deltaY > deltaX * 1.5) {
@@ -239,7 +257,7 @@ export function useSwiperAutoSlider({
         }
       }
       
-      handleInteraction(event);
+      handleInteraction(event instanceof TouchEvent ? event : event instanceof PointerEvent ? event : undefined);
     };
 
     const handleSlideChange = () => {
@@ -262,24 +280,26 @@ export function useSwiperAutoSlider({
       paginationEl.addEventListener('click', handlePaginationClick);
     }
 
-    // Обработка drag/swipe (только горизонтальное)
-    swiper.on('sliderMove', () => {
-      // sliderMove срабатывает только при горизонтальном движении
-      handleInteraction();
-    });
-
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (swiper: SwiperType, event?: Event | TouchEvent | PointerEvent | MouseEvent) => {
       touchStartRef.current = null;
     };
 
+    const handleSliderMove = (swiper: SwiperType, event?: Event | TouchEvent | PointerEvent | MouseEvent) => {
+      // sliderMove срабатывает только при горизонтальном движении
+      handleInteraction(event instanceof TouchEvent ? event : event instanceof PointerEvent ? event : undefined);
+    };
+
     swiper.on('touchEnd', handleTouchEnd);
+
+    // Обработка drag/swipe (только горизонтальное)
+    swiper.on('sliderMove', handleSliderMove);
 
     return () => {
       swiper.off('touchStart', handleTouchStart);
       swiper.off('touchMove', handleTouchMove);
       swiper.off('touchEnd', handleTouchEnd);
       swiper.off('slideChange', handleSlideChange);
-      swiper.off('sliderMove', handleInteraction);
+      swiper.off('sliderMove', handleSliderMove);
       if (paginationEl) {
         paginationEl.removeEventListener('click', handlePaginationClick);
       }

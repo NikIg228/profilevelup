@@ -45,7 +45,7 @@ export default function HomePage() {
     openFor('free');
   }, [openFor]);
 
-  const handleStartPro = useCallback((testType: string) => {
+  const handleStartPro = useCallback((testType?: string) => {
     openFor('pro', testType);
   }, [openFor]);
 
