@@ -117,10 +117,18 @@ export default function TestingPage() {
       const config = getTestConfig(tariff, ageGroup);
       setTestConfig(config);
     } catch (error) {
-      console.error('Ошибка загрузки теста:', error);
-      alert('Не удалось загрузить тест. Пожалуйста, обновите страницу.');
+      logger.error('Ошибка загрузки теста:', error);
+      // Показываем ошибку пользователю через navigate на главную с сообщением
+      // В будущем можно добавить toast notification
+      navigate('/', { 
+        state: { 
+          error: 'Не удалось загрузить тест. Пожалуйста, попробуйте еще раз.' 
+        } 
+      });
     }
-  }, [tariff, ageGroup, setTestConfig]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // setTestConfig из Zustand - стабильная функция, не требует включения в зависимости
+  }, [tariff, ageGroup, navigate]);
 
   const total = testConfig?.questions?.length ?? 0;
   const currentQuestion = testConfig?.questions?.[step - 1];

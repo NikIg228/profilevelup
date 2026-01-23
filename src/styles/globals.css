@@ -1391,6 +1391,50 @@ html[data-mobile="true"] body {
   overflow-x: hidden !important;
 }
 
+/* Скрываем скроллбар на мобильных устройствах */
+html[data-mobile="true"],
+html[data-mobile="true"] body {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE и Edge */
+}
+
+html[data-mobile="true"]::-webkit-scrollbar,
+html[data-mobile="true"] body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Также скрываем скроллбар через медиа-запросы для надежности */
+/* Это гарантирует, что на мобильных скроллбар всегда скрыт */
+@media (max-width: 1023px) {
+  html,
+  html[data-mobile="true"],
+  body,
+  body[data-mobile="true"] {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE и Edge */
+  }
+
+  html::-webkit-scrollbar,
+  html[data-mobile="true"]::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  body[data-mobile="true"]::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+  }
+
+  /* Дополнительно скрываем для всех элементов на мобильных */
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+}
+
 /* Кастомный скроллбар для Lenis (desktop) - ТОЛЬКО на html */
 html.lenis:not([data-mobile="true"]) {
   scrollbar-width: thin;

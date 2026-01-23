@@ -410,14 +410,14 @@ export function useAutoSlider({
         }
       }, 500);
 
-      return () => clearTimeout(initTimer);
+      return () => {
+        clearTimeout(initTimer);
+        stop(); // Останавливаем при cleanup
+      };
     } else {
       stop();
+      return undefined; // Явно возвращаем undefined для else ветки
     }
-
-    return () => {
-      stop();
-    };
   }, [enabled, isPaused, start, stop]);
 
   // Очистка при размонтировании

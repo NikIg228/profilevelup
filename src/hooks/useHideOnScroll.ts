@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLenis } from '../contexts/LenisContext';
 import { scrollLockManager } from '../utils/scrollLock';
+import { isMobile } from '../utils/device';
 
 interface UseHideOnScrollOptions {
   hideThreshold?: number; // Порог для скрытия (px)
@@ -34,6 +35,11 @@ export function useHideOnScroll({
   const rafIdRef = useRef<number | null>(null);
   const isScrollingRef = useRef(false);
 
+  // Определяем, используем ли мы Lenis или нативный скролл
+  // Выносим за пределы useEffect для правильных зависимостей
+  const isMobileDevice = isMobile();
+  const useNativeScroll = isMobileDevice || !lenis;
+
   useEffect(() => {
     // Проверяем, есть ли вообще скролл на странице
     const checkHasScroll = () => {
@@ -50,9 +56,16 @@ export function useHideOnScroll({
     // Инициализация начальной позиции скролла
     // Используем единый подход для обоих случаев (Lenis и нативный скролл)
     const getScrollY = (): number => {
-      const y = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-      // Нормализация для iOS bounce (может быть отрицательным)
-      return Math.max(0, y);
+      if (useNativeScroll) {
+        // Для нативного скролла используем window.scrollY
+        const y = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+        // Нормализация для iOS bounce (может быть отрицательным)
+        return Math.max(0, y);
+      } else if (lenis) {
+        // Для Lenis используем его scroll
+        return lenis.scroll;
+      }
+      return 0;
     };
 
     const initialScrollY = getScrollY();
@@ -130,31 +143,34 @@ export function useHideOnScroll({
 
     // Подписка на события скролла
     // Для Lenis используем событие 'scroll', для нативного скролла - window 'scroll'
-    let scrollHandler: ((e: any) => void) | null = null;
+    let scrollHandler: (() => void) | null = null;
     
-    if (lenis) {
+    if (useNativeScroll) {
+      // Нативный скролл на mobile - используем window scroll event
+      // Добавляем также touchmove для лучшей поддержки на мобильных
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('touchmove', handleScroll, { passive: true });
+    } else if (lenis) {
       // Lenis на desktop - подписываемся на событие scroll через Lenis API
       scrollHandler = () => {
         handleScroll();
       };
       
       lenis.on('scroll', scrollHandler);
-    } else {
-      // Нативный скролл на mobile
-      window.addEventListener('scroll', handleScroll, { passive: true });
     }
     
     return () => {
-      if (lenis && scrollHandler) {
-        lenis.off('scroll', scrollHandler);
-      } else {
+      if (useNativeScroll) {
         window.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('touchmove', handleScroll);
+      } else if (lenis && scrollHandler) {
+        lenis.off('scroll', scrollHandler);
       }
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
     };
-  }, [lenis, hideThreshold, showThreshold, revealTopOffset, topLock]);
+  }, [lenis, useNativeScroll, hideThreshold, showThreshold, revealTopOffset, topLock]);
 
   return {
     isHidden,

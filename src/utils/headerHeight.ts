@@ -4,6 +4,8 @@
  * и обновления при повороте экрана или изменении размеров
  */
 
+import { logger } from './logger';
+
 export function initHeaderHeightObserver() {
   if (typeof window === 'undefined') return;
 
@@ -58,9 +60,7 @@ export function initHeaderHeightObserver() {
           document.documentElement.style.setProperty('--header-h', `${height}px`);
         } catch (error) {
           // Игнорируем ошибки при обновлении (может быть связано с расширениями браузера)
-          if (import.meta.env.DEV) {
-            console.warn('Error updating header height:', error);
-          }
+          logger.warn('Error updating header height:', error);
         }
       };
 
@@ -91,18 +91,14 @@ export function initHeaderHeightObserver() {
             }
           } catch (error) {
             // Игнорируем ошибки в ResizeObserver callback
-            if (import.meta.env.DEV) {
-              console.warn('Error in ResizeObserver callback:', error);
-            }
+            logger.warn('Error in ResizeObserver callback:', error);
           }
         });
 
         resizeObserver.observe(header);
       } catch (error) {
         // Fallback если ResizeObserver не поддерживается
-        if (import.meta.env.DEV) {
-          console.warn('ResizeObserver not supported, using fallback:', error);
-        }
+        logger.warn('ResizeObserver not supported, using fallback:', error);
       }
 
       // Также отслеживаем изменения ориентации экрана и размера окна
@@ -134,22 +130,16 @@ export function initHeaderHeightObserver() {
                       document.documentElement.style.setProperty('--header-h', `${height}px`);
                     }
                   } catch (error) {
-                    if (import.meta.env.DEV) {
-                      console.warn('Error in ResizeObserver callback:', error);
-                    }
+                    logger.warn('Error in ResizeObserver callback:', error);
                   }
                 });
                 resizeObserver.observe(header);
               } catch (error) {
-                if (import.meta.env.DEV) {
-                  console.warn('ResizeObserver not supported:', error);
-                }
+                logger.warn('ResizeObserver not supported:', error);
               }
             }
           } catch (error) {
-            if (import.meta.env.DEV) {
-              console.warn('Error in orientation change handler:', error);
-            }
+            logger.warn('Error in orientation change handler:', error);
           }
         }, 100);
       };
@@ -173,16 +163,12 @@ export function initHeaderHeightObserver() {
                   document.documentElement.style.setProperty('--header-h', `${height}px`);
                 }
               } catch (error) {
-                if (import.meta.env.DEV) {
-                  console.warn('Error in ResizeObserver callback:', error);
-                }
+                logger.warn('Error in ResizeObserver callback:', error);
               }
             });
             resizeObserver.observe(header);
           } catch (error) {
-            if (import.meta.env.DEV) {
-              console.warn('ResizeObserver not supported:', error);
-            }
+            logger.warn('ResizeObserver not supported:', error);
           }
         }
       };
@@ -202,9 +188,7 @@ export function initHeaderHeightObserver() {
           window.removeEventListener('orientationchange', handleOrientationChange);
           window.removeEventListener('resize', handleResize);
         } catch (error) {
-          if (import.meta.env.DEV) {
-            console.warn('Error during cleanup:', error);
-          }
+          logger.warn('Error during cleanup:', error);
         }
       };
     };
@@ -213,9 +197,7 @@ export function initHeaderHeightObserver() {
     findAndInitHeader();
   } catch (error) {
     // Обрабатываем любые неожиданные ошибки
-    if (import.meta.env.DEV) {
-      console.error('Error initializing header height observer:', error);
-    }
+    logger.error('Error initializing header height observer:', error);
     // Используем fallback значение
     const fallbackHeight = 64;
     document.documentElement.style.setProperty('--header-h', `${fallbackHeight}px`);

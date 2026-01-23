@@ -242,7 +242,7 @@ export const useAuthStore = create<AuthState>()(
             });
           }
         } catch (error) {
-          console.error('Ошибка проверки сессии:', error);
+          logger.error('Ошибка проверки сессии:', error);
         }
       },
 
