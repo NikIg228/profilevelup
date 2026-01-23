@@ -35,9 +35,18 @@ function Modal({ open, onClose, children, hideScrollbar = false }: ModalProps) {
       firstFocusableRef.current = focusableElements[0];
       lastFocusableRef.current = focusableElements[focusableElements.length - 1];
       
-      // Фокусируемся на первом элементе
+      // Фокусируемся на первом элементе БЕЗ скролла
+      // Используем preventScroll: true для предотвращения автоматического скролла браузера
       setTimeout(() => {
-        firstFocusableRef.current?.focus();
+        const el = firstFocusableRef.current;
+        if (el) {
+          try {
+            el.focus({ preventScroll: true });
+          } catch {
+            // Fallback для браузеров без поддержки preventScroll
+            el.focus();
+          }
+        }
       }, 100);
     }
 
@@ -77,53 +86,67 @@ function Modal({ open, onClose, children, hideScrollbar = false }: ModalProps) {
   }, [open, onClose]);
 
   useEffect(() => {
-    if (open) {
-      // Блокируем скролл через менеджер
-      scrollLockManager.lock('modal');
-      
-      // Временно останавливаем Lenis, если он активен
-      if (lenis) {
-        lenis.stop();
-      }
-      
-      // Предотвращаем перехват событий скролла Lenis внутри модального окна
-      // Используем passive: true для лучшей производительности
-      const handleWheel = (e: WheelEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('.modal-scroll-container')) {
-          e.stopPropagation();
-        }
-      };
-      
-      const handleTouchMove = (e: TouchEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('.modal-scroll-container')) {
-          e.stopPropagation();
-        }
-      };
-      
-      window.addEventListener('wheel', handleWheel, { passive: true, capture: true });
-      window.addEventListener('touchmove', handleTouchMove, { passive: true, capture: true });
-      
-      return () => {
-        window.removeEventListener('wheel', handleWheel, { capture: true });
-        window.removeEventListener('touchmove', handleTouchMove, { capture: true });
-      };
-    } else {
-      // Разблокируем скролл через менеджер
-      scrollLockManager.unlock('modal');
-      
-      // Восстанавливаем Lenis
-      if (lenis) {
-        lenis.start();
-      }
+    if (!open) return;
+
+    // Блокируем скролл через менеджер
+    scrollLockManager.lock('modal');
+    
+    // Временно останавливаем Lenis, если он активен
+    if (lenis) {
+      lenis.stop();
     }
     
+    // Предотвращаем перехват событий скролла Lenis внутри модального окна
+    // Используем passive: true для лучшей производительности
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.modal-scroll-container')) {
+        e.stopPropagation();
+      }
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.modal-scroll-container')) {
+        e.stopPropagation();
+      }
+    };
+    
+    window.addEventListener('wheel', handleWheel, { passive: true, capture: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true, capture: true });
+    
     return () => {
-      // Cleanup при размонтировании
+      // Cleanup при закрытии модалки
+      window.removeEventListener('wheel', handleWheel, { capture: true });
+      window.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      
+      // Сохраняем позицию скролла перед разблокировкой
+      const scrollY = document.body.getAttribute('data-scroll-y');
+      const savedScrollY = scrollY ? parseInt(scrollY, 10) : 0;
+      
+      // Разблокируем скролл через менеджер
+      // scrollLockManager.unlock сам восстановит позицию через window.scrollTo
       scrollLockManager.unlock('modal');
+      
+      // Восстанавливаем Lenis и синхронизируем с восстановленной позицией
       if (lenis) {
-        lenis.start();
+        // Используем двойной requestAnimationFrame для гарантии, что window.scrollTo выполнен
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            // Проверяем, что скролл действительно разблокирован
+            if (!scrollLockManager.isScrollLocked()) {
+              // Запускаем Lenis
+              lenis.start();
+              
+              // Синхронизируем позицию Lenis с текущей позицией скролла
+              // Это гарантирует, что Lenis знает о восстановленной позиции
+              const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+              if (currentScrollY > 0) {
+                lenis.scrollTo(currentScrollY, { immediate: true });
+              }
+            }
+          });
+        });
       }
     };
   }, [open, lenis]);
