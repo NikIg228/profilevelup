@@ -9,7 +9,9 @@ import { initializeDefaultReviews } from './utils/reviewsStorage';
 
 // Lazy loading для всех страниц
 const HomePage = lazy(() => import('./pages/Home'));
-const TestingPage = lazy(() => import('./pages/Testing'));
+const TestingFreePage = lazy(() => import('./pages/TestingFree'));
+const TestingExtendedPage = lazy(() => import('./pages/TestingExtended'));
+const TestingPremiumPage = lazy(() => import('./pages/TestingPremium'));
 const ResultFreePage = lazy(() => import('./pages/ResultFree'));
 const ResultVipPage = lazy(() => import('./pages/ResultVip'));
 const PrivacyPage = lazy(() => import('./pages/Privacy'));
@@ -22,6 +24,8 @@ const AdminPage = lazy(() => import('./pages/Admin'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
 const PublicOfferPage = lazy(() => import('./pages/PublicOffer'));
 const AccountPage = lazy(() => import('./pages/Account'));
+const PaymentSuccessPage = lazy(() => import('./pages/PaymentSuccess'));
+const PaymentFailPage = lazy(() => import('./pages/PaymentFail'));
 
 // Компонент загрузки
 const PageLoader = () => (
@@ -47,10 +51,35 @@ const router = createBrowserRouter([
         ) 
       },
       { 
+        path: 'test/free', 
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <TestingFreePage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'test/extended', 
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <TestingExtendedPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'test/premium', 
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <TestingPremiumPage />
+          </Suspense>
+        ) 
+      },
+      // Обратная совместимость - редирект со старого пути
+      { 
         path: 'test', 
         element: (
           <Suspense fallback={<PageLoader />}>
-            <TestingPage />
+            <TestingFreePage />
           </Suspense>
         ) 
       },
@@ -139,6 +168,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <AccountPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'payment/success', 
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PaymentSuccessPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'payment/fail', 
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PaymentFailPage />
           </Suspense>
         ) 
       },

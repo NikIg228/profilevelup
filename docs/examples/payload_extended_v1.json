@@ -1,0 +1,34 @@
+{
+  "version": "payload_v1",
+  "testId": "extended-example-1",
+  "tariff": "EXTENDED",
+  "completedAt": "2025-06-15T10:00:00.000Z",
+  "ageBucket": "15_17",
+  "user": {
+    "fullName": "MARIA IVANOVA",
+    "email": "maria@example.com",
+    "age": 16,
+    "gender": "female"
+  },
+  "moduleId": "ENFJ",
+  "placeholdersBase": {
+    "USER_FULL_NAME": "MARIA IVANOVA",
+    "REPORT_DATE": "15 JUN 2025"
+  },
+  "placeholdersExtended": {
+    "AXIS_SOCIAL_VALUE": 100,
+    "AXIS_FOCUS_VALUE": 100,
+    "AXIS_DECISION_VALUE": 100,
+    "AXIS_STRUCTURE_VALUE": 100,
+    "AXIS_MOTIVATION_VALUE": 80,
+    "AXIS_ACTIVATION_VALUE": 20,
+    "AXIS_COMMUNICATION_VALUE": 60,
+    "META_EXPRESSIVENESS_VALUE": 100,
+    "META_EXPRESSIVENESS_TEXT": "ярко, устойчиво, заметно",
+    "META_CONFIDENCE_VALUE": 91,
+    "META_CONFIDENCE_TEXT": "ровно, согласованно, стабильно",
+    "SUMMARY_MOTIVATION": "Тебя держит не только “сделать”, а понять: зачем это тебе...",
+    "SUMMARY_ACTIVATION": "Тебе легче начинать, когда есть структура...",
+    "SUMMARY_COMMUNICATION": "В конфликте ты чаще стараешься сохранить отношения..."
+  }
+}

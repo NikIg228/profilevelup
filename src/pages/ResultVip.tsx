@@ -4,13 +4,20 @@ import { CheckCircle, Download, ArrowLeft, RotateCcw } from 'lucide-react';
 import { resolveVipMetrics, type VipMetrics } from '../engine/resolveVipMetrics';
 import { useTestStore } from '../stores/useTestStore';
 import { logger } from '../utils/logger';
+import { getStoredPromo, getPriceWithPromo } from '../utils/promoApi';
+import { PAYMENT_API } from '../config/api';
 import type { ExtendedAnswers, ExtendedTestConfig } from '../engine/types';
+
+function formatPrice(value: number): string {
+  return `${value.toLocaleString('ru-RU')} ₸`;
+}
 
 export default function ResultVipPage() {
   const navigate = useNavigate();
-  const { testConfig, answers, resetTest } = useTestStore();
+  const { testConfig, answers, resetTest, tariff } = useTestStore();
   const [metrics, setMetrics] = useState<VipMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [paymentPending, setPaymentPending] = useState(false);
 
   const user = useMemo(() => {
     const raw = sessionStorage.getItem('profi.user');
@@ -18,6 +25,7 @@ export default function ResultVipPage() {
     try {
       return JSON.parse(raw) as { 
         name?: string;
+        age?: number | string;
         ageGroup?: string;
         testType?: string;
       };
@@ -26,6 +34,12 @@ export default function ResultVipPage() {
       return {};
     }
   }, []);
+
+  const promo = useMemo(() => getStoredPromo(), []);
+  const { basePrice, finalPrice, hasDiscount } = useMemo(
+    () => getPriceWithPromo(tariff || 'EXTENDED', promo),
+    [tariff, promo]
+  );
 
   useEffect(() => {
     if (!testConfig || !answers) {
@@ -65,7 +79,11 @@ export default function ResultVipPage() {
 
         // Вычисляем все метрики VIP теста
         const extendedConfig = testConfig as ExtendedTestConfig;
-        const vipMetrics = resolveVipMetrics(answers as ExtendedAnswers, extendedConfig, textModules);
+        
+        // Получаем возраст из user объекта (он должен быть числом, но на всякий случай парсим)
+        const userAge = user.age ? (typeof user.age === 'number' ? user.age : parseInt(user.age as string, 10)) : 18;
+        
+        const vipMetrics = resolveVipMetrics(answers as ExtendedAnswers, extendedConfig, textModules, userAge);
         setMetrics(vipMetrics);
         setIsLoading(false);
       } catch (error) {
@@ -356,12 +374,16 @@ export default function ResultVipPage() {
             Вернуться на главную
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               // Сбрасываем состояние теста и переходим к новому прохождению
-              resetTest();
+              await resetTest();
               // Небольшая задержка для гарантии полного сброса состояния
               setTimeout(() => {
-                navigate('/test');
+                // Используем тариф из store или по умолчанию EXTENDED для VIP
+                const testPath = tariff === 'PREMIUM' ? '/test/premium' 
+                               : tariff === 'FREE' ? '/test/free' 
+                               : '/test/extended';
+                navigate(testPath);
               }, 50);
             }}
             className="btn btn-primary px-6 py-3 flex items-center justify-center gap-2"
@@ -370,14 +392,51 @@ export default function ResultVipPage() {
             Пройти тест снова
           </button>
           <button
-            onClick={() => {
-              // Здесь можно добавить логику скачивания отчета
-              alert('Функция скачивания отчета будет доступна в ближайшее время');
+            onClick={async () => {
+              setPaymentPending(true);
+              try {
+                const res = await fetch(PAYMENT_API.CREATE, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    amount: finalPrice,
+                    description: 'Расширенный разбор результата теста',
+                  }),
+                });
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({}));
+                  logger.error('Ошибка создания платежа:', res.status, err);
+                  alert(err.detail || 'Не удалось перейти к оплате. Попробуйте позже.');
+                  return;
+                }
+                const data = await res.json() as { payment_url: string; inv_id: number };
+                window.location.href = data.payment_url;
+              } catch (e) {
+                logger.error('Ошибка создания платежа:', e);
+                alert('Не удалось перейти к оплате. Проверьте подключение.');
+              } finally {
+                setPaymentPending(false);
+              }
             }}
-            className="btn btn-outline px-6 py-3 flex items-center justify-center gap-2"
+            disabled={paymentPending}
+            className="btn btn-outline px-6 py-3 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 disabled:opacity-70"
           >
-            <Download className="w-5 h-5" />
-            Скачать отчет
+            {paymentPending ? (
+              <span className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
+            ) : (
+              <Download className="w-5 h-5 shrink-0" />
+            )}
+            <span>Получить расширенный разбор</span>
+            <span className="flex items-center gap-2 text-sm font-medium">
+              {hasDiscount ? (
+                <>
+                  <span className="line-through text-muted">{formatPrice(basePrice)}</span>
+                  <span className="text-primary">{formatPrice(finalPrice)}</span>
+                </>
+              ) : (
+                <span className="text-primary">{formatPrice(finalPrice)}</span>
+              )}
+            </span>
           </button>
         </div>
 

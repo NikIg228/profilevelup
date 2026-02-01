@@ -8,7 +8,7 @@ import type { Answers, FreeTestConfig } from '../engine/types';
 
 export default function ResultFreePage() {
   const navigate = useNavigate();
-  const { testConfig, answers, resetTest } = useTestStore();
+  const { testConfig, answers, resetTest, tariff } = useTestStore();
   const [resultIndex, setResultIndex] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -137,12 +137,16 @@ export default function ResultFreePage() {
             Вернуться на главную
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               // Сбрасываем состояние теста и переходим к новому прохождению
-              resetTest();
+              await resetTest();
               // Небольшая задержка для гарантии полного сброса состояния
               setTimeout(() => {
-                navigate('/test');
+                // Используем тариф из store или по умолчанию FREE
+                const testPath = tariff === 'EXTENDED' ? '/test/extended' 
+                               : tariff === 'PREMIUM' ? '/test/premium' 
+                               : '/test/free';
+                navigate(testPath);
               }, 50);
             }}
             className="btn btn-primary px-6 py-3 flex items-center justify-center gap-2"

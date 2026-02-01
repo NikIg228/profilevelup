@@ -24,5 +24,6 @@ export interface UserPayload {
   testType: string;
   email: string;
   parentEmail?: string;
+  tariff?: string; // Тариф для отправки на бэкенд: "FREE" | "EXTENDED" | "PREMIUM"
 }
 

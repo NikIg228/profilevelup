@@ -2,7 +2,7 @@
  * Типы для системы тестирования
  */
 
-export type Tariff = 'FREE' | 'PRO' | 'PREMIUM' | 'EXTENDED';
+export type Tariff = 'FREE' | 'EXTENDED' | 'PREMIUM';
 
 // Возрастные группы для FREE тестов
 export type FreeAgeGroup = '12-17' | '18-20' | '21+';

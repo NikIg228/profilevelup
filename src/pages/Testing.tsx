@@ -9,8 +9,12 @@ import { getTestConfig } from '../engine/getTestConfig';
 import { resolveFreeResult, resolveExtendedResult } from '../engine/resolveResult';
 import { useTestStore } from '../stores/useTestStore';
 import { useMotionMode } from '../hooks/useMotionMode';
+import { useTestSaveOnUnload } from '../hooks/useTestSaveOnUnload';
+import { useTestExitConfirmation } from '../hooks/useTestExitConfirmation';
+import ExitConfirmDialog from '../components/test/ExitConfirmDialog';
 import { logger } from '../utils/logger';
 import type { Answers, ExtendedAnswers, Tariff, AgeGroup, FreeTestConfig, ExtendedTestConfig } from '../engine/types';
+import { planToTariff } from '../utils/testTypeMapping';
 
 export default function TestingPage() {
   const navigate = useNavigate();
@@ -38,20 +42,27 @@ export default function TestingPage() {
   const step = useTestStore(state => state.step);
   const answers = useTestStore(state => state.answers);
   const isRestoring = useTestStore(state => state.isRestoring);
+  const isCompleted = useTestStore(state => state.isCompleted);
+  const testId = useTestStore(state => state.testId);
+  const tariff = useTestStore(state => state.tariff);
   
   // Actions не вызывают ререндеры, получаем их отдельно
   const initializeTest = useTestStore(state => state.initializeTest);
   const setTestConfig = useTestStore(state => state.setTestConfig);
   const setStep = useTestStore(state => state.setStep);
   const setAnswer = useTestStore(state => state.setAnswer);
+  const markTestCompleted = useTestStore(state => state.markTestCompleted);
+  
+  // Немедленное сохранение при закрытии страницы
+  useTestSaveOnUnload();
+  
+  // Подтверждение выхода при навигации внутри приложения
+  useTestExitConfirmation();
 
-  // Определяем параметры теста
-  const tariff: Tariff = useMemo(() => {
-    if (user.plan === 'free') return 'FREE';
-    if (user.plan === 'extended') return 'EXTENDED';
-    if (user.plan === 'premium') return 'PREMIUM';
-    return 'FREE';
-  }, [user.plan]);
+  // Определяем параметры теста используя четкий маппинг (из store, если есть)
+  const currentTariff: Tariff = useMemo(() => {
+    return tariff || planToTariff(user.plan);
+  }, [tariff, user.plan]);
 
   // Преобразуем возрастную группу в правильный формат (для обратной совместимости)
   const normalizeAgeGroup = (ag: string | undefined): AgeGroup => {
@@ -72,35 +83,52 @@ export default function TestingPage() {
   const initTimerRef = useRef<NodeJS.Timeout | null>(null);
   const navigateTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasNavigatedRef = useRef(false);
+  const configRetryCountRef = useRef(0);
+  const configErrorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  /** true, если завершение произошло в этой сессии. Иначе не редиректим (восстановленный завершённый тест = перепройти). */
+  const completedInThisSessionRef = useRef(false);
+
+  const [retryTrigger, setRetryTrigger] = useState(0);
+  const [showConfigError, setShowConfigError] = useState(false);
 
   // Инициализация теста через Zustand (только если нужно)
   useEffect(() => {
-    // Очищаем предыдущий таймер если есть
     if (initTimerRef.current) {
       clearTimeout(initTimerRef.current);
     }
 
-    // Небольшая задержка, чтобы persist middleware успел восстановить состояние
-    initTimerRef.current = setTimeout(() => {
+    const runInit = () => {
       const state = useTestStore.getState();
       
-      // Инициализируем только если:
-      // 1. Нет активного теста ИЛИ
-      // 2. Параметры изменились (тариф или возрастная группа)
+      if (state.tariff && state.tariff !== currentTariff) {
+        logger.debug(`Обнаружено несоответствие тарифа: store=${state.tariff}, current=${currentTariff}. Очищаем состояние.`);
+        useTestStore.getState().resetTestForce();
+        initializeTest(currentTariff, ageGroup, user.email, user.email);
+        return;
+      }
+      
       const needsInitialization = 
         !state.testId ||
-        state.tariff !== tariff ||
+        state.isCompleted ||
+        state.tariff !== currentTariff ||
         state.ageGroup !== ageGroup;
       
       if (needsInitialization) {
-        initializeTest(tariff, ageGroup, user.email, user.email);
+        initializeTest(currentTariff, ageGroup, user.email, user.email);
       } else {
-        // Если тест уже активен и параметры совпадают - просто снимаем флаг восстановления
         if (state.isRestoring) {
           useTestStore.setState({ isRestoring: false });
         }
       }
-    }, 100); // Небольшая задержка для восстановления из localStorage
+    };
+
+    // Восстановленный завершённый тест (перепройти) — инициализируем сразу
+    const state = useTestStore.getState();
+    if (state.isCompleted && state.tariff === currentTariff) {
+      runInit();
+      return;
+    }
+    initTimerRef.current = setTimeout(runInit, 100);
     
     return () => {
       if (initTimerRef.current) {
@@ -108,27 +136,71 @@ export default function TestingPage() {
         initTimerRef.current = null;
       }
     };
-  }, [tariff, ageGroup, user.email, initializeTest]);
+  }, [tariff, ageGroup, user.email, initializeTest, currentTariff]);
 
 
-  // Загрузка конфигурации теста
+  // Загрузка конфигурации теста (с повторными попытками)
+  const MAX_CONFIG_RETRIES = 3;
   useEffect(() => {
+    if (!currentTariff || !ageGroup) {
+      logger.warn('Tariff или ageGroup не определены, пропускаем загрузку конфигурации');
+      return;
+    }
+    
+    const state = useTestStore.getState();
+    const needsConfigReload = 
+      !state.testConfig || 
+      (state.tariff && state.tariff !== currentTariff) ||
+      (state.ageGroup && state.ageGroup !== ageGroup);
+    
+    if (!needsConfigReload && state.testConfig) {
+      configRetryCountRef.current = 0;
+      return;
+    }
+    
+    let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
     try {
-      const config = getTestConfig(tariff, ageGroup);
+      const config = getTestConfig(currentTariff, ageGroup);
       setTestConfig(config);
+      configRetryCountRef.current = 0;
     } catch (error) {
       logger.error('Ошибка загрузки теста:', error);
-      // Показываем ошибку пользователю через navigate на главную с сообщением
-      // В будущем можно добавить toast notification
-      navigate('/', { 
-        state: { 
-          error: 'Не удалось загрузить тест. Пожалуйста, попробуйте еще раз.' 
-        } 
-      });
+      const currentState = useTestStore.getState();
+      if (currentState.isRestoring || !currentState.tariff) {
+        logger.warn('Ошибка загрузки конфигурации во время инициализации, будет повторная попытка');
+      } else if (configRetryCountRef.current < MAX_CONFIG_RETRIES - 1) {
+        configRetryCountRef.current += 1;
+        retryTimeoutId = setTimeout(() => setRetryTrigger(r => r + 1), 400);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // setTestConfig из Zustand - стабильная функция, не требует включения в зависимости
-  }, [tariff, ageGroup, navigate]);
+    return () => {
+      if (retryTimeoutId) clearTimeout(retryTimeoutId);
+    };
+  }, [currentTariff, ageGroup, isRestoring, retryTrigger, setTestConfig]);
+
+  // Grace period перед показом ошибки загрузки конфига
+  const CONFIG_ERROR_GRACE_MS = 2000;
+  useEffect(() => {
+    if (testConfig) {
+      setShowConfigError(false);
+      if (configErrorTimeoutRef.current) {
+        clearTimeout(configErrorTimeoutRef.current);
+        configErrorTimeoutRef.current = null;
+      }
+      return;
+    }
+    if (!currentTariff || isRestoring) return;
+    configErrorTimeoutRef.current = setTimeout(() => {
+      configErrorTimeoutRef.current = null;
+      setShowConfigError(true);
+    }, CONFIG_ERROR_GRACE_MS);
+    return () => {
+      if (configErrorTimeoutRef.current) {
+        clearTimeout(configErrorTimeoutRef.current);
+        configErrorTimeoutRef.current = null;
+      }
+    };
+  }, [testConfig, currentTariff, isRestoring]);
 
   const total = testConfig?.questions?.length ?? 0;
   const currentQuestion = testConfig?.questions?.[step - 1];
@@ -144,11 +216,17 @@ export default function TestingPage() {
     if (!isTestComplete || !testConfig || !answers || hasNavigatedRef.current) {
       return;
     }
+    // Не редиректить, если тест завершён до этой сессии (восстановлен из localStorage) — пользователь зашёл перепройти
+    if (isCompleted && !completedInThisSessionRef.current) {
+      return;
+    }
 
     // Очищаем предыдущий таймер навигации если есть
     if (navigateTimerRef.current) {
       clearTimeout(navigateTimerRef.current);
     }
+
+    completedInThisSessionRef.current = true;
 
     try {
       // Определяем тип теста
@@ -160,16 +238,22 @@ export default function TestingPage() {
         const result = resolveExtendedResult(answers as ExtendedAnswers, extendedConfig);
         setResultPreview(result);
         
+        // Отмечаем тест как завершенный перед навигацией
+        markTestCompleted();
+        
         // Переходим на страницу результатов VIP через 2 секунды (чтобы показать превью)
         hasNavigatedRef.current = true;
         navigateTimerRef.current = setTimeout(() => {
           navigate('/result/vip');
         }, 2000);
-      } else if (tariff === 'FREE') {
+      } else if (currentTariff === 'FREE') {
         // FREE тест
         const freeConfig = testConfig as FreeTestConfig;
         const result = resolveFreeResult(answers as Answers, freeConfig);
         setResultPreview(result);
+        
+        // Отмечаем тест как завершенный перед навигацией
+        markTestCompleted();
         
         // Переходим на страницу результатов FREE через 2 секунды (чтобы показать превью)
         hasNavigatedRef.current = true;
@@ -182,12 +266,14 @@ export default function TestingPage() {
     }
 
     return () => {
-      if (navigateTimerRef.current) {
+      // Не сбрасываем таймер, если редирект уже запланирован (иначе в React Strict Mode
+      // cleanup отменит таймер, повторный запуск эффекта не поставит его из-за hasNavigatedRef)
+      if (navigateTimerRef.current && !hasNavigatedRef.current) {
         clearTimeout(navigateTimerRef.current);
         navigateTimerRef.current = null;
       }
     };
-  }, [isTestComplete, testConfig, answers, tariff, navigate]);
+  }, [isTestComplete, testConfig, answers, currentTariff, isCompleted, navigate, markTestCompleted]);
 
   const onSelect = useCallback((value: string) => {
     if (!currentQuestion || !testConfig) return;
@@ -243,17 +329,27 @@ export default function TestingPage() {
       <section className="fixed inset-0 flex items-center justify-center overflow-hidden">
         <div className="flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="ml-3 text-muted">Восстановление прогресса...</span>
+          <span className="ml-3 text-muted">Загрузка теста...</span>
         </div>
       </section>
     );
   }
 
-  if (!testConfig) {
+  if (!testConfig && showConfigError) {
     return (
       <section className="fixed inset-0 flex items-center justify-center overflow-hidden">
         <div className="card p-6">
           <p className="text-muted">Не удалось загрузить тест. Пожалуйста, обновите страницу.</p>
+        </div>
+      </section>
+    );
+  }
+  if (!testConfig) {
+    return (
+      <section className="fixed inset-0 flex items-center justify-center overflow-hidden">
+        <div className="flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-3 text-muted">Загрузка теста...</span>
         </div>
       </section>
     );
@@ -372,6 +468,8 @@ export default function TestingPage() {
           />
         </div>
       </div>
+      
+      <ExitConfirmDialog />
     </section>
   );
 }

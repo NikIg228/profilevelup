@@ -13,6 +13,7 @@ import FormatsSectionLazy from './sections/FormatsSection.lazy';
 export default function HomePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [plan, setPlan] = useState<Plan>(null);
+  const [initialTestType, setInitialTestType] = useState<string>('');
   const [premiumSlideIndex, setPremiumSlideIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   
@@ -24,6 +25,7 @@ export default function HomePage() {
 
   const openFor = useCallback((p: Plan, testTypeValue?: string) => {
     setPlan(p);
+    setInitialTestType(testTypeValue || '');
     setModalOpen(true);
   }, []);
 
@@ -109,7 +111,7 @@ export default function HomePage() {
           <StartTestModalLazy
             open={modalOpen}
             plan={plan}
-            initialTestType={plan === 'pro' ? 'Персональный разбор' : ''}
+            initialTestType={initialTestType || (plan === 'pro' ? 'Персональный разбор' : '')}
             onClose={handleCloseModal}
           />
         </Suspense>

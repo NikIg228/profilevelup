@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
@@ -6,6 +6,8 @@ import Modal from '../../../components/Modal';
 import Select from '../../../components/Select';
 import type { Plan, FormData, FormErrorKey } from '../home.types';
 import { validateForm, isFormComplete, buildUserPayload } from '../home.utils';
+import { testTypeToPlan, testTypeToTariff, TEST_TYPES } from '../../../utils/testTypeMapping';
+import { validatePromoCode, setStoredPromo, type PromoCheckResult } from '../../../utils/promoApi';
 
 interface StartTestModalProps {
   open: boolean;
@@ -28,9 +30,24 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
     consent: false,
   });
   const [errors, setErrors] = useState<Partial<Record<FormErrorKey, string>>>({});
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<PromoCheckResult | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
 
-  const isBasicTest = useMemo(() => plan === 'free' || form.testType === 'Первичное понимание', [plan, form.testType]);
-  const isPremiumTest = useMemo(() => form.testType === 'Семейная навигация', [form.testType]);
+  const isPaidTest = useMemo(
+    () => form.testType === TEST_TYPES.PERSONAL || form.testType === TEST_TYPES.FAMILY,
+    [form.testType]
+  );
+
+  // Обновляем testType при изменении initialTestType или открытии модалки
+  useEffect(() => {
+    if (open && initialTestType) {
+      setForm(prev => ({ ...prev, testType: initialTestType }));
+    }
+  }, [open, initialTestType]);
+
+  const isPremiumTest = useMemo(() => form.testType === TEST_TYPES.FAMILY, [form.testType]);
   const formComplete = useMemo(() => isFormComplete(form, plan), [form, plan]);
 
   const clearError = useCallback((field: FormErrorKey) => {
@@ -55,8 +72,58 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
       consent: false,
     });
     setErrors({});
+    setPromoCodeInput('');
+    setAppliedPromo(null);
+    setPromoError(null);
+    setStoredPromo(null);
     onClose();
   }, [onClose]);
+
+  // Сбрасываем форму при закрытии модалки
+  useEffect(() => {
+    if (!open) {
+      setForm({
+        name: '',
+        age: '',
+        gender: '',
+        testType: '',
+        email: '',
+        emailConfirm: '',
+        parentEmail: '',
+        parentEmailConfirm: '',
+        consent: false,
+      });
+      setErrors({});
+      setPromoCodeInput('');
+      setAppliedPromo(null);
+      setPromoError(null);
+      setStoredPromo(null);
+    }
+  }, [open]);
+
+  const handleApplyPromo = useCallback(async () => {
+    const code = promoCodeInput.trim();
+    if (!code) {
+      setPromoError('Введите промокод');
+      return;
+    }
+    setPromoError(null);
+    setPromoLoading(true);
+    try {
+      const result = await validatePromoCode(code);
+      if (result.valid) {
+        setAppliedPromo(result);
+      } else {
+        setAppliedPromo(null);
+        setPromoError('Промокод недействителен или истёк');
+      }
+    } catch (e) {
+      setAppliedPromo(null);
+      setPromoError(e instanceof Error ? e.message : 'Ошибка проверки промокода');
+    } finally {
+      setPromoLoading(false);
+    }
+  }, [promoCodeInput]);
 
   const handleSubmit = useCallback(() => {
     const newErrors = validateForm(form, plan);
@@ -68,15 +135,17 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
 
     setErrors({});
     
-    // Определяем finalPlan на основе testType
+    // Определяем finalPlan на основе testType используя четкий маппинг
     let finalPlan: 'free' | 'extended' | 'premium';
-    if (form.testType === 'Первичное понимание') {
-      finalPlan = 'free';
-    } else if (form.testType === 'Персональный разбор') {
-      finalPlan = 'extended';
-    } else if (form.testType === 'Семейная навигация') {
-      finalPlan = 'premium';
+    if (form.testType) {
+      try {
+        finalPlan = testTypeToPlan(form.testType);
+      } catch {
+        // Fallback для обратной совместимости
+        finalPlan = plan === 'pro' ? 'extended' : 'free';
+      }
     } else {
+      // Fallback если testType не указан
       finalPlan = plan === 'pro' ? 'extended' : 'free';
     }
     
@@ -84,13 +153,36 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
     const planForPayload: 'free' | 'pro' = finalPlan === 'free' ? 'free' : 'pro';
     const payload = buildUserPayload(form, planForPayload);
     
+    // Получаем tariff для отправки на бэкенд
+    const tariff = form.testType ? testTypeToTariff(form.testType) : 'FREE';
+    
+    // Сохраняем возраст как число для корректной отправки на бэкенд
+    const ageNum = parseInt(form.age.trim(), 10);
+    
     sessionStorage.setItem('profi.user', JSON.stringify({
       ...payload,
       plan: finalPlan,
+      tariff, // Добавляем tariff для отправки на бэкенд
+      age: ageNum, // Сохраняем возраст как число
     }));
+
+    // Сохраняем применённый промокод для отображения скидки на странице результата
+    if (appliedPromo?.valid) {
+      setStoredPromo({
+        code: promoCodeInput.trim(),
+        discount_percent: appliedPromo.discount_percent ?? null,
+        discount_fixed: appliedPromo.discount_fixed ?? null,
+      });
+    } else {
+      setStoredPromo(null);
+    }
     
-    navigate('/test');
-  }, [form, plan, navigate]);
+    // Навигация на правильную страницу теста в зависимости от тарифа
+    const testPath = tariff === 'FREE' ? '/test/free' 
+                   : tariff === 'EXTENDED' ? '/test/extended' 
+                   : '/test/premium';
+    navigate(testPath);
+  }, [form, plan, navigate, appliedPromo, promoCodeInput]);
 
   return (
     <Modal
@@ -156,8 +248,12 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
                 setErrors(prev => ({ ...prev, age: 'Укажите возраст' }));
               } else {
                 const ageNum = parseInt(form.age, 10);
-                if (isNaN(ageNum) || ageNum < 10 || ageNum > 70) {
-                  setErrors(prev => ({ ...prev, age: 'Возраст должен быть от 10 до 70 лет' }));
+                if (isPremiumTest) {
+                  if (isNaN(ageNum) || ageNum < 12 || ageNum > 20) {
+                    setErrors(prev => ({ ...prev, age: 'Возраст должен быть от 12 до 20 лет' }));
+                  }
+                } else if (isNaN(ageNum) || ageNum < 12 || ageNum > 70) {
+                  setErrors(prev => ({ ...prev, age: 'Возраст должен быть от 12 до 70 лет' }));
                 }
               }
             }}
@@ -201,82 +297,47 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
             </motion.p>
           )}
         </div>
-        <div className="space-y-1">
-          <input
-            type="email"
-            id="form-email"
-            name="email"
-            className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
-              errors.email 
-                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-                : 'border-black/10 focus:border-primary'
-            } focus:outline-none focus:ring-2 focus:ring-primary/20`}
-            placeholder="Email (обязательно)"
-            value={form.email}
-            onChange={(e) => {
-              setForm({ ...form, email: e.target.value });
-              clearError('email');
-            }}
-            onBlur={() => {
-              const emailValue = form.email.trim();
-              if (!emailValue) {
-                setErrors(prev => ({ ...prev, email: 'Укажите email' }));
-              } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-                setErrors(prev => ({ ...prev, email: 'Введите корректный email' }));
-              }
-            }}
-            aria-invalid={Boolean(errors.email)}
-          />
-          {errors.email && (
-            <motion.p 
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-xs text-red-500 flex items-center gap-1"
-            >
-              <AlertCircle className="w-3 h-3" />
-              {errors.email}
-            </motion.p>
-          )}
-        </div>
-        {!isBasicTest && (
-          <div className="space-y-1">
-            <input
-              type="email"
-              id="form-email-confirm"
-              name="emailConfirm"
-              className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
-                errors.emailConfirm 
-                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-                  : 'border-black/10 focus:border-primary'
-              } focus:outline-none focus:ring-2 focus:ring-primary/20`}
-              placeholder="Подтвердите email"
-              value={form.emailConfirm}
-              onChange={(e) => {
-                setForm({ ...form, emailConfirm: e.target.value });
-                clearError('emailConfirm');
-              }}
-              onBlur={() => {
-                const emailValue = form.email.trim();
-                const emailConfirmValue = form.emailConfirm.trim();
-                if (!emailConfirmValue) {
-                  setErrors(prev => ({ ...prev, emailConfirm: 'Повторите email' }));
-                } else if (emailConfirmValue !== emailValue) {
-                  setErrors(prev => ({ ...prev, emailConfirm: 'Email не совпадает' }));
-                }
-              }}
-              aria-invalid={Boolean(errors.emailConfirm)}
-            />
-            {errors.emailConfirm && (
-              <motion.p 
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs text-red-500 flex items-center gap-1"
-              >
-                <AlertCircle className="w-3 h-3" />
-                {errors.emailConfirm}
-              </motion.p>
-            )}
-          </div>
+        {/* Email ребёнка: только для бесплатного теста и Персонального разбора (для Семейной навигации не показываем) */}
+        {!isPremiumTest && (
+          <>
+            <div className="space-y-1">
+              <input
+                type="email"
+                id="form-email"
+                name="email"
+                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                  errors.email 
+                    ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                    : 'border-black/10 focus:border-primary'
+                } focus:outline-none focus:ring-2 focus:ring-primary/20`}
+                placeholder="Email (обязательно)"
+                value={form.email}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  clearError('email');
+                }}
+                onBlur={() => {
+                  const emailValue = form.email.trim();
+                  if (!emailValue) {
+                    setErrors(prev => ({ ...prev, email: 'Укажите email' }));
+                  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+                    setErrors(prev => ({ ...prev, email: 'Введите корректный email' }));
+                  }
+                }}
+                aria-invalid={Boolean(errors.email)}
+              />
+              {errors.email && (
+                <motion.p 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs text-red-500 flex items-center gap-1"
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.email}
+                </motion.p>
+              )}
+            </div>
+          </>
         )}
         {isPremiumTest && (
           <>
@@ -372,9 +433,9 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
               }}
               placeholder="Вид навигации"
               options={[
-                { value: 'Первичное понимание', label: 'Первичное понимание — Бесплатно' },
-                { value: 'Персональный разбор', label: 'Персональный разбор — 14 990 ₸' },
-                { value: 'Семейная навигация', label: 'Семейная навигация — 34 990 ₸' },
+                { value: TEST_TYPES.PRIMARY, label: 'Первичное понимание — Бесплатно' },
+                { value: TEST_TYPES.PERSONAL, label: 'Персональный разбор — 14 990 ₸' },
+                { value: TEST_TYPES.FAMILY, label: 'Семейная навигация — 34 990 ₸' },
               ]}
               error={Boolean(errors.testType)}
             />
@@ -387,6 +448,49 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
                 <AlertCircle className="w-3 h-3" />
                 {errors.testType}
               </motion.p>
+            )}
+          </div>
+        )}
+        {/* Промокод: только для платных тестов, в самом низу формы */}
+        {isPaidTest && (
+          <div className="space-y-2 p-3 rounded-xl bg-secondary/10 border border-secondary/20">
+            <label className="block text-sm font-medium text-heading">Промокод</label>
+            <div className="flex gap-2 flex-wrap">
+              <input
+                type="text"
+                value={promoCodeInput}
+                onChange={(e) => {
+                  setPromoCodeInput(e.target.value);
+                  setPromoError(null);
+                  if (appliedPromo) setAppliedPromo(null);
+                }}
+                placeholder="Введите код"
+                className="flex-1 min-w-[120px] px-4 py-2 rounded-xl border border-black/10 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                disabled={promoLoading}
+              />
+              <button
+                type="button"
+                onClick={handleApplyPromo}
+                disabled={promoLoading}
+                className="px-4 py-2 rounded-xl bg-secondary/30 text-heading font-medium hover:bg-secondary/50 disabled:opacity-50 transition-colors"
+              >
+                {promoLoading ? 'Проверка…' : 'Применить'}
+              </button>
+            </div>
+            {promoError && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                {promoError}
+              </p>
+            )}
+            {appliedPromo?.valid && (
+              <p className="text-xs text-green-600 font-medium">
+                {appliedPromo.discount_percent != null
+                  ? `Скидка ${appliedPromo.discount_percent}% применена`
+                  : appliedPromo.discount_fixed != null
+                  ? `Скидка ${appliedPromo.discount_fixed} ₸ применена`
+                  : 'Промокод применён'}
+              </p>
             )}
           </div>
         )}

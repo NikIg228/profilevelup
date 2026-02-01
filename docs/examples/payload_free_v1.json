@@ -1,0 +1,18 @@
+{
+  "version": "payload_v1",
+  "testId": "free-example-1",
+  "tariff": "FREE",
+  "completedAt": "2025-05-20T14:30:00.000Z",
+  "ageBucket": "12_14",
+  "user": {
+    "fullName": "ALEX SMITH",
+    "email": "alex@example.com",
+    "age": 13,
+    "gender": "male"
+  },
+  "moduleId": "ENTJ",
+  "placeholdersBase": {
+    "USER_FULL_NAME": "ALEX SMITH",
+    "REPORT_DATE": "20 MAY 2025"
+  }
+}

@@ -67,7 +67,8 @@ export function resolveExtendedResult(
   const { resultMapping } = config;
   
   /**
-   * Вычисляет букву для дихотомии на основе подсчета ответов A и B
+   * Вычисляет букву для дихотомии на основе подсчета ответов A и B.
+   * При ничьей (разница 1) — срединный тип из конфига (Z, X, Q, W); в бэкенде есть модули ZXQW и т.д.
    */
   function getDichotomyLetter(
     aCount: number,
@@ -77,7 +78,7 @@ export function resolveExtendedResult(
     middle: string
   ): string {
     if (Math.abs(aCount - bCount) === 1) {
-      return middle; // Срединный тип
+      return middle;
     }
     return aCount > bCount ? primary : secondary;
   }

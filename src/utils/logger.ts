@@ -11,6 +11,12 @@ export const logger = {
       console.log(...args);
     }
   },
+  /** Для отладочных сообщений (ожидаемый поток инициализации и т.п.), в dev — console.debug */
+  debug: (...args: unknown[]) => {
+    if (isDev) {
+      console.debug(...args);
+    }
+  },
   warn: (...args: unknown[]) => {
     if (isDev) {
       console.warn(...args);

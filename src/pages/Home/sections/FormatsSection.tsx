@@ -74,6 +74,8 @@ export default function FormatsSection({
       <div className="levels-desktop hidden lg:grid gap-6 lg:grid-cols-3 lg:items-stretch">
         {/* Первичное понимание */}
         <div 
+          id="test-card-free"
+          data-tariff="FREE"
           className={`card flex flex-col shadow-md bg-white order-1 transition-all duration-300
           ${expandedCard === 'basic' ? 'shadow-lg bg-base/30' : ''}
           lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:cursor-pointer`}
@@ -132,6 +134,8 @@ export default function FormatsSection({
 
         {/* Персональный разбор */}
         <div 
+          id="test-card-extended"
+          data-tariff="EXTENDED"
           className={`card flex flex-col border-2 border-primary/20 rounded-2xl shadow-md bg-gradient-to-b from-primary/5 to-white order-2 transition-all duration-300 relative
           ${expandedCard === 'extended' ? 'shadow-lg bg-base/30' : ''}
           lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-xl lg:hover:-translate-y-1 lg:hover:border-primary/40 lg:cursor-pointer`}
@@ -188,6 +192,8 @@ export default function FormatsSection({
 
         {/* Семейная навигация */}
         <div 
+          id="test-card-premium"
+          data-tariff="PREMIUM"
           className={`card flex flex-col rounded-2xl shadow-xl bg-card-recommend order-3 transition-all duration-300 relative
           ${expandedCard === 'premium' ? 'shadow-lg' : ''}
           lg:h-full lg:min-h-[500px] lg:p-8 lg:hover:shadow-2xl lg:hover:-translate-y-1 lg:cursor-pointer lg:border-2 lg:border-primary lg:hover:border-primary-hover`}
@@ -317,6 +323,8 @@ export default function FormatsSection({
               <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
             </div>
             <div 
+              id="test-card-free-mobile"
+              data-tariff="FREE"
               className="level-card-mobile bg-white rounded-2xl shadow-md p-6 flex flex-col h-full w-full cursor-pointer"
               onClick={() => onStartFree('Первичное понимание')}
             >
@@ -377,6 +385,8 @@ export default function FormatsSection({
               <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
             </div>
             <div 
+              id="test-card-extended-mobile"
+              data-tariff="EXTENDED"
               className="level-card-mobile bg-white rounded-2xl shadow-md border-2 border-primary/20 bg-gradient-to-b from-primary/5 to-white p-6 flex flex-col h-full w-full cursor-pointer"
               onClick={() => onStartPro('Персональный разбор')}
             >
@@ -437,6 +447,8 @@ export default function FormatsSection({
               <div className="w-16 h-0.5 bg-primary/40 mt-2"></div>
             </div>
             <div 
+              id="test-card-premium-mobile"
+              data-tariff="PREMIUM"
               className="level-card-mobile bg-white rounded-2xl shadow-xl bg-card-recommend p-6 flex flex-col h-full relative border-2 border-primary w-full cursor-pointer"
               onClick={() => onStartPro('Семейная навигация')}
             >

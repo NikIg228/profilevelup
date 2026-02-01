@@ -1,4 +1,5 @@
-import type { ExtendedAnswers, ExtendedTestConfig, ExtendedAgeGroup } from './types';
+import type { ExtendedAnswers, ExtendedTestConfig } from './types';
+import { getVipModuleAgeGroup } from '../utils/ageUtils';
 
 /**
  * Интерфейс для результата подсчета блока
@@ -225,6 +226,7 @@ function calculateResultType(
     secondary: string,
     middle: string
   ): string {
+    // При ничьей (разница 1) — срединный тип из конфига (Z, X, Q, W); в бэкенде есть модули ZXQW и т.д.
     if (Math.abs(aCount - bCount) === 1) {
       return middle;
     }
@@ -282,9 +284,11 @@ export function getBand(score: number): 'L' | 'M' | 'R' {
 /**
  * Получает текстовый модуль для указанной оси и возрастной группы
  */
+type VipAgeGroupKey = '12_14' | '15_17' | '18_20' | '21_plus';
+
 interface TextModules {
   ageGroups?: {
-    [key in ExtendedAgeGroup]?: {
+    [key in VipAgeGroupKey]?: {
       [moduleName: string]: {
         [band: string]: string;
       };
@@ -294,16 +298,16 @@ interface TextModules {
 
 function getTextModule(
   modules: TextModules | null | undefined,
-  ageGroup: ExtendedAgeGroup,
-  moduleName: 'motivation' | 'start' | 'conflict' | 'expression' | 'confidence',
+  ageGroupKey: VipAgeGroupKey | null,
+  moduleName: 'motivation' | 'activation' | 'communication' | 'expression' | 'confidence',
   axisValue: number
 ): string {
-  if (!modules || !modules.ageGroups) {
+  if (!modules || !modules.ageGroups || !ageGroupKey) {
     return '';
   }
   
   const band = getBand(axisValue);
-  const ageGroupData = modules.ageGroups[ageGroup];
+  const ageGroupData = modules.ageGroups[ageGroupKey];
   
   if (!ageGroupData || !ageGroupData[moduleName]) {
     return '';
@@ -318,12 +322,14 @@ function getTextModule(
  * @param answers Ответы пользователя на все 28 вопросов (A или B)
  * @param config Конфигурация EXTENDED/PREMIUM теста
  * @param textModules Загруженные текстовые модули (опционально)
+ * @param userAge Возраст пользователя (число, опционально, но нужно для модулей)
  * @returns Все метрики VIP теста включая тип личности, оси и метрики
  */
 export function resolveVipMetrics(
   answers: ExtendedAnswers,
   config: ExtendedTestConfig,
-  textModules?: TextModules | null
+  textModules?: TextModules | null,
+  userAge?: number
 ): VipMetrics {
   const { resultMapping } = config;
   
@@ -360,12 +366,26 @@ export function resolveVipMetrics(
   );
   
   // 5. Выбор текстовых модулей на основе осей 5-7 и метрик (если модули переданы)
-  const ageGroup = config.meta.ageGroup;
-  const motivationModule = textModules ? getTextModule(textModules, ageGroup, 'motivation', axis5) : '';
-  const startModule = textModules ? getTextModule(textModules, ageGroup, 'start', axis6) : '';
-  const conflictModule = textModules ? getTextModule(textModules, ageGroup, 'conflict', axis7) : '';
-  const expressionModule = textModules ? getTextModule(textModules, ageGroup, 'expression', expression) : '';
-  const confidenceModule = textModules ? getTextModule(textModules, ageGroup, 'confidence', confidence) : '';
+  let motivationModule = '';
+  let startModule = '';
+  let conflictModule = '';
+  let expressionModule = '';
+  let confidenceModule = '';
+
+  if (textModules && userAge) {
+    const ageGroupKey = getVipModuleAgeGroup(userAge);
+    
+    // Используем ключи из JSON (activation вместо start, communication вместо conflict)
+    motivationModule = getTextModule(textModules, ageGroupKey, 'motivation', axis5);
+    startModule = getTextModule(textModules, ageGroupKey, 'activation', axis6);
+    conflictModule = getTextModule(textModules, ageGroupKey, 'communication', axis7);
+    expressionModule = getTextModule(textModules, ageGroupKey, 'expression', expression);
+    confidenceModule = getTextModule(textModules, ageGroupKey, 'confidence', confidence);
+  } else if (textModules) {
+    // Fallback если возраст не передан (для совместимости, хотя лучше всегда передавать)
+    // Можно попытаться маппить из config.meta.ageGroup, но это ненадежно
+    // Оставляем пустыми
+  }
   
   return {
     resultType,
@@ -389,4 +409,3 @@ export function resolveVipMetrics(
     },
   };
 }
-

@@ -1,4 +1,5 @@
 import type { FormData, FormErrorKey, AgeGroup, UserPayload } from './home.types';
+import { testTypeToTariff, TEST_TYPES } from '../../utils/testTypeMapping';
 
 /**
  * Определяет возрастную группу на основе возраста
@@ -34,20 +35,24 @@ export function validateForm(
   const trimmedEmailConfirm = form.emailConfirm.trim();
   const trimmedParentEmail = form.parentEmail.trim();
   const trimmedParentEmailConfirm = form.parentEmailConfirm.trim();
-  const isBasicTest = plan === 'free' || form.testType === 'Первичное понимание';
-  const isPremiumTest = form.testType === 'Семейная навигация';
+  const isBasicTest = plan === 'free' || form.testType === TEST_TYPES.PRIMARY;
+  const isPremiumTest = form.testType === TEST_TYPES.FAMILY;
 
   // Валидация имени
   if (!form.name.trim()) {
     errors.name = 'Введите имя';
   }
 
-  // Валидация возраста
+  // Валидация возраста (для Семейной навигации — 12–20 лет)
   if (!form.age.trim()) {
     errors.age = 'Введите возраст';
   } else {
     const ageNum = parseInt(form.age.trim(), 10);
-    if (isNaN(ageNum) || ageNum < 12 || ageNum > 70) {
+    if (isPremiumTest) {
+      if (isNaN(ageNum) || ageNum < 12 || ageNum > 20) {
+        errors.age = 'Возраст должен быть от 12 до 20 лет';
+      }
+    } else if (isNaN(ageNum) || ageNum < 12 || ageNum > 70) {
       errors.age = 'Возраст должен быть от 12 до 70 лет';
     }
   }
@@ -62,23 +67,16 @@ export function validateForm(
     errors.testType = 'Выберите тип теста';
   }
 
-  // Валидация email
-  if (!trimmedEmail) {
-    errors.email = 'Введите email';
-  } else if (!validateEmail(trimmedEmail)) {
-    errors.email = 'Введите корректный email';
-  }
-
-  // Валидация подтверждения email (для не-Basic тестов)
-  if (!isBasicTest) {
-    if (!trimmedEmailConfirm) {
-      errors.emailConfirm = 'Подтвердите email';
-    } else if (trimmedEmail !== trimmedEmailConfirm) {
-      errors.emailConfirm = 'Email не совпадает';
+  // Валидация email (для Семейной навигации email ребёнка не собираем — только родительский)
+  if (!isPremiumTest) {
+    if (!trimmedEmail) {
+      errors.email = 'Введите email';
+    } else if (!validateEmail(trimmedEmail)) {
+      errors.email = 'Введите корректный email';
     }
   }
 
-  // Валидация email родителя (для Premium теста)
+  // Валидация email родителя (для Семейной навигации — только родительский email)
   if (isPremiumTest) {
     if (!trimmedParentEmail) {
       errors.parentEmail = 'Введите email родителя';
@@ -109,25 +107,45 @@ export function isFormComplete(
   plan: 'free' | 'pro' | null
 ): boolean {
   const trimmedEmail = form.email.trim();
-  const trimmedEmailConfirm = form.emailConfirm.trim();
   const trimmedParentEmail = form.parentEmail.trim();
   const trimmedParentEmailConfirm = form.parentEmailConfirm.trim();
-  const isBasicTest = plan === 'free' || form.testType === 'Первичное понимание';
-  const isPremiumTest = form.testType === 'Семейная навигация';
-  const emailsMatch = trimmedEmail && trimmedEmailConfirm && trimmedEmail === trimmedEmailConfirm;
+  const isPremiumTest = form.testType === TEST_TYPES.FAMILY;
   const parentEmailsMatch = trimmedParentEmail && trimmedParentEmailConfirm && trimmedParentEmail === trimmedParentEmailConfirm;
 
   // testType требуется только если plan === null (пользователь должен выбрать тип)
   const testTypeValid = plan !== null || form.testType;
-  
+
+  // Возраст для Семейной навигации — 12–20
+  const ageNum = parseInt(form.age.trim(), 10);
+  const ageValid = form.age.trim()
+    ? isPremiumTest
+      ? !isNaN(ageNum) && ageNum >= 12 && ageNum <= 20
+      : !isNaN(ageNum) && ageNum >= 12 && ageNum <= 70
+    : false;
+
+  // Семейная навигация: только родительский email, без полей ребёнка
+  if (isPremiumTest) {
+    return Boolean(
+      form.name.trim() &&
+      ageValid &&
+      form.gender &&
+      testTypeValid &&
+      trimmedParentEmail &&
+      trimmedParentEmailConfirm &&
+      parentEmailsMatch &&
+      form.consent
+    );
+  }
+
+  // Первичное понимание и Персональный разбор: только email, без подтверждения
+  const emailValid = Boolean(trimmedEmail);
+
   return Boolean(
     form.name.trim() &&
-    form.age.trim() &&
+    ageValid &&
     form.gender &&
     testTypeValid &&
-    trimmedEmail &&
-    (isBasicTest || (trimmedEmailConfirm && emailsMatch)) &&
-    (!isPremiumTest || (trimmedParentEmail && trimmedParentEmailConfirm && parentEmailsMatch)) &&
+    emailValid &&
     form.consent
   );
 }
@@ -146,13 +164,21 @@ export function buildUserPayload(
   let testType = form.testType;
   if (!testType) {
     if (plan === 'free') {
-      testType = 'Первичное понимание';
+      testType = TEST_TYPES.PRIMARY;
     } else if (plan === 'pro') {
-      testType = 'Персональный разбор';
+      testType = TEST_TYPES.PERSONAL;
     } else {
-      testType = 'Первичное понимание'; // По умолчанию для null
+      testType = TEST_TYPES.PRIMARY; // По умолчанию для null
     }
   }
+
+  // Получаем tariff для отправки на бэкенд
+  const tariff = testTypeToTariff(testType);
+
+  // Для Семейной навигации контактный email — родительский (поля ребёнка не заполняются)
+  const contactEmail = form.testType === TEST_TYPES.FAMILY
+    ? form.parentEmail.trim()
+    : form.email.trim();
 
   const payload: UserPayload = {
     plan: plan || 'free',
@@ -160,11 +186,11 @@ export function buildUserPayload(
     ageGroup,
     gender: form.gender,
     testType,
-    email: form.email.trim(),
+    email: contactEmail,
+    tariff, // Добавляем tariff для отправки на бэкенд
   };
 
-  // Добавляем email родителя для Premium теста
-  if (form.testType === 'Семейная навигация' && form.parentEmail.trim()) {
+  if (form.testType === TEST_TYPES.FAMILY && form.parentEmail.trim()) {
     payload.parentEmail = form.parentEmail.trim();
   }
 

@@ -48,3 +48,21 @@ export function getAgeGroup(age: number, tariff: 'FREE' | 'EXTENDED' | 'PREMIUM'
   }
 }
 
+/**
+ * Преобразует возраст в ключ возрастной группы для VIP текстовых модулей
+ * Соответствует ключам в src/data/text_modules.json
+ * @param age Возраст пользователя
+ * @returns Ключ возрастной группы ('12_14' | '15_17' | '18_20' | '21_plus')
+ */
+export function getVipModuleAgeGroup(age: number): '12_14' | '15_17' | '18_20' | '21_plus' {
+  if (age >= 12 && age <= 14) {
+    return '12_14';
+  } else if (age >= 15 && age <= 17) {
+    return '15_17';
+  } else if (age >= 18 && age <= 20) {
+    return '18_20';
+  } else {
+    return '21_plus';
+  }
+}
+

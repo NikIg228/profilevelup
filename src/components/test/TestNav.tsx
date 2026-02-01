@@ -19,11 +19,13 @@ function TestNav({
 }: TestNavProps) {
   const motionConfig = useMotionMode();
 
-  // Обработка клавиатуры
+  // Обработка клавиатуры: Enter = следующий вопрос (при выбранном ответе), Esc = назад
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Enter = Далее
+      // Enter = переход к следующему вопросу (если ответ уже выбран)
       if (e.key === 'Enter' && canGoNext && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        const target = e.target as HTMLElement;
+        if (target?.closest?.('input, textarea, [contenteditable="true"]')) return;
         e.preventDefault();
         onNext();
       }
@@ -34,9 +36,9 @@ function TestNav({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
     };
   }, [onNext, onBack, canGoNext, canGoBack]);
 

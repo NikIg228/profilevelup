@@ -10,7 +10,7 @@ interface PersonalDataFormProps {
   onClose: () => void;
 }
 
-type FormErrorKey = 'name' | 'age' | 'gender' | 'email' | 'emailConfirm' | 'consent';
+type FormErrorKey = 'name' | 'age' | 'gender' | 'email' | 'consent';
 
 export default function PersonalDataForm({ open, onClose }: PersonalDataFormProps) {
   const navigate = useNavigate();
@@ -19,7 +19,6 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
     age: '', 
     gender: '', 
     email: '', 
-    emailConfirm: '', 
     consent: false 
   });
   const [errors, setErrors] = useState<Partial<Record<FormErrorKey, string>>>({});
@@ -36,7 +35,6 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
 
   const handleSubmit = () => {
     const emailValue = form.email.trim();
-    const emailConfirmValue = form.emailConfirm.trim();
     const newErrors: Partial<Record<FormErrorKey, string>> = {};
 
     if (!form.name.trim()) newErrors.name = 'Укажите имя';
@@ -57,12 +55,6 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
       newErrors.email = 'Укажите email';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
       newErrors.email = 'Введите корректный email';
-    }
-    
-    if (!emailConfirmValue) {
-      newErrors.emailConfirm = 'Повторите email';
-    } else if (emailConfirmValue !== emailValue) {
-      newErrors.emailConfirm = 'Email не совпадает';
     }
     
     if (!form.consent) newErrors.consent = 'Необходимо подтвердить согласие';
@@ -88,6 +80,7 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
     // Сохраняем данные для EXTENDED теста (Личный разбор)
     sessionStorage.setItem('profi.user', JSON.stringify({ 
       name: form.name.trim(),
+      age: ageNum, // Сохраняем возраст как число
       ageGroup,
       gender: form.gender,
       email: emailValue,
@@ -97,7 +90,8 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
     
     // Закрываем модальное окно и переходим к тесту
     onClose();
-    navigate('/test');
+    // По умолчанию для PersonalDataForm используется extended
+    navigate('/test/extended');
   };
 
   const isFormComplete = Boolean(
@@ -105,8 +99,6 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
     form.age.trim() &&
     form.gender &&
     form.email.trim() &&
-    form.emailConfirm.trim() &&
-    form.email.trim() === form.emailConfirm.trim() &&
     form.consent
   );
 
@@ -252,45 +244,6 @@ export default function PersonalDataForm({ open, onClose }: PersonalDataFormProp
             >
               <AlertCircle className="w-3 h-3" />
               {errors.email}
-            </motion.p>
-          )}
-        </div>
-
-        <div className="space-y-1">
-          <input
-            type="email"
-            id="pdf-email-confirm"
-            name="emailConfirm"
-            className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
-              errors.emailConfirm 
-                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-                : 'border-black/10 focus:border-primary'
-            } focus:outline-none focus:ring-2 focus:ring-primary/20`}
-            placeholder="Подтвердите email"
-            value={form.emailConfirm}
-            onChange={(e) => {
-              setForm({ ...form, emailConfirm: e.target.value });
-              clearError('emailConfirm');
-            }}
-            onBlur={() => {
-              const emailValue = form.email.trim();
-              const emailConfirmValue = form.emailConfirm.trim();
-              if (!emailConfirmValue) {
-                setErrors(prev => ({ ...prev, emailConfirm: 'Повторите email' }));
-              } else if (emailConfirmValue !== emailValue) {
-                setErrors(prev => ({ ...prev, emailConfirm: 'Email не совпадает' }));
-              }
-            }}
-            aria-invalid={Boolean(errors.emailConfirm)}
-          />
-          {errors.emailConfirm && (
-            <motion.p 
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-xs text-red-500 flex items-center gap-1"
-            >
-              <AlertCircle className="w-3 h-3" />
-              {errors.emailConfirm}
             </motion.p>
           )}
         </div>

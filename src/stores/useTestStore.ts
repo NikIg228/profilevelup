@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Answers, ExtendedAnswers, Tariff, AgeGroup, TestConfig } from '../engine/types';
+import type { Answers, ExtendedAnswers, AgeGroup, TestConfig } from '../engine/types';
+import type { Tariff } from '../utils/testTypeMapping';
+import { submitReportJob } from '../utils/reportApi';
+import { TEST_API } from '../config/api';
+import { logger } from '../utils/logger';
 
 interface TestState {
   // Основное состояние
@@ -16,6 +20,7 @@ interface TestState {
   email?: string;
   startedAt: string | null;
   lastSaved: number;
+  isCompleted: boolean; // Флаг завершения теста
   
   // Статус синхронизации
   isSaving: boolean;
@@ -29,10 +34,13 @@ interface TestState {
   setStep: (step: number) => void;
   setAnswer: (questionId: number, answer: string) => void;
   setAnswers: (answers: Answers | ExtendedAnswers) => void;
-  resetTest: () => void;
+  markTestCompleted: () => Promise<void>; // Отметить тест как завершенный
+  resetTest: () => Promise<void>; // Теперь асинхронный для подтверждения
+  resetTestForce: () => void; // Принудительный сброс без подтверждения
   
   // Синхронизация
   syncWithServer: () => Promise<boolean>;
+  syncImmediate: () => Promise<boolean>; // Немедленная синхронизация без debounce
 }
 
 // Debounce для синхронизации
@@ -48,7 +56,7 @@ async function createTestSession(
   email?: string
 ): Promise<string> {
   try {
-    const response = await fetch('/api/test/start', {
+    const response = await fetch(TEST_API.START, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -89,7 +97,7 @@ async function syncProgress(
   }
 
   try {
-    const response = await fetch(`/api/test/progress/${testId}`, {
+    const response = await fetch(TEST_API.PROGRESS(testId), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -127,7 +135,7 @@ async function loadFromServer(testId: string): Promise<Partial<TestState> | null
   }
 
   try {
-    const response = await fetch(`/api/test/progress/${testId}`);
+    const response = await fetch(TEST_API.PROGRESS(testId));
     
     if (!response.ok) {
       // 404 - тест не найден на сервере (нормально для новых тестов)
@@ -172,6 +180,7 @@ export const useTestStore = create<TestState>()(
       email: undefined,
       startedAt: null,
       lastSaved: Date.now(),
+      isCompleted: false,
       isSaving: false,
       isRestoring: false,
       lastSyncStatus: null,
@@ -181,9 +190,15 @@ export const useTestStore = create<TestState>()(
       initializeTest: async (tariff, ageGroup, userId, email) => {
         const state = get();
         
-        // Если уже есть активный тест с теми же параметрами - не перезаписываем
+        // ⚠️ ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ: Сохраняем текущий незавершенный тест перед созданием нового
+        if (state.testId && !state.isCompleted && Object.keys(state.answers).length > 0) {
+          await state.syncImmediate();
+        }
+        
+        // Если уже есть активный НЕЗАВЕРШЕННЫЙ тест с теми же параметрами - не перезаписываем
         if (
           state.testId &&
+          !state.isCompleted &&
           state.tariff === tariff &&
           state.ageGroup === ageGroup
         ) {
@@ -209,21 +224,35 @@ export const useTestStore = create<TestState>()(
 
         // Создаем новую сессию только если:
         // 1. Нет активного теста
-        // 2. Параметры изменились
-        set({ isRestoring: true });
+        // 2. Тест завершен
+        // 3. Параметры изменились
+        
+        // ⚠️ КРИТИЧНО: Устанавливаем тариф СИНХРОННО в начале, чтобы он был доступен сразу
+        // Это предотвращает ошибки при загрузке конфигурации, которая может сработать параллельно
+        set({ 
+          isRestoring: true,
+          tariff, // Устанавливаем тариф сразу
+          ageGroup, // Устанавливаем возрастную группу сразу
+          testConfig: null, // Очищаем конфигурацию сразу
+          answers: {}, // Очищаем ответы сразу
+        });
         
         const testId = await createTestSession(tariff, ageGroup, userId, email);
         
+        // ⚠️ ВАЖНО: При смене тарифа полностью очищаем все состояние, включая testConfig и answers
+        // Это гарантирует, что старые данные из другого тарифа не будут использоваться
         set({
           testId,
-          tariff,
-          ageGroup,
+          tariff, // Тариф уже установлен выше, но устанавливаем еще раз для полноты
+          ageGroup, // Возрастная группа уже установлена выше
+          testConfig: null, // Явно очищаем конфигурацию теста
           step: 1,
-          answers: {},
+          answers: {}, // Явно очищаем ответы
           userId,
           email,
           startedAt: new Date().toISOString(),
           lastSaved: Date.now(),
+          isCompleted: false,
           isRestoring: false,
           lastSyncStatus: null,
           syncError: null,
@@ -288,10 +317,16 @@ export const useTestStore = create<TestState>()(
         }, SYNC_DEBOUNCE_MS);
       },
 
-      // Ручная синхронизация
+      // Ручная синхронизация (с debounce отменой)
       syncWithServer: async () => {
         const state = get();
         if (!state.testId) return false;
+        
+        // Отменяем debounced синхронизацию
+        if (syncTimeout) {
+          clearTimeout(syncTimeout);
+          syncTimeout = null;
+        }
         
         set({ isSaving: true });
         const success = await syncProgress(state.testId, state.step, state.answers);
@@ -304,8 +339,144 @@ export const useTestStore = create<TestState>()(
         return success;
       },
 
-      // Сброс состояния
-      resetTest: () => {
+      // Немедленная синхронизация (без debounce, для beforeunload)
+      syncImmediate: async () => {
+        const state = get();
+        if (!state.testId || state.isCompleted) return false;
+        
+        // Отменяем debounced синхронизацию
+        if (syncTimeout) {
+          clearTimeout(syncTimeout);
+          syncTimeout = null;
+        }
+        
+        // Используем navigator.sendBeacon для надежного сохранения при закрытии
+        // sendBeacon работает только с POST и не поддерживает заголовки, поэтому используем fetch с keepalive
+        let beaconSent = false;
+        if (typeof navigator !== 'undefined' && !state.testId.startsWith('local_')) {
+          try {
+            // Используем fetch с keepalive для надежного сохранения при закрытии
+            fetch(`/api/test/progress/${state.testId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                step: state.step, 
+                answers: state.answers, 
+                timestamp: new Date().toISOString() 
+              }),
+              keepalive: true, // Критично для beforeunload
+            }).catch(() => {
+              // Игнорируем ошибки, так как это асинхронный запрос при закрытии
+            });
+            beaconSent = true;
+          } catch (error) {
+            // Fallback к обычной синхронизации
+          }
+        }
+        
+        // Обычная синхронизация (если keepalive не использовался или для локальных тестов)
+        // Для beforeunload используем только keepalive, не ждем ответа
+        const success = beaconSent ? true : await syncProgress(state.testId, state.step, state.answers);
+        set({
+          lastSaved: Date.now(),
+          lastSyncStatus: success,
+          syncError: success ? null : 'Ошибка синхронизации',
+        });
+        
+        return success;
+      },
+
+      // Отметить тест как завершенный
+      markTestCompleted: async () => {
+        const state = get();
+        if (!state.testId) return;
+        // Уже отмечен — не отправляем отчёт повторно (страница результатов тоже вызывает markTestCompleted)
+        if (state.isCompleted) return;
+
+        // Принудительно синхронизируем перед завершением
+        await state.syncImmediate();
+        
+        set({ 
+          isCompleted: true,
+          lastSaved: Date.now(),
+        });
+        
+        // Сохраняем статус завершения на сервере
+        if (!state.testId.startsWith('local_')) {
+          try {
+            await fetch(TEST_API.COMPLETE(state.testId), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                completedAt: new Date().toISOString(),
+                timestamp: new Date().toISOString() 
+              }),
+            });
+          } catch (error) {
+            // Игнорируем ошибки, локальное сохранение уже сделано
+          }
+        }
+        
+        // Отправляем запрос на генерацию PDF отчета согласно схеме test-result-schema.json
+        if (state.tariff && state.testConfig && state.answers) {
+          try {
+            const completedAt = new Date().toISOString();
+            const reportResponse = await submitReportJob(
+              state.testId,
+              state.tariff,
+              state.answers,
+              state.testConfig,
+              completedAt
+            );
+            
+            logger.log('Запрос на генерацию отчета отправлен:', {
+              jobId: reportResponse.jobId,
+              status: reportResponse.status,
+              tariff: state.tariff,
+            });
+            
+            // Сохраняем jobId в store для последующей проверки статуса (опционально)
+            // Можно добавить поле reportJobId в TestState если нужно
+          } catch (error) {
+            // Не блокируем завершение теста, если отправка отчета не удалась
+            logger.error('Ошибка отправки запроса на генерацию отчета:', error);
+          }
+        } else {
+          logger.warn('Недостаточно данных для отправки запроса на генерацию отчета:', {
+            hasTariff: !!state.tariff,
+            hasConfig: !!state.testConfig,
+            hasAnswers: !!state.answers,
+          });
+        }
+      },
+
+      // Сброс состояния с подтверждением для платных тестов
+      resetTest: async () => {
+        const state = get();
+        
+        // Для платных тестов - подтверждение
+        if (state.tariff === 'EXTENDED' || state.tariff === 'PREMIUM') {
+          const confirmed = window.confirm(
+            'Вы уверены, что хотите начать новый тест?\n\n' +
+            'Незавершенный тест будет потерян. Убедитесь, что вы сохранили свой прогресс.'
+          );
+          
+          if (!confirmed) {
+            return;
+          }
+        }
+        
+        // Принудительно синхронизируем перед сбросом
+        if (state.testId && !state.isCompleted && Object.keys(state.answers).length > 0) {
+          await state.syncImmediate();
+        }
+        
+        // Вызываем принудительный сброс
+        get().resetTestForce();
+      },
+
+      // Принудительный сброс без подтверждения (для внутреннего использования)
+      resetTestForce: () => {
         if (syncTimeout) clearTimeout(syncTimeout);
         set({
           testId: null,
@@ -318,6 +489,7 @@ export const useTestStore = create<TestState>()(
           email: undefined,
           startedAt: null,
           lastSaved: Date.now(),
+          isCompleted: false,
           isSaving: false,
           isRestoring: false,
           lastSyncStatus: null,
@@ -326,7 +498,7 @@ export const useTestStore = create<TestState>()(
       },
     }),
     {
-      name: 'profi-test-state', // localStorage key
+      name: 'profi-test-state', // localStorage key (будет переопределен для каждого тарифа)
       storage: createJSONStorage(() => localStorage),
       // Сохраняем только нужные поля
       partialize: (state) => ({
@@ -339,13 +511,17 @@ export const useTestStore = create<TestState>()(
         email: state.email,
         startedAt: state.startedAt,
         lastSaved: state.lastSaved,
+        isCompleted: state.isCompleted, // Сохраняем флаг завершения
       }),
       // Восстановление с проверкой устаревания (24 часа)
       onRehydrateStorage: () => (state) => {
         if (state) {
           const hoursSinceSave = (Date.now() - state.lastSaved) / (1000 * 60 * 60);
           if (hoursSinceSave > 24) {
-            state.resetTest();
+            // Если данные устарели - сбрасываем только незавершенные тесты
+            if (!state.isCompleted) {
+              state.resetTestForce();
+            }
           } else {
             // Восстанавливаем состояние, но не сбрасываем isRestoring сразу
             // Это позволит компоненту понять, что данные восстановлены

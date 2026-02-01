@@ -4,22 +4,29 @@ import { supabase } from '../lib/supabase';
 import LoginForm from '../components/forms/LoginForm';
 import RegisterForm from '../components/forms/RegisterForm';
 import ForgotPasswordForm from '../components/forms/ForgotPasswordForm';
-import ChangeEmailForm from '../components/forms/ChangeEmailForm';
-import ChangePasswordForm from '../components/forms/ChangePasswordForm';
 import ChangeNameForm from '../components/forms/ChangeNameForm';
 import { logger } from '../utils/logger';
-import { User, LogOut, Settings, Check, AlertCircle } from 'lucide-react';
+import { User, LogOut, Check, FileText } from 'lucide-react';
+import { tariffToTestType } from '../utils/testTypeMapping';
 
 type ViewMode = 'login' | 'register' | 'forgot-password' | 'account';
-type AccountSection = 'settings';
+
+/** Карточка отчёта по пройденному тесту (данные можно подгружать из Supabase) */
+export interface TestReportCard {
+  id: string;
+  testId: string;
+  tariff: 'FREE' | 'EXTENDED' | 'PREMIUM';
+  completedAt: string;
+  status?: 'pending' | 'completed' | 'failed';
+}
 
 export default function AccountPage() {
   const { user, isAuthenticated, logout, checkSession } = useAuthStore();
   const [viewMode, setViewMode] = useState<ViewMode>('login');
-  const [section, setSection] = useState<AccountSection>('settings');
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
+  const [reports, setReports] = useState<TestReportCard[]>([]);
 
   // Проверяем сессию при загрузке
   useEffect(() => {
@@ -208,11 +215,63 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Контент */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <ChangeEmailForm />
-          <ChangePasswordForm />
-        </div>
+        {/* Отчёты по пройденным тестам */}
+        <section className="mt-6">
+          <h2 className="text-lg font-semibold text-heading mb-4 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            Отчёты по пройденным тестам
+          </h2>
+          {reports.length === 0 ? (
+            <div className="bg-white rounded-xl p-8 border border-secondary/40 shadow-sm text-center">
+              <FileText className="w-12 h-12 text-muted mx-auto mb-3" />
+              <p className="text-muted mb-1">Пока нет отчётов</p>
+              <p className="text-sm text-muted">
+                Пройдите тест, чтобы здесь появилась карточка с отчётом.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {reports.map((report) => (
+                <div
+                  key={report.id}
+                  className="bg-white rounded-xl p-5 border border-secondary/40 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-heading mb-1">
+                        {tariffToTestType(report.tariff)}
+                      </h3>
+                      <p className="text-sm text-muted mb-2">
+                        Пройден: {new Date(report.completedAt).toLocaleDateString('ru-RU', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </p>
+                      {report.status && (
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                            report.status === 'completed'
+                              ? 'bg-green-100 text-green-700'
+                              : report.status === 'pending'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {report.status === 'completed'
+                            ? 'Готов'
+                            : report.status === 'pending'
+                            ? 'В обработке'
+                            : 'Ошибка'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

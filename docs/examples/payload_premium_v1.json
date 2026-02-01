@@ -1,0 +1,38 @@
+{
+  "version": "payload_v1",
+  "testId": "premium-example-1",
+  "tariff": "PREMIUM",
+  "completedAt": "2025-07-01T09:00:00.000Z",
+  "ageBucket": "21_plus",
+  "user": {
+    "fullName": "JOHN ADULT",
+    "email": "john.adult@example.com",
+    "age": 25,
+    "gender": "male"
+  },
+  "moduleId": "ESTP",
+  "placeholdersBase": {
+    "USER_FULL_NAME": "JOHN ADULT",
+    "REPORT_DATE": "01 JUL 2025"
+  },
+  "placeholdersExtended": {
+    "AXIS_SOCIAL_VALUE": 100,
+    "AXIS_FOCUS_VALUE": 0,
+    "AXIS_DECISION_VALUE": 0,
+    "AXIS_STRUCTURE_VALUE": 0,
+    "AXIS_MOTIVATION_VALUE": 20,
+    "AXIS_ACTIVATION_VALUE": 80,
+    "AXIS_COMMUNICATION_VALUE": 20,
+    "META_EXPRESSIVENESS_VALUE": 100,
+    "META_EXPRESSIVENESS_TEXT": "ярко, устойчиво, выражено",
+    "META_CONFIDENCE_VALUE": 91,
+    "META_CONFIDENCE_TEXT": "стабильно, согласованно, надежно",
+    "SUMMARY_MOTIVATION": "Тебя больше всего включает, когда понятно: что делать...",
+    "SUMMARY_ACTIVATION": "Тебе проще начать с черновика: попробовать, посмотреть...",
+    "SUMMARY_COMMUNICATION": "В конфликте ты чаще идёшь через ясность: кто прав..."
+  },
+  "parent": {
+    "enabled": true,
+    "email": "mom@example.com"
+  }
+}
