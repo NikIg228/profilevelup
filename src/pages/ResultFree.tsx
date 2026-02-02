@@ -1,16 +1,26 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Download, ArrowLeft, RotateCcw } from 'lucide-react';
+import { CheckCircle, ArrowLeft, RotateCcw, FileText } from 'lucide-react';
 import { resolveFreeResult } from '../engine/resolveResult';
 import { useTestStore } from '../stores/useTestStore';
 import { logger } from '../utils/logger';
+import { submitReportJob, checkReportJobStatus } from '../utils/reportApi';
 import type { Answers, FreeTestConfig } from '../engine/types';
+
+const POLL_INTERVAL_MS = 3000;
+type ReportStatus = 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
 
 export default function ResultFreePage() {
   const navigate = useNavigate();
-  const { testConfig, answers, resetTest, tariff } = useTestStore();
+  const { testId, testConfig, answers, resetTest, tariff } = useTestStore();
   const [resultIndex, setResultIndex] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [reportJobId, setReportJobId] = useState<string | null>(null);
+  const [reportStatus, setReportStatus] = useState<ReportStatus>('idle');
+  const [childUrl, setChildUrl] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const user = useMemo(() => {
     const raw = sessionStorage.getItem('profi.user');
@@ -45,6 +55,57 @@ export default function ResultFreePage() {
       setIsLoading(false);
     }
   }, [testConfig, answers, navigate]);
+
+  useEffect(() => {
+    if (!reportJobId || (reportStatus !== 'pending' && reportStatus !== 'processing')) return;
+    const poll = async () => {
+      const res = await checkReportJobStatus(reportJobId!);
+      setReportStatus(res.status);
+      if (res.status === 'completed') {
+        setChildUrl(res.childUrl ?? null);
+        setReportError(null);
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+      } else if (res.status === 'failed') {
+        setReportError(res.error ?? 'Ошибка генерации отчёта');
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+      }
+    };
+    pollRef.current = setInterval(poll, POLL_INTERVAL_MS);
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [reportJobId, reportStatus]);
+
+  const requestReport = async () => {
+    if (!testId || !tariff || !testConfig || !answers) {
+      setReportError('Недостаточно данных для генерации отчёта');
+      return;
+    }
+    if (reportJobId || reportStatus === 'processing' || reportStatus === 'pending') {
+      return;
+    }
+    setReportError(null);
+    setReportStatus('processing');
+    const completedAt = new Date().toISOString();
+    const res = await submitReportJob(testId, tariff, answers, testConfig, completedAt);
+    setReportJobId(res.jobId);
+    setReportStatus(res.status);
+    if (res.status === 'completed') {
+      const statusRes = await checkReportJobStatus(res.jobId);
+      setChildUrl(statusRes.childUrl ?? null);
+    } else if (res.status === 'failed') {
+      setReportError(res.error ?? 'Не удалось создать задачу отчёта');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -94,41 +155,39 @@ export default function ResultFreePage() {
             <CheckCircle className="w-16 h-16 text-primary" strokeWidth={1.5} />
           </div>
           <h1 className="text-3xl font-bold text-heading mb-2">
-            Тест завершен!
+            Навигация завершена!
           </h1>
           {user.name && (
             <p className="text-lg text-muted">
-              {user.name}, спасибо за прохождение теста
+              {user.name}, спасибо за прохождение навигации
             </p>
           )}
         </div>
 
-        {/* Результат */}
-        <div className="card p-8 mb-6 text-center">
-          <div className="mb-6">
-            <p className="text-sm text-muted mb-2">Ваш тип личности</p>
-            <div className="text-6xl font-bold text-primary mb-4">
-              {resultIndex}
-            </div>
-            <p className="text-muted text-sm">
-              Это ваш базовый стиль мышления и принятия решений
+        {reportStatus === 'completed' && childUrl && (
+          <p className="mb-4 text-center text-primary font-medium flex items-center justify-center gap-2">
+            <CheckCircle className="w-5 h-5 shrink-0" />
+            Ваш отчёт готов!
+          </p>
+        )}
+
+        {/* Подсказка: не выходить и не обновлять страницу пока отчёт готовится */}
+        {(reportStatus === 'pending' || reportStatus === 'processing') && (
+          <div className="mb-4 p-4 rounded-lg bg-amber-100 dark:bg-amber-900/40 border-2 border-amber-400 dark:border-amber-600 text-center">
+            <p className="font-semibold sm:text-base" style={{ color: '#1a1a1a' }}>
+              Не закрывайте и не обновляйте страницу! Ваш отчёт будет готов в течение минуты.
             </p>
           </div>
+        )}
 
-          {/* Описание результата */}
-          <div className="mt-8 pt-8 border-t border-secondary/20">
-            <h2 className="text-xl font-semibold mb-4">Что это значит?</h2>
-            <p className="text-muted leading-relaxed mb-4">
-              Ваш тип {resultIndex} показывает, как вы обычно думаете, принимаете решения и взаимодействуете с миром.
-            </p>
-            <p className="text-muted leading-relaxed">
-              Это первая карта вашей навигационной системы — точка отсчета для понимания себя и своих сильных сторон.
-            </p>
-          </div>
-        </div>
+        {reportStatus === 'failed' && (
+          <p className="mb-4 text-center text-sm text-red-600 dark:text-red-400">
+            {reportError ?? 'Ошибка генерации отчёта'}
+          </p>
+        )}
 
-        {/* Действия */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {/* 3 кнопки в ряд */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button
             onClick={() => navigate('/')}
             className="btn btn-ghost px-6 py-3 flex items-center justify-center gap-2"
@@ -138,11 +197,8 @@ export default function ResultFreePage() {
           </button>
           <button
             onClick={async () => {
-              // Сбрасываем состояние теста и переходим к новому прохождению
               await resetTest();
-              // Небольшая задержка для гарантии полного сброса состояния
               setTimeout(() => {
-                // Используем тариф из store или по умолчанию FREE
                 const testPath = tariff === 'EXTENDED' ? '/test/extended' 
                                : tariff === 'PREMIUM' ? '/test/premium' 
                                : '/test/free';
@@ -152,18 +208,48 @@ export default function ResultFreePage() {
             className="btn btn-primary px-6 py-3 flex items-center justify-center gap-2"
           >
             <RotateCcw className="w-5 h-5" />
-            Пройти тест снова
+            Пройти навигацию снова
           </button>
-          <button
-            onClick={() => {
-              // Здесь можно добавить логику скачивания отчета
-              alert('Функция скачивания отчета будет доступна в ближайшее время');
-            }}
-            className="btn btn-outline px-6 py-3 flex items-center justify-center gap-2"
-          >
-            <Download className="w-5 h-5" />
-            Скачать отчет
-          </button>
+          {/* Кнопка/ссылка "Просмотреть отчёт" всегда в одном месте — не исчезает при смене статуса */}
+          {reportStatus === 'completed' && childUrl ? (
+            <a
+              href={childUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline px-6 py-3 flex items-center justify-center gap-2"
+            >
+              <FileText className="w-5 h-5" />
+              Просмотреть отчёт
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={requestReport}
+              disabled={reportStatus === 'pending' || reportStatus === 'processing' || (reportStatus === 'completed' && !childUrl)}
+              className="btn btn-outline px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed min-w-[180px]"
+            >
+              {(reportStatus === 'pending' || reportStatus === 'processing' || (reportStatus === 'completed' && !childUrl)) ? (
+                <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent shrink-0" />
+              ) : (
+                <FileText className="w-5 h-5 shrink-0" />
+              )}
+              {reportStatus === 'completed' && !childUrl ? 'Подготовка ссылки...' : 'Просмотреть отчёт'}
+            </button>
+          )}
+          {reportStatus === 'failed' && (
+            <button
+              type="button"
+              onClick={() => {
+                setReportStatus('idle');
+                setReportJobId(null);
+                setReportError(null);
+                requestReport();
+              }}
+              className="btn btn-outline px-6 py-3"
+            >
+              Повторить
+            </button>
+          )}
         </div>
 
         {/* Дополнительная информация */}
@@ -172,15 +258,11 @@ export default function ResultFreePage() {
           <ul className="space-y-2 text-muted">
             <li className="flex items-start gap-2">
               <span className="text-primary mt-1">•</span>
-              <span>Изучите подробный отчет о вашем типе личности</span>
+              <span>Откройте PDF-отчёт по кнопке выше</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary mt-1">•</span>
-              <span>Узнайте о своих сильных сторонах и зонах роста</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary mt-1">•</span>
-              <span>Получите рекомендации по развитию и взаимодействию</span>
+              <span>Вернитесь на главную или пройдите навигацию снова</span>
             </li>
           </ul>
         </div>

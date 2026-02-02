@@ -1,23 +1,41 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Download, ArrowLeft, RotateCcw } from 'lucide-react';
+import { CheckCircle, Download, ArrowLeft, RotateCcw, FileText } from 'lucide-react';
 import { resolveVipMetrics, type VipMetrics } from '../engine/resolveVipMetrics';
 import { useTestStore } from '../stores/useTestStore';
+import { useAuthStore } from '../stores/useAuthStore';
 import { logger } from '../utils/logger';
 import { getStoredPromo, getPriceWithPromo } from '../utils/promoApi';
 import { PAYMENT_API } from '../config/api';
+import { submitReportJob, checkReportJobStatus } from '../utils/reportApi';
 import type { ExtendedAnswers, ExtendedTestConfig } from '../engine/types';
+
+const POLL_INTERVAL_MS = 3000;
 
 function formatPrice(value: number): string {
   return `${value.toLocaleString('ru-RU')} ₸`;
 }
 
+type ReportStatus = 'idle' | 'pending' | 'processing' | 'completed' | 'failed';
+
 export default function ResultVipPage() {
   const navigate = useNavigate();
-  const { testConfig, answers, resetTest, tariff } = useTestStore();
+  const { testId, testConfig, answers, resetTest, tariff } = useTestStore();
+  const authUser = useAuthStore((s) => s.user);
   const [metrics, setMetrics] = useState<VipMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [paymentPending, setPaymentPending] = useState(false);
+  /** Оплачен ли платный тест (доступ к просмотру отчёта) */
+  const [isPaid, setIsPaid] = useState(false);
+  const [paidCheckLoading, setPaidCheckLoading] = useState(false);
+
+  // PDF отчёт: создание задачи, опрос, отображение
+  const [reportJobId, setReportJobId] = useState<string | null>(null);
+  const [reportStatus, setReportStatus] = useState<ReportStatus>('idle');
+  const [childUrl, setChildUrl] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState<'pending' | 'sent' | 'failed' | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const user = useMemo(() => {
     const raw = sessionStorage.getItem('profi.user');
@@ -95,6 +113,85 @@ export default function ResultVipPage() {
     calculateMetrics();
   }, [testConfig, answers, navigate]);
 
+  // Проверка оплаты для платного теста (доступ к отчёту только после оплаты)
+  useEffect(() => {
+    if (!testId || !tariff || (tariff !== 'EXTENDED' && tariff !== 'PREMIUM')) return;
+    let cancelled = false;
+    setPaidCheckLoading(true);
+    fetch(PAYMENT_API.CHECK(testId))
+      .then((res) => (res.ok ? res.json() : { paid: false }))
+      .then((data) => {
+        if (!cancelled && data && typeof data.paid === 'boolean') setIsPaid(data.paid);
+      })
+      .catch(() => {
+        if (!cancelled) setIsPaid(false);
+      })
+      .finally(() => {
+        if (!cancelled) setPaidCheckLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [testId, tariff]);
+
+  // Опрос статуса отчёта по jobId
+  useEffect(() => {
+    if (!reportJobId || (reportStatus !== 'pending' && reportStatus !== 'processing')) return;
+
+    const poll = async () => {
+      const res = await checkReportJobStatus(reportJobId!);
+      setReportStatus(res.status);
+      if (res.status === 'completed') {
+        setChildUrl(res.childUrl ?? null);
+        if (res.emailStatus) setEmailStatus(res.emailStatus);
+        setReportError(null);
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+      } else if (res.status === 'failed') {
+        setReportError(res.error ?? 'Ошибка генерации отчёта');
+        if (pollRef.current) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
+      }
+    };
+
+    pollRef.current = setInterval(poll, POLL_INTERVAL_MS);
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [reportJobId, reportStatus]);
+
+  const requestReport = async () => {
+    if (!testId || !tariff || !testConfig || !answers) {
+      setReportError('Недостаточно данных для генерации отчёта');
+      return;
+    }
+    if (reportJobId || reportStatus === 'processing' || reportStatus === 'pending') {
+      return;
+    }
+    setReportError(null);
+    setReportStatus('processing');
+    const completedAt = new Date().toISOString();
+    const res = await submitReportJob(testId, tariff, answers, testConfig, completedAt);
+    setReportJobId(res.jobId);
+    setReportStatus(res.status);
+    if (res.status === 'completed') {
+      const statusRes = await checkReportJobStatus(res.jobId);
+      setChildUrl(statusRes.childUrl ?? null);
+      if (statusRes.emailStatus) setEmailStatus(statusRes.emailStatus);
+    } else if (res.status === 'failed') {
+      const errMsg = res.error ?? 'Не удалось создать задачу отчёта';
+      const isPaymentRequired = errMsg.includes('403') || errMsg.includes('PAYMENT_REQUIRED') || errMsg.includes('оплаты');
+      setReportError(isPaymentRequired
+        ? 'Просмотр отчёта доступен только после оплаты. Нажмите «Получить расширенный разбор» и оплатите.'
+        : errMsg);
+    }
+  };
+
   if (isLoading) {
     return (
       <section className="container-balanced mt-10">
@@ -111,7 +208,7 @@ export default function ResultVipPage() {
       <section className="container-balanced mt-10">
         <div className="card p-6 text-center">
           <h2 className="text-2xl font-semibold mb-4">Ошибка</h2>
-          <p className="text-muted mb-6">Не удалось вычислить результат теста.</p>
+          <p className="text-muted mb-6">Не удалось вычислить результат навигации.</p>
           <button
             onClick={() => navigate('/')}
             className="btn btn-primary"
@@ -143,229 +240,39 @@ export default function ResultVipPage() {
             <CheckCircle className="w-16 h-16 text-primary" strokeWidth={1.5} />
           </div>
           <h1 className="text-3xl font-bold text-heading mb-2">
-            Тест завершен!
+            Навигация завершена!
           </h1>
           {user.name && (
             <p className="text-lg text-muted">
-              {user.name}, спасибо за прохождение теста
+              {user.name}, спасибо за прохождение навигации
             </p>
           )}
         </div>
 
-        {/* Результат */}
-        <div className="card p-8 mb-6 text-center">
-          <div className="mb-6">
-            <p className="text-sm text-muted mb-2">Ваш тип личности</p>
-            <div className="text-6xl font-bold text-primary mb-4">
-              {metrics.resultType}
-            </div>
-            <p className="text-muted text-sm">
-              Это ваш базовый стиль мышления и принятия решений
-            </p>
-          </div>
-
-          {/* Метрики Выраженность и Уверенность */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div className="bg-primary/5 rounded-lg p-4">
-              <p className="text-sm text-muted mb-1">Выраженность</p>
-              <div className="text-3xl font-bold text-primary">{metrics.expression}%</div>
-              {metrics.modules.expression && (
-                <p className="text-xs text-muted mt-2 italic">
-                  {metrics.modules.expression}
-                </p>
-              )}
-            </div>
-            <div className="bg-primary/5 rounded-lg p-4">
-              <p className="text-sm text-muted mb-1">Уверенность</p>
-              <div className="text-3xl font-bold text-primary">{metrics.confidence}%</div>
-              {metrics.modules.confidence && (
-                <p className="text-xs text-muted mt-2 italic">
-                  {metrics.modules.confidence}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Описание результата */}
-          <div className="mt-8 pt-8 border-t border-secondary/20">
-            <h2 className="text-xl font-semibold mb-4">Что это значит?</h2>
-            <p className="text-muted leading-relaxed mb-4">
-              Ваш тип {metrics.resultType} показывает, как вы обычно думаете, принимаете решения и взаимодействуете с миром.
-            </p>
-            <p className="text-muted leading-relaxed">
-              Это первая карта вашей навигационной системы — точка отсчета для понимания себя и своих сильных сторон.
-            </p>
-          </div>
-        </div>
-
-        {/* 7 осей личности */}
-        {metrics.axes && (
-        <div className="card p-8 mb-6">
-          <h2 className="text-2xl font-semibold mb-6 text-center">Ваши характеристики</h2>
-          <div className="space-y-6">
-            {/* Ось 1 */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Социальный режим</span>
-                <span className="text-sm text-muted">{metrics.axes.axis1}%</span>
-              </div>
-              <div className="w-full bg-secondary/20 rounded-full h-3">
-                <div 
-                  className="bg-primary rounded-full h-3 transition-all"
-                  style={{ width: `${metrics.axes.axis1}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-1">
-                <span>Автономно</span>
-                <span>Через людей</span>
-              </div>
-            </div>
-
-            {/* Ось 2 */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Фокус мышления</span>
-                <span className="text-sm text-muted">{metrics.axes.axis2}%</span>
-              </div>
-              <div className="w-full bg-secondary/20 rounded-full h-3">
-                <div 
-                  className="bg-primary rounded-full h-3 transition-all"
-                  style={{ width: `${metrics.axes.axis2}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-1">
-                <span>Конкретика и факты</span>
-                <span>Идеи и сценарии</span>
-              </div>
-            </div>
-
-            {/* Ось 3 */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Основание решений</span>
-                <span className="text-sm text-muted">{metrics.axes.axis3}%</span>
-              </div>
-              <div className="w-full bg-secondary/20 rounded-full h-3">
-                <div 
-                  className="bg-primary rounded-full h-3 transition-all"
-                  style={{ width: `${metrics.axes.axis3}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-1">
-                <span>Логика/справедливость</span>
-                <span>Люди/ценности</span>
-              </div>
-            </div>
-
-            {/* Ось 4 */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Стиль организации</span>
-                <span className="text-sm text-muted">{metrics.axes.axis4}%</span>
-              </div>
-              <div className="w-full bg-secondary/20 rounded-full h-3">
-                <div 
-                  className="bg-primary rounded-full h-3 transition-all"
-                  style={{ width: `${metrics.axes.axis4}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-1">
-                <span>Адаптация</span>
-                <span>План/структура</span>
-              </div>
-            </div>
-
-            {/* Ось 5 */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Драйвер мотивации</span>
-                <span className="text-sm text-muted">{metrics.axes.axis5}%</span>
-              </div>
-              <div className="w-full bg-secondary/20 rounded-full h-3">
-                <div 
-                  className="bg-primary rounded-full h-3 transition-all"
-                  style={{ width: `${metrics.axes.axis5}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-1">
-                <span>Результат</span>
-                <span>Смысл</span>
-              </div>
-            </div>
-
-            {/* Ось 6 */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Старт действий</span>
-                <span className="text-sm text-muted">{metrics.axes.axis6}%</span>
-              </div>
-              <div className="w-full bg-secondary/20 rounded-full h-3">
-                <div 
-                  className="bg-primary rounded-full h-3 transition-all"
-                  style={{ width: `${metrics.axes.axis6}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-1">
-                <span>Через план</span>
-                <span>Через пробу/эксперимент</span>
-              </div>
-            </div>
-
-            {/* Ось 7 */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Стиль диалога в напряжении</span>
-                <span className="text-sm text-muted">{metrics.axes.axis7}%</span>
-              </div>
-              <div className="w-full bg-secondary/20 rounded-full h-3">
-                <div 
-                  className="bg-primary rounded-full h-3 transition-all"
-                  style={{ width: `${metrics.axes.axis7}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-1">
-                <span>Прямо/жёстко</span>
-                <span>Мягко/согласуя</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {reportStatus === 'completed' && childUrl && (
+          <p className="mb-4 text-center text-primary font-medium flex items-center justify-center gap-2">
+            <CheckCircle className="w-5 h-5 shrink-0" />
+            Ваш отчёт готов!
+          </p>
         )}
 
-        {/* Текстовые модули */}
-        {(metrics.modules.motivation || metrics.modules.start || metrics.modules.conflict) && (
-          <div className="card p-8 mb-6">
-            <h2 className="text-2xl font-semibold mb-6 text-center">Ваши особенности</h2>
-            <div className="space-y-6">
-              {/* Модуль мотивации */}
-              {metrics.modules.motivation && (
-                <div className="bg-primary/5 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-primary">Драйвер мотивации</h3>
-                  <p className="text-muted leading-relaxed">{metrics.modules.motivation}</p>
-                </div>
-              )}
-
-              {/* Модуль старта действий */}
-              {metrics.modules.start && (
-                <div className="bg-primary/5 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-primary">Старт действий</h3>
-                  <p className="text-muted leading-relaxed">{metrics.modules.start}</p>
-                </div>
-              )}
-
-              {/* Модуль диалога в напряжении */}
-              {metrics.modules.conflict && (
-                <div className="bg-primary/5 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-primary">Стиль диалога в напряжении</h3>
-                  <p className="text-muted leading-relaxed">{metrics.modules.conflict}</p>
-                </div>
-              )}
-            </div>
+        {/* Подсказка: не выходить и не обновлять страницу пока отчёт готовится */}
+        {(reportStatus === 'pending' || reportStatus === 'processing') && (
+          <div className="mb-4 p-4 rounded-lg bg-amber-100 dark:bg-amber-900/40 border-2 border-amber-400 dark:border-amber-600 text-center">
+            <p className="font-semibold sm:text-base" style={{ color: '#1a1a1a' }}>
+              Не закрывайте и не обновляйте страницу! Ваш отчёт будет готов в течение минуты.
+            </p>
           </div>
         )}
 
-        {/* Действия */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {reportStatus === 'failed' && (
+          <p className="mb-4 text-center text-sm text-red-600 dark:text-red-400">
+            {reportError ?? 'Ошибка генерации отчёта'}
+          </p>
+        )}
+
+        {/* Кнопки в ряд */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
           <button
             onClick={() => navigate('/')}
             className="btn btn-ghost px-6 py-3 flex items-center justify-center gap-2"
@@ -375,11 +282,8 @@ export default function ResultVipPage() {
           </button>
           <button
             onClick={async () => {
-              // Сбрасываем состояние теста и переходим к новому прохождению
               await resetTest();
-              // Небольшая задержка для гарантии полного сброса состояния
               setTimeout(() => {
-                // Используем тариф из store или по умолчанию EXTENDED для VIP
                 const testPath = tariff === 'PREMIUM' ? '/test/premium' 
                                : tariff === 'FREE' ? '/test/free' 
                                : '/test/extended';
@@ -389,18 +293,87 @@ export default function ResultVipPage() {
             className="btn btn-primary px-6 py-3 flex items-center justify-center gap-2"
           >
             <RotateCcw className="w-5 h-5" />
-            Пройти тест снова
+            Пройти навигацию снова
           </button>
+          {/* Просмотр отчёта только после оплаты платного теста. Ссылка на отчёт для родителя только в письме на email родителя. */}
+          {isPaid ? (
+            reportStatus === 'completed' && childUrl ? (
+              <a
+                href={childUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-outline px-6 py-3 flex items-center justify-center gap-2"
+              >
+                <FileText className="w-5 h-5" />
+                Просмотреть отчёт
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={requestReport}
+                disabled={reportStatus === 'pending' || reportStatus === 'processing' || (reportStatus === 'completed' && !childUrl)}
+                className="btn btn-outline px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed min-w-[180px]"
+              >
+                {(reportStatus === 'pending' || reportStatus === 'processing' || (reportStatus === 'completed' && !childUrl)) ? (
+                  <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent shrink-0" />
+                ) : (
+                  <FileText className="w-5 h-5 shrink-0" />
+                )}
+                {reportStatus === 'completed' && !childUrl ? 'Подготовка ссылки...' : 'Просмотреть отчёт'}
+              </button>
+            )
+          ) : !paidCheckLoading ? (
+            <span className="text-muted text-sm px-2 py-1 rounded bg-muted/50">
+              Отчёт доступен после оплаты расширенного разбора
+            </span>
+          ) : null}
+          {reportStatus === 'failed' && (
+            <button
+              type="button"
+              onClick={() => {
+                setReportStatus('idle');
+                setReportJobId(null);
+                setReportError(null);
+                requestReport();
+              }}
+              className="btn btn-outline px-6 py-3"
+            >
+              Повторить
+            </button>
+          )}
           <button
             onClick={async () => {
               setPaymentPending(true);
               try {
+                // При 100% скидке платёж не нужен — выдаём доступ к отчёту без Robokassa
+                if (finalPrice <= 0) {
+                  const res = await fetch(PAYMENT_API.GRANT_FREE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      test_id: testId ?? '',
+                      tariff: tariff ?? 'EXTENDED',
+                    }),
+                  });
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    logger.error('Ошибка выдачи бесплатного доступа:', res.status, err);
+                    alert(err.detail || 'Не удалось получить доступ к отчёту. Попробуйте позже.');
+                    return;
+                  }
+                  setIsPaid(true);
+                  return;
+                }
                 const res = await fetch(PAYMENT_API.CREATE, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     amount: finalPrice,
                     description: 'Расширенный разбор результата теста',
+                    test_id: testId ?? undefined,
+                    tariff: tariff ?? 'EXTENDED',
+                    user_id: authUser?.id ?? undefined,
+                    email: (user as { email?: string }).email ?? undefined,
                   }),
                 });
                 if (!res.ok) {
@@ -426,7 +399,7 @@ export default function ResultVipPage() {
             ) : (
               <Download className="w-5 h-5 shrink-0" />
             )}
-            <span>Получить расширенный разбор</span>
+            <span>{finalPrice <= 0 ? 'Получить отчёт бесплатно' : 'Получить расширенный разбор'}</span>
             <span className="flex items-center gap-2 text-sm font-medium">
               {hasDiscount ? (
                 <>
@@ -440,21 +413,32 @@ export default function ResultVipPage() {
           </button>
         </div>
 
+        {/* Для PREMIUM: отчёт для родителя только по email, не по кнопке */}
+        {tariff === 'PREMIUM' && reportStatus === 'completed' && (
+          <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20 text-center text-sm text-muted">
+            {emailStatus === 'sent' && (
+              <p>Ссылка на отчёт для родителя отправлена на указанный при регистрации email.</p>
+            )}
+            {emailStatus === 'pending' && (
+              <p>Письмо с отчётом для родителя будет отправлено на указанный при регистрации email.</p>
+            )}
+            {emailStatus === 'failed' && (
+              <p className="text-amber-700 dark:text-amber-400">Не удалось отправить письмо с отчётом для родителя. Обратитесь в поддержку.</p>
+            )}
+          </div>
+        )}
+
         {/* Дополнительная информация */}
         <div className="mt-8 card p-6 bg-primary/5 border border-primary/20">
           <h3 className="text-lg font-semibold mb-3">Что дальше?</h3>
           <ul className="space-y-2 text-muted">
             <li className="flex items-start gap-2">
               <span className="text-primary mt-1">•</span>
-              <span>Изучите подробный отчет о вашем типе личности</span>
+              <span>Откройте PDF-отчёт по кнопке выше</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary mt-1">•</span>
-              <span>Узнайте о своих сильных сторонах и зонах роста</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary mt-1">•</span>
-              <span>Получите рекомендации по развитию и взаимодействию</span>
+              <span>Вернитесь на главную или пройдите навигацию снова</span>
             </li>
           </ul>
         </div>

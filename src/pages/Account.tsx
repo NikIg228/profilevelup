@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
 import { supabase } from '../lib/supabase';
 import LoginForm from '../components/forms/LoginForm';
@@ -6,18 +6,85 @@ import RegisterForm from '../components/forms/RegisterForm';
 import ForgotPasswordForm from '../components/forms/ForgotPasswordForm';
 import ChangeNameForm from '../components/forms/ChangeNameForm';
 import { logger } from '../utils/logger';
-import { User, LogOut, Check, FileText } from 'lucide-react';
+import { User, LogOut, Check, FileText, Download } from 'lucide-react';
 import { tariffToTestType } from '../utils/testTypeMapping';
+import { checkReportJobStatus } from '../utils/reportApi';
 
 type ViewMode = 'login' | 'register' | 'forgot-password' | 'account';
 
-/** Карточка отчёта по пройденному тесту (данные можно подгружать из Supabase) */
+function ReportCard({ report }: { report: TestReportCard }) {
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = useCallback(async () => {
+    if (report.status !== 'completed') return;
+    setDownloading(true);
+    try {
+      const res = await checkReportJobStatus(report.jobId);
+      if (res.childUrl) window.open(res.childUrl, '_blank');
+      if (res.parentUrl) window.open(res.parentUrl, '_blank');
+    } catch (e) {
+      logger.error('Ошибка получения ссылки на отчёт:', e);
+    } finally {
+      setDownloading(false);
+    }
+  }, [report.jobId, report.status]);
+  return (
+    <div className="bg-white rounded-xl p-5 border border-secondary/40 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold text-heading mb-1">
+            {tariffToTestType(report.tariff)}
+          </h3>
+          <p className="text-sm text-muted mb-2">
+            Пройден: {new Date(report.completedAt).toLocaleDateString('ru-RU', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </p>
+          {report.status && (
+            <span
+              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                report.status === 'completed'
+                  ? 'bg-green-100 text-green-700'
+                  : report.status === 'pending' || report.status === 'processing'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-700'
+              }`}
+            >
+              {report.status === 'completed'
+                ? 'Готов'
+                : report.status === 'processing'
+                ? 'В обработке'
+                : report.status === 'pending'
+                ? 'В очереди'
+                : 'Ошибка'}
+            </span>
+          )}
+        </div>
+        {report.status === 'completed' && (
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-sm font-medium disabled:opacity-50 shrink-0"
+          >
+            <Download className="w-4 h-4" />
+            {downloading ? '…' : 'Скачать'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Карточка отчёта по пройденному тесту (из Supabase reports) */
 export interface TestReportCard {
   id: string;
+  jobId: string;
   testId: string;
   tariff: 'FREE' | 'EXTENDED' | 'PREMIUM';
   completedAt: string;
-  status?: 'pending' | 'completed' | 'failed';
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
 }
 
 export default function AccountPage() {
@@ -110,6 +177,45 @@ export default function AccountPage() {
       setViewMode('login');
     }
   }, [isAuthenticated]);
+
+  // Загрузка отчётов из Supabase (таблица reports, RLS по user_id)
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      setReports([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reports')
+          .select('id, job_id, test_id, tariff, status, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (cancelled) return;
+        if (error) {
+          logger.error('Ошибка загрузки отчётов:', error);
+          setReports([]);
+          return;
+        }
+        const cards: TestReportCard[] = (data || []).map((row: { id: string; job_id: string; test_id: string; tariff: string; status: string; created_at: string }) => ({
+          id: row.id,
+          jobId: row.job_id,
+          testId: row.test_id,
+          tariff: row.tariff as 'FREE' | 'EXTENDED' | 'PREMIUM',
+          completedAt: row.created_at,
+          status: (row.status as 'pending' | 'processing' | 'completed' | 'failed') || undefined,
+        }));
+        setReports(cards);
+      } catch (e) {
+        if (!cancelled) {
+          logger.error('Ошибка загрузки отчётов:', e);
+          setReports([]);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, user?.id]);
 
   const handleLogout = async () => {
     await logout();
@@ -232,42 +338,7 @@ export default function AccountPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {reports.map((report) => (
-                <div
-                  key={report.id}
-                  className="bg-white rounded-xl p-5 border border-secondary/40 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold text-heading mb-1">
-                        {tariffToTestType(report.tariff)}
-                      </h3>
-                      <p className="text-sm text-muted mb-2">
-                        Пройден: {new Date(report.completedAt).toLocaleDateString('ru-RU', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </p>
-                      {report.status && (
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                            report.status === 'completed'
-                              ? 'bg-green-100 text-green-700'
-                              : report.status === 'pending'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}
-                        >
-                          {report.status === 'completed'
-                            ? 'Готов'
-                            : report.status === 'pending'
-                            ? 'В обработке'
-                            : 'Ошибка'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <ReportCard key={report.id} report={report} />
               ))}
             </div>
           )}

@@ -161,25 +161,27 @@ export default function TestingPageContent({ tariff }: TestingPageContentProps) 
       logger.debug(`Тариф в store (${state.tariff}) не совпадает с тарифом из URL (${tariff}). Ждем инициализации.`);
       return;
     }
-    // Если тариф в store ещё не установлен (persist не успел восстановиться) — не ждём бесконечно:
-    // через 500 мс загружаем конфиг по тарифу из URL (fallback).
+    // Конфиг всегда пробуем загрузить по tariff/ageGroup из URL — не ждём только store
+    const tryLoadConfig = () => {
+      try {
+        const config = getTestConfig(tariff, ageGroup);
+        setTestConfig(config);
+        configRetryCountRef.current = 0;
+      } catch (e) {
+        logger.error('Ошибка загрузки конфигурации:', e);
+      }
+    };
+    // Если тариф в store ещё не установлен — загружаем конфиг сразу по URL и страховка через 500 мс
     if (!state.tariff) {
+      tryLoadConfig();
       const fallbackId = setTimeout(() => {
         const current = useTestStore.getState();
         if (current.testConfig && current.tariff === tariff) return;
         if (current.tariff && current.tariff !== tariff) return;
-        try {
-          const config = getTestConfig(tariff, ageGroup);
-          setTestConfig(config);
-          configRetryCountRef.current = 0;
-        } catch (e) {
-          logger.error('Ошибка загрузки конфигурации (fallback):', e);
-        }
+        tryLoadConfig();
       }, 500);
       return () => clearTimeout(fallbackId);
     }
-    // Конфиг загружаем сразу при совпадении тарифа — не ждём окончания createTestSession (isRestoring),
-    // иначе при медленной сети ошибка «Не удалось загрузить тест» показывается до появления конфига.
     
     const needsConfigReload = 
       !state.testConfig || 
@@ -379,10 +381,37 @@ export default function TestingPageContent({ tariff }: TestingPageContentProps) 
 
   // Ошибка загрузки конфига — только после grace period и только если конфиг так и не появился
   if (!testConfig && showConfigError) {
+    const handleRetryLoad = () => {
+      setShowConfigError(false);
+      configRetryCountRef.current = 0;
+      try {
+        const config = getTestConfig(tariff, ageGroup);
+        setTestConfig(config);
+      } catch (e) {
+        logger.error('Повторная загрузка конфигурации:', e);
+        setRetryTrigger((r) => r + 1);
+      }
+    };
     return (
-      <section className="fixed inset-0 flex items-center justify-center overflow-hidden">
-        <div className="card p-6">
-          <p className="text-muted">Не удалось загрузить тест. Пожалуйста, обновите страницу.</p>
+      <section className="fixed inset-0 flex items-center justify-center overflow-hidden p-4">
+        <div className="card p-6 max-w-md text-center">
+          <p className="text-muted mb-4">Не удалось загрузить тест. Пожалуйста, обновите страницу или нажмите «Повторить».</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              type="button"
+              onClick={handleRetryLoad}
+              className="btn btn-primary"
+            >
+              Повторить
+            </button>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="btn btn-outline"
+            >
+              Обновить страницу
+            </button>
+          </div>
         </div>
       </section>
     );
@@ -415,26 +444,15 @@ export default function TestingPageContent({ tariff }: TestingPageContentProps) 
         
         <div className="relative z-10 w-full max-w-2xl px-4">
           <div className="card p-8 text-center">
-            {resultPreview ? (
-              <div className="flex flex-col items-center">
-                <CheckCircle className="w-16 h-16 text-primary mb-4" strokeWidth={1.5} />
-                <h2 className="text-3xl font-bold mb-4">Тест завершен!</h2>
-                <p className="text-sm text-muted mb-6">Ваш тип личности</p>
-                <div className={`text-7xl font-bold text-primary mb-6 ${motionConfig.mode !== 'reduced' ? 'animate-pulse' : ''}`}>
-                  {resultPreview}
-                </div>
-                <p className="text-muted text-sm mb-4">
-                  Переход на страницу с подробными результатами...
-                </p>
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-                <h2 className="text-2xl font-semibold mb-2">Тест завершен!</h2>
-                <p className="text-muted">Вычисление результата...</p>
-              </div>
-            )}
+            <div className="flex flex-col items-center">
+              <CheckCircle className="w-16 h-16 text-primary mb-4" strokeWidth={1.5} />
+              <h2 className="text-3xl font-bold mb-4">Навигация завершена!</h2>
+              <p className="text-muted text-sm mb-6">
+                Переход на страницу с подробными результатами...
+              </p>
+              <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
+              <p className="text-muted font-medium">Загрузка...</p>
+            </div>
           </div>
         </div>
       </section>

@@ -6,6 +6,7 @@ import PreviewGate from './components/PreviewGate';
 import AppLayout from './ui/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initializeDefaultReviews } from './utils/reviewsStorage';
+import { useAuthStore } from './stores/useAuthStore';
 
 // Lazy loading для всех страниц
 const HomePage = lazy(() => import('./pages/Home'));
@@ -218,11 +219,9 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Инициализация сессии авторизации (lazy)
+// Инициализация сессии авторизации при старте
 if (typeof window !== 'undefined') {
-  import('./stores/useAuthStore').then(({ useAuthStore }) => {
-    useAuthStore.getState().checkSession();
-  });
+  useAuthStore.getState().checkSession();
 }
 
 

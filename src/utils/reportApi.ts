@@ -14,6 +14,7 @@ import { REPORT_API } from '../config/api';
 import type { Tariff } from './testTypeMapping';
 import type { Answers, ExtendedAnswers, TestConfig, ExtendedTestConfig } from '../engine/types';
 import type { PayloadV1 } from '../types/payload';
+import { useAuthStore } from '../stores/useAuthStore';
 
 /**
  * Интерфейс для ответа от бэкенда
@@ -22,6 +23,7 @@ export interface ReportJobResponse {
   jobId: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   childUrl?: string;
+  parentUrl?: string;
   emailStatus?: 'pending' | 'sent' | 'failed';
   error?: string;
 }
@@ -115,27 +117,38 @@ export async function submitReportJob(
     // Валидируем payload перед отправкой
     validatePayload(payload);
     
+    const authUser = useAuthStore.getState().user;
+    const body = authUser?.id
+      ? { ...payload, userId: authUser.id }
+      : payload;
+
     // Отправляем POST запрос на бэкенд
     const response = await fetch(REPORT_API.CREATE, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
     
     if (!response.ok) {
-      // Если бэкенд не готов (404, 500), это нормально для разработки
       if (response.status === 404 || response.status >= 500) {
-        logger.warn(`Бэкенд не готов (${response.status}), пропускаем отправку отчета`);
+        logger.warn(`Бэкенд недоступен или ошибка (${response.status}), отчёт не создан`);
         return {
           jobId: testId,
-          status: 'pending',
-          error: `Backend unavailable: ${response.status}`,
+          status: 'failed',
+          error: `Сервис отчётов временно недоступен (${response.status}). Попробуйте позже.`,
         };
       }
-      
-      // Для других ошибок пробрасываем исключение
+      if (response.status === 403) {
+        const errBody = await response.json().catch(() => ({}));
+        const msg = (errBody?.detail?.message || errBody?.detail?.error || 'PAYMENT_REQUIRED') as string;
+        return {
+          jobId: testId,
+          status: 'failed',
+          error: msg || 'Просмотр отчёта доступен только после оплаты.',
+        };
+      }
       const errorText = await response.text();
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
@@ -143,10 +156,11 @@ export async function submitReportJob(
     // Парсим ответ
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
-      logger.warn('Бэкенд вернул не JSON, пропускаем парсинг ответа');
+      logger.warn('Бэкенд вернул не JSON');
       return {
         jobId: testId,
-        status: 'pending',
+        status: 'failed',
+        error: 'Некорректный ответ сервера',
       };
     }
     

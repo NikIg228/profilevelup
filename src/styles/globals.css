@@ -114,6 +114,13 @@ body {
   }
 }
 
+/* Контент модалки на мобильных: явный фон (фикс iOS Safari) */
+@media (max-width: 1023px) {
+  .modal-scroll-container {
+    background-color: #FFFFFF;
+  }
+}
+
 /* Улучшение производительности на мобильных */
 @media (max-width: 767px) {
   * {

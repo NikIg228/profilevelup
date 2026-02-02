@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
@@ -78,6 +78,22 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
     setStoredPromo(null);
     onClose();
   }, [onClose]);
+
+  // #region agent log
+  const formWrapRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (!open || !formWrapRef.current) return;
+    const el = formWrapRef.current;
+    requestAnimationFrame(() => {
+      const win = typeof window !== 'undefined' ? window : null;
+      const s = el && win ? win.getComputedStyle(el) : null;
+      const r = el?.getBoundingClientRect();
+      const firstInput = el?.querySelector('input');
+      const hs = firstInput && win ? win.getComputedStyle(firstInput) : null;
+      fetch('http://127.0.0.1:7246/ingest/d3cafbcc-0859-4ae3-a9b2-ea3965b405a3', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'StartTestModal.tsx:form', message: 'form wrapper styles', data: { formColor: s?.color, formOpacity: s?.opacity, formHeight: r?.height, formTop: r?.top, inputColor: hs?.color, inputOpacity: hs?.opacity, innerWidth: win?.innerWidth }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'E' }) }).catch(() => {});
+    });
+  }, [open]);
+  // #endregion
 
   // Сбрасываем форму при закрытии модалки
   useEffect(() => {
@@ -190,18 +206,19 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
       onClose={handleClose}
       hideScrollbar={Object.keys(errors).length === 0}
     >
-      <h3 className="text-xl font-semibold mb-4">Перед началом — немного о Вас</h3>
-      <div className="grid gap-3">
+      <div ref={formWrapRef} className="min-h-[min(320px,65dvh)] text-ink">
+        <h3 className="text-xl font-semibold mb-4 text-heading">Перед началом — немного о Вас</h3>
+        <div className="grid gap-3">
         <div className="space-y-1">
           <input
             type="text"
             id="form-name"
             name="name"
-            className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+            className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all bg-white ${
               errors.name 
                 ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
                 : 'border-black/10 focus:border-primary'
-            } focus:outline-none focus:ring-2 focus:ring-primary/20`}
+            } focus:outline-none focus:ring-2 focus:ring-primary/20 text-ink`}
             placeholder="Имя"
             value={form.name}
             onChange={(e) => {
@@ -231,11 +248,11 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
             type="text"
             id="form-age"
             name="age"
-            className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+            className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all bg-white ${
               errors.age 
                 ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
                 : 'border-black/10 focus:border-primary'
-            } focus:outline-none focus:ring-2 focus:ring-primary/20`}
+            } focus:outline-none focus:ring-2 focus:ring-primary/20 text-ink`}
             placeholder="Возраст"
             inputMode="numeric"
             value={form.age}
@@ -305,11 +322,11 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
                 type="email"
                 id="form-email"
                 name="email"
-                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all bg-white ${
                   errors.email 
                     ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
                     : 'border-black/10 focus:border-primary'
-                } focus:outline-none focus:ring-2 focus:ring-primary/20`}
+                } focus:outline-none focus:ring-2 focus:ring-primary/20 text-ink`}
                 placeholder="Email (обязательно)"
                 value={form.email}
                 onChange={(e) => {
@@ -349,11 +366,11 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
                 type="email"
                 id="form-parent-email"
                 name="parentEmail"
-                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all bg-white ${
                   errors.parentEmail 
                     ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
                     : 'border-black/10 focus:border-primary'
-                } focus:outline-none focus:ring-2 focus:ring-primary/20`}
+                } focus:outline-none focus:ring-2 focus:ring-primary/20 text-ink`}
                 placeholder="Email родителя"
                 value={form.parentEmail}
                 onChange={(e) => {
@@ -386,11 +403,11 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
                 type="email"
                 id="form-parent-email-confirm"
                 name="parentEmailConfirm"
-                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all ${
+                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all bg-white ${
                   errors.parentEmailConfirm 
                     ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
                     : 'border-black/10 focus:border-primary'
-                } focus:outline-none focus:ring-2 focus:ring-primary/20`}
+                } focus:outline-none focus:ring-2 focus:ring-primary/20 text-ink`}
                 placeholder="Подтвердите email родителя"
                 value={form.parentEmailConfirm}
                 onChange={(e) => {
@@ -465,7 +482,7 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
                   if (appliedPromo) setAppliedPromo(null);
                 }}
                 placeholder="Введите код"
-                className="flex-1 min-w-[120px] px-4 py-2 rounded-xl border border-black/10 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="flex-1 min-w-[120px] px-4 py-2 rounded-xl border border-black/10 bg-white text-ink focus:border-primary focus:ring-2 focus:ring-primary/20"
                 disabled={promoLoading}
               />
               <button
@@ -545,6 +562,7 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
         >
           Начать   
         </button>
+      </div>
       </div>
     </Modal>
   );

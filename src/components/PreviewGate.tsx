@@ -3,6 +3,9 @@ import { Eye, EyeOff } from 'lucide-react';
 const STORAGE_KEY = 'preview_authed_v2';
 
 export default function PreviewGate({ children }: PropsWithChildren) {
+  // В продакшене пароль не показываем — сразу отдаём контент
+  if (import.meta.env.PROD) return <>{children}</>;
+
   // Экран включается если явно VITE_PREVIEW_ENABLED === 'true'
   // либо если передан VITE_PREVIEW_PASSWORD (защита включена по факту наличия пароля)
   const enabled = (import.meta.env.VITE_PREVIEW_ENABLED ?? 'true') === 'true'

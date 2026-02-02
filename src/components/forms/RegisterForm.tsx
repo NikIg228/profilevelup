@@ -3,6 +3,7 @@ import { Mail, Lock, User, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../stores/useAuthStore';
 
 interface RegisterFormProps {
+  /** Вызывается после успешной регистрации (если сессия создана — можно перейти к тесту) */
   onSuccess?: () => void;
   onSwitchToLogin?: (email?: string) => void;
 }
@@ -38,9 +39,8 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
     const result = await register(email, password, fullName || undefined);
     
     if (result.success) {
-      // После успешной регистрации сразу переключаемся на форму входа
-      // с предзаполненным email
       onSwitchToLogin?.(email);
+      onSuccess?.();
     } else {
       setError(result.error || 'Ошибка регистрации');
     }
@@ -50,7 +50,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="full-name" className="block text-sm font-medium text-heading mb-2">
-          Имя (необязательно)
+          Имя 
         </label>
         <div className="relative">
           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />

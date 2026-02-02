@@ -205,7 +205,7 @@ function Modal({ open, onClose, children, hideScrollbar = false }: ModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30"
+          className="fixed inset-0 z-[9999]"
           style={{
             position: 'fixed',
             top: 0,
@@ -214,68 +214,81 @@ function Modal({ open, onClose, children, hideScrollbar = false }: ModalProps) {
             bottom: 0,
             width: '100%',
             height: '100%',
+            minHeight: '100dvh',
             maxWidth: '100%',
             maxHeight: '100%',
-            overflow: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             zIndex: 9999,
           }}
-          onClick={onClose}
         >
-          <motion.div
-            ref={modalRef}
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ 
-              scale: 1, 
-              opacity: 1, 
-              y: dragY > 0 ? dragY : 0 
+          {/* Backdrop — отдельно, без overflow */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          {/* Контейнер модалки: flex + safe-area */}
+          <div
+            className="relative z-10 flex items-end sm:items-center justify-center p-0 sm:p-4 min-h-[100dvh]"
+            style={{
+              paddingTop: 'max(1rem, env(safe-area-inset-top))',
+              paddingRight: 'max(1rem, env(safe-area-inset-right))',
+              paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+              paddingLeft: 'max(1rem, env(safe-area-inset-left))',
             }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            transition={{ duration: dragY > 0 ? 0 : 0.2, ease: 'easeOut' }}
-            className={`card w-full max-w-lg flex flex-col max-h-[90vh] relative ${hideScrollbar ? 'scrollbar-hide' : 'modal-scrollbar'}`}
-            style={{ 
-              minHeight: 0,
-              height: 'auto',
-              touchAction: 'pan-y',
-              margin: 'auto',
-              position: 'relative',
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
           >
-            {/* Индикатор для swipe down на мобильных */}
-            {isMobile() && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-secondary/40 rounded-full" />
-            )}
-            
-            {/* Кнопка закрытия */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-black/5 hover:bg-black/10 active:bg-black/15 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
-              aria-label="Закрыть"
-            >
-              <X className="w-5 h-5 text-heading" />
-            </button>
-            <div 
-              className="flex-1 overflow-y-auto overflow-x-hidden p-6 modal-scroll-container"
-              style={{ 
-                WebkitOverflowScrolling: 'touch',
-                overscrollBehavior: 'contain',
-                minHeight: 0,
-                touchAction: 'pan-y'
+            <motion.div
+              ref={modalRef}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{
+                scale: 1,
+                opacity: 1,
+                y: dragY > 0 ? dragY : 0,
               }}
-              onWheel={(e) => {
-                // Предотвращаем всплытие события скролла, чтобы Lenis не перехватывал его
-                e.stopPropagation();
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ duration: dragY > 0 ? 0 : 0.2, ease: 'easeOut' }}
+              className={`card w-full max-w-lg flex flex-col max-h-[min(90vh,90dvh)] relative ${hideScrollbar ? 'scrollbar-hide' : 'modal-scrollbar'} rounded-t-2xl sm:rounded-2xl rounded-b-none sm:rounded-b-2xl bg-white`}
+              style={{
+                minHeight: 'min(400px, 70dvh)',
+                height: 'auto',
+                touchAction: 'pan-y',
+                margin: 'auto',
+                position: 'relative',
+                backgroundColor: '#FFFFFF',
               }}
+              onClick={(e) => e.stopPropagation()}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
             >
-              {children}
-            </div>
-          </motion.div>
+              {/* Индикатор для swipe down на мобильных */}
+              {isMobile() && (
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-secondary/40 rounded-full" />
+              )}
+
+              {/* Кнопка закрытия */}
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-black/5 hover:bg-black/10 active:bg-black/15 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Закрыть"
+              >
+                <X className="w-5 h-5 text-heading" />
+              </button>
+              <div
+                className="flex-1 overflow-y-auto overflow-x-hidden p-6 modal-scroll-container bg-card"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
+                  minHeight: 0,
+                  touchAction: 'pan-y',
+                }}
+                onWheel={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                {children}
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

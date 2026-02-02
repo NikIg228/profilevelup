@@ -29,8 +29,17 @@ export type PromoCodeInsert = {
   description?: string | null;
 };
 
+/** Превращает ответ Supabase в сообщение для пользователя */
+function supabaseErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string') {
+    return (err as { message: string }).message;
+  }
+  if (err instanceof Error) return err.message;
+  return 'Ошибка загрузки промокодов';
+}
+
 /**
- * Список всех промокодов (требуется сессия Supabase)
+ * Список всех промокодов (требуется сессия Supabase — войдите в аккаунт)
  */
 export async function fetchPromoCodes(): Promise<PromoCode[]> {
   const { data, error } = await supabase
@@ -38,7 +47,9 @@ export async function fetchPromoCodes(): Promise<PromoCode[]> {
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(supabaseErrorMessage(error));
+  }
   return (data ?? []) as PromoCode[];
 }
 
@@ -52,7 +63,7 @@ export async function createPromoCode(row: PromoCodeInsert): Promise<PromoCode> 
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw new Error(supabaseErrorMessage(error));
   return data as PromoCode;
 }
 
@@ -61,7 +72,7 @@ export async function createPromoCode(row: PromoCodeInsert): Promise<PromoCode> 
  */
 export async function deletePromoCode(id: string): Promise<void> {
   const { error } = await supabase.from('promo_codes').delete().eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(supabaseErrorMessage(error));
 }
 
 /**
@@ -88,7 +99,7 @@ export async function validatePromoCode(code: string): Promise<PromoCheckResult>
     return { valid: false };
   }
   const { data, error } = await supabase.rpc('check_promo_code', { p_code: trimmed });
-  if (error) throw error;
+  if (error) throw new Error(supabaseErrorMessage(error));
   const result = data as { valid: boolean; discount_percent?: number | null; discount_fixed?: number | null };
   return {
     valid: result?.valid === true,

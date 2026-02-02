@@ -7,6 +7,9 @@ import SocialProofSection from './sections/SocialProofSection';
 import WhoForSectionLazy from './sections/WhoForSection.lazy';
 import ReviewsSectionLazy from './sections/ReviewsSection.lazy';
 import StartTestModalLazy from './components/StartTestModal.lazy';
+import AuthModal from '../../components/AuthModal';
+import ModalErrorBoundary from '../../components/ModalErrorBoundary';
+import { useAuthStore } from '../../stores/useAuthStore';
 import type { Plan } from './home.types';
 import FormatsSectionLazy from './sections/FormatsSection.lazy';
 
@@ -16,18 +19,28 @@ export default function HomePage() {
   const [initialTestType, setInitialTestType] = useState<string>('');
   const [premiumSlideIndex, setPremiumSlideIndex] = useState(0);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
-  
+
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<Plan>(null);
+  const [pendingTestType, setPendingTestType] = useState<string>('');
+
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isMobile = useIsMobile();
   const lenis = useLenis();
-  
-  // Используем хук для безопасной обработки resize на мобильных
+
   useHeroResizeFix(isMobile);
 
   const openFor = useCallback((p: Plan, testTypeValue?: string) => {
-    setPlan(p);
-    setInitialTestType(testTypeValue || '');
-    setModalOpen(true);
-  }, []);
+    if (isAuthenticated) {
+      setPlan(p);
+      setInitialTestType(testTypeValue || '');
+      setModalOpen(true);
+    } else {
+      setPendingPlan(p);
+      setPendingTestType(testTypeValue || '');
+      setAuthModalOpen(true);
+    }
+  }, [isAuthenticated]);
 
   const scrollToFormats = useCallback(() => {
     const formatsSection = document.getElementById('formats');
@@ -41,6 +54,23 @@ export default function HomePage() {
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setPlan(null);
+  }, []);
+
+  const handleAuthSuccess = useCallback(() => {
+    setAuthModalOpen(false);
+    if (pendingPlan !== null) {
+      setPlan(pendingPlan);
+      setInitialTestType(pendingTestType);
+      setModalOpen(true);
+      setPendingPlan(null);
+      setPendingTestType('');
+    }
+  }, [pendingPlan, pendingTestType]);
+
+  const handleAuthModalClose = useCallback(() => {
+    setAuthModalOpen(false);
+    setPendingPlan(null);
+    setPendingTestType('');
   }, []);
 
   const handleStartFree = useCallback(() => {
@@ -106,15 +136,42 @@ export default function HomePage() {
         <WhoForSectionLazy />
       </Suspense>
 
+      {authModalOpen && (
+        <AuthModal
+          open={authModalOpen}
+          onClose={handleAuthModalClose}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      )}
+
       {modalOpen && (
-        <Suspense fallback={null}>
-          <StartTestModalLazy
-            open={modalOpen}
-            plan={plan}
-            initialTestType={initialTestType || (plan === 'pro' ? 'Персональный разбор' : '')}
-            onClose={handleCloseModal}
-          />
-        </Suspense>
+        <ModalErrorBoundary onClose={handleCloseModal}>
+          <Suspense fallback={
+            <div
+              className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 p-4"
+              style={{
+                paddingTop: 'max(1rem, env(safe-area-inset-top))',
+                paddingRight: 'max(1rem, env(safe-area-inset-right))',
+                paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+                paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+                minHeight: '100dvh',
+              }}
+              aria-label="Загрузка формы"
+            >
+              <div className="card p-8 flex flex-col items-center gap-4 max-w-sm w-full rounded-t-2xl sm:rounded-2xl">
+                <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
+                <p className="text-sm text-muted">Загрузка формы…</p>
+              </div>
+            </div>
+          }>
+            <StartTestModalLazy
+              open={modalOpen}
+              plan={plan}
+              initialTestType={initialTestType || (plan === 'pro' ? 'Персональный разбор' : '')}
+              onClose={handleCloseModal}
+            />
+          </Suspense>
+        </ModalErrorBoundary>
       )}
     </div>
   );

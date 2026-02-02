@@ -58,7 +58,8 @@ export default function AdminPage() {
       const list = await fetchPromoCodes();
       setPromoCodes(list);
     } catch (e) {
-      setPromoError(e instanceof Error ? e.message : 'Ошибка загрузки промокодов');
+      const msg = e instanceof Error ? e.message : String(e);
+      setPromoError(msg || 'Ошибка загрузки промокодов');
     } finally {
       setPromoLoading(false);
     }
@@ -382,10 +383,11 @@ export default function AdminPage() {
                               {p.valid_until ? new Date(p.valid_until).toLocaleDateString('ru-RU') : 'Без срока'}
                             </td>
                             <td className="p-3 text-ink">
-                              {p.used_count}{p.max_uses != null ? ` / ${p.max_uses}` : ''}
+                              {(p as { used_count?: number }).used_count ?? '—'}
+                              {p.max_uses != null ? ` / ${p.max_uses}` : ''}
                             </td>
                             <td className="p-3 text-muted text-sm">
-                              {new Date(p.created_at).toLocaleDateString('ru-RU')}
+                              {p.created_at ? new Date(p.created_at).toLocaleDateString('ru-RU') : '—'}
                             </td>
                             <td className="p-3">
                               <button

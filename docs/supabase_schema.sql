@@ -283,7 +283,61 @@ create policy "purchases_select_own"
 
 
 -- -----------------------------------------------------------------------------
--- 5. ИНДЕКСЫ
+-- 5. ОТЧЁТЫ (reports)
+-- Метаданные сгенерированных PDF: статус, пути в Storage. Сам файл — в bucket reports
+-- Бэкенд: создаёт запись (pending), генерирует PDF, заливает в Storage, обновляет status + storage_path_*
+-- Фронт: опрашивает по job_id, при completed получает signed URL через бэкенд
+-- -----------------------------------------------------------------------------
+
+create table if not exists public.reports (
+  id uuid default gen_random_uuid() primary key,
+  job_id text unique not null,
+  test_id text not null,
+  user_id uuid references auth.users(id) on delete set null,
+  tariff text not null check (tariff in ('FREE', 'EXTENDED', 'PREMIUM')),
+  status text not null default 'pending' check (status in ('pending', 'processing', 'completed', 'failed')),
+  storage_path_child text,
+  storage_path_parent text,
+  error_message text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+comment on table public.reports is 'Метаданные отчётов: job_id от бэкенда, статус, пути в Storage (bucket reports)';
+comment on column public.reports.job_id is 'Уникальный ID задачи генерации (возвращается фронту при создании)';
+comment on column public.reports.test_id is 'ID теста с фронта';
+comment on column public.reports.storage_path_child is 'Путь в bucket reports, например {job_id}/child.pdf';
+comment on column public.reports.storage_path_parent is 'Путь в bucket reports, например {job_id}/parent.pdf (для PREMIUM)';
+
+alter table public.reports enable row level security;
+
+-- Пользователь видит только свои отчёты (если user_id задан) или доступ через бэкенд по job_id
+drop policy if exists "reports_select_own" on public.reports;
+create policy "reports_select_own"
+  on public.reports for select
+  using (auth.uid() = user_id);
+
+-- Вставка и обновление — только с бэкенда (service role)
+-- Политик insert/update для anon/authenticated не создаём
+
+create or replace function public.reports_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists reports_set_updated_at on public.reports;
+create trigger reports_set_updated_at
+  before update on public.reports
+  for each row execute procedure public.reports_updated_at();
+
+
+-- -----------------------------------------------------------------------------
+-- 6. ИНДЕКСЫ
 -- -----------------------------------------------------------------------------
 
 create index if not exists idx_orders_user_id on public.orders(user_id);
@@ -294,9 +348,14 @@ create index if not exists idx_orders_created_at on public.orders(created_at des
 create index if not exists idx_promo_codes_code_lower on public.promo_codes(lower(code));
 create index if not exists idx_purchases_user_id on public.purchases(user_id);
 
+create index if not exists idx_reports_job_id on public.reports(job_id);
+create index if not exists idx_reports_user_id on public.reports(user_id);
+create index if not exists idx_reports_status on public.reports(status);
+create index if not exists idx_reports_created_at on public.reports(created_at desc);
+
 
 -- -----------------------------------------------------------------------------
--- 6. GRANT (права для anon и authenticated)
+-- 7. GRANT (права для anon и authenticated)
 -- -----------------------------------------------------------------------------
 
 grant usage on schema public to anon, authenticated;
@@ -309,8 +368,10 @@ grant execute on function public.check_promo_code(text) to anon, authenticated;
 
 grant select on public.orders to authenticated;
 grant select on public.purchases to authenticated;
+grant select on public.reports to authenticated;
 
 -- Последовательность для inv_id — только для service role (бэкенд создаёт заказы)
 grant usage, select on sequence public.orders_inv_id_seq to service_role;
 grant insert, update, select on public.orders to service_role;
 grant insert, select on public.purchases to service_role;
+grant insert, update, select on public.reports to service_role;

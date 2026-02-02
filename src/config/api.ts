@@ -33,10 +33,14 @@ export const REPORT_API = {
 } as const;
 
 /**
- * Payment API (Robokassa — создание платежа)
+ * Payment API (Robokassa — создание платежа и проверка оплаты)
  */
 export const PAYMENT_API = {
   CREATE: `${API_BASE_URL}/payment/create`,
+  /** Проверка: оплачен ли тест (доступ к отчёту). GET ?test_id=... */
+  CHECK: (testId: string) => `${API_BASE_URL}/payment/check?test_id=${encodeURIComponent(testId)}`,
+  /** Выдать доступ к отчёту без оплаты (100% промокод). POST body: { test_id, tariff } */
+  GRANT_FREE: `${API_BASE_URL}/payment/grant-free`,
 } as const;
 
 /**

@@ -372,26 +372,15 @@ export default function TestingPage() {
         
         <div className="relative z-10 w-full max-w-2xl px-4">
           <div className="card p-8 text-center">
-            {resultPreview ? (
-              <div className="flex flex-col items-center">
-                <CheckCircle className="w-16 h-16 text-primary mb-4" strokeWidth={1.5} />
-                <h2 className="text-3xl font-bold mb-4">Тест завершен!</h2>
-                <p className="text-sm text-muted mb-6">Ваш тип личности</p>
-                <div className={`text-7xl font-bold text-primary mb-6 ${motionConfig.mode !== 'reduced' ? 'animate-pulse' : ''}`}>
-                  {resultPreview}
-                </div>
-                <p className="text-muted text-sm mb-4">
-                  Переход на страницу с подробными результатами...
-                </p>
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-                <h2 className="text-2xl font-semibold mb-2">Тест завершен!</h2>
-                <p className="text-muted">Вычисление результата...</p>
-              </div>
-            )}
+            <div className="flex flex-col items-center">
+              <CheckCircle className="w-16 h-16 text-primary mb-4" strokeWidth={1.5} />
+              <h2 className="text-3xl font-bold mb-4">Навигация завершена!</h2>
+              <p className="text-muted text-sm mb-6">
+                Переход на страницу с подробными результатами...
+              </p>
+              <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
+              <p className="text-muted font-medium">Загрузка...</p>
+            </div>
           </div>
         </div>
       </section>
