@@ -42,7 +42,8 @@ class ScrollLockManager {
     if (typeof navigator === 'undefined') return false;
     const ua = navigator.userAgent || '';
     const iPhoneiPad = /iPad|iPhone|iPod/.test(ua);
-    const iPadOS = navigator.platform === 'MacIntel' && (navigator as { maxTouchPoints?: number }).maxTouchPoints > 1;
+    const maxTouch = (navigator as { maxTouchPoints?: number }).maxTouchPoints ?? 0;
+    const iPadOS = navigator.platform === 'MacIntel' && maxTouch > 1;
     return iPhoneiPad || iPadOS;
   }
 
