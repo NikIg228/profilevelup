@@ -38,6 +38,14 @@ class ScrollLockManager {
     );
   }
 
+  private isIOS(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    const iPhoneiPad = /iPad|iPhone|iPod/.test(ua);
+    const iPadOS = navigator.platform === 'MacIntel' && (navigator as { maxTouchPoints?: number }).maxTouchPoints > 1;
+    return iPhoneiPad || iPadOS;
+  }
+
   private getScrollbarWidth(): number {
     return Math.max(0, window.innerWidth - document.documentElement.clientWidth);
   }
@@ -127,7 +135,7 @@ class ScrollLockManager {
     
     // Блокируем скролл ТОЛЬКО один раз, даже если несколько источников lock
     if (!this.isLocked) {
-      const useHtmlStrategy = this.isHtmlScrollMode();
+      const useHtmlStrategy = this.isHtmlScrollMode() || this.isIOS();
       this.lockedWithHtmlStrategy = useHtmlStrategy;
 
       // КРИТИЧЕСКИ ВАЖНО: Сохраняем текущую позицию скролла ДО любых изменений DOM
@@ -155,10 +163,11 @@ class ScrollLockManager {
       this.prevHtmlOverflowY = document.documentElement.style.overflowY;
 
       if (useHtmlStrategy) {
-        // Strategy A (Lenis/html-scroll): блокируем скролл на HTML, body не трогаем
-        // Это предотвращает конфликт body:fixed + html-scroll и убирает jump-to-top.
+        // Strategy A (Lenis/html-scroll или iOS): блокируем через overflow без body:fixed
         document.documentElement.style.overflow = 'hidden';
         document.documentElement.style.overflowY = 'hidden';
+        document.body.style.overflow = 'hidden';
+        document.body.style.overflowY = 'hidden';
 
         // Компенсация ширины scrollbar (опционально, чтобы не было сдвига контента)
         const sbw = this.getScrollbarWidth();
