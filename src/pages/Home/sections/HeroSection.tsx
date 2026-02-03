@@ -54,7 +54,7 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
 
         {/* Основной контент - единая Grid структура */}
         <div className="relative z-10 w-full container-balanced px-4 lg:px-0 pt-8 lg:pt-6">
-          <div className="grid grid-cols-[1fr_230px] sm:grid-cols-[1fr_250px] lg:grid-cols-2 items-center gap-y-4 gap-x-3 lg:gap-8 w-full">
+          <div className="grid grid-cols-[1fr_160px] sm:grid-cols-[1fr_200px] lg:grid-cols-2 items-center gap-y-4 gap-x-3 lg:gap-8 w-full">
             {/* Колонка 1: Текст (слева) */}
             <motion.div
               className="flex flex-col"
@@ -106,7 +106,7 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
                 <img 
                   src="/logomain.png" 
                   alt="Логотип PROFILEVELUP" 
-                  className="w-[250px] sm:w-[210px] lg:w-full lg:max-w-[520px] h-auto object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.08)]" 
+                  className="w-[150px] sm:w-[180px] lg:w-full lg:max-w-[520px] h-auto object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.08)]" 
                   loading="lazy" 
                 />
               </div>
