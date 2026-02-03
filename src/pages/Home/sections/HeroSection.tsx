@@ -63,12 +63,12 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               <h1 className="text-[clamp(22px,6vw,34px)] lg:text-4xl xl:text-5xl font-semibold tracking-[-0.02em] leading-[1.05] mb-4 text-heading text-left">
-  <span className="block">Характер —</span>
+  <span className="block">Характер —{"\u00A0"}</span>
   <span className="block">это система.</span>
 
   {/* смысловой разрыв */}
   
-  <span className="block mt-3">Понимая{"\u00A0"}её,</span>
+  <span className="block mt-5">Понимая{"\u00A0"}её,</span>
 
   <span className="block">начинаешь управлять.</span>
 </h1>
@@ -89,7 +89,6 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
                   >
                     Уровни навигации
                   </button>
-                  <span className="text-sm text-muted mt-1 text-center">Выбери формат, который подходит под твою задачу</span>
                 </div>
                 <div className="flex flex-col">
                   <button 
@@ -98,8 +97,7 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
                   >
                     Подробнее
                   </button>
-                  <span className="text-sm text-muted mt-1 text-center">Выбери формат, который подходит под твою задачу</span>
-                </div>
+                  </div>
               </div>
             </motion.div>
 

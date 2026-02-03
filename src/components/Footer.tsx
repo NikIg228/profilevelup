@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Mail } from 'lucide-react';
 
 const socialLinks = [
   {
@@ -24,6 +25,9 @@ const socialLinks = [
   },
 ];
 
+const email = "support@profilevelup.com";
+const mailto = `mailto:${email}?subject=${encodeURIComponent("Обращение в поддержку")}`;
+
 export default function Footer() {
   return (
     <motion.footer
@@ -33,26 +37,26 @@ export default function Footer() {
       transition={{ duration: 0.3 }}
       className="mt-16 border-t border-secondary/30 bg-heading"
     >
-      <div className="container-balanced py-12">
+      <div className="container-balanced py-3">
         {/* Основной контент футера */}
         <div className="grid gap-8 md:grid-cols-4 md:gap-6 lg:gap-10">
           {/* Блок 1: Логотип и описание */}
-          <div className="md:col-span-1 space-y-4 flex flex-col items-center">
-            <Link to="/" className="inline-block flex justify-center">
+          <div className="px-8 md:px-0 md:col-span-1 flex flex-row items-center gap-3 md:flex-col md:space-y-4 md:items-center">
+            <Link to="/" className="flex-shrink-0 md:inline-block md:flex md:justify-center">
               <img
                 src="/logomain.png"
                 alt="ProfiLevelUp"
-                className="w-32 h-auto opacity-90 hover:opacity-100 transition-opacity"
+                className="w-20 h-auto md:w-32 opacity-90 hover:opacity-100 transition-opacity"
                 loading="lazy"
               />
             </Link>
-            <p className="text-sm text-section-bg/80 leading-relaxed max-w-xs text-center">
-            Профиль будущего — система понимания себя и управления решениями.
+            <p className="text-sm text-section-bg/80 leading-relaxed flex-1 md:max-w-xs md:text-center">
+            Система понимания себя и управление решениями.
             </p>
           </div>
 
           {/* Блок 2: Навигация */}
-          <div className="md:col-span-1">
+          <div className="hidden md:block md:col-span-1">
             <h3 className="text-sm font-semibold text-section-bg mb-4">Навигация</h3>
             <nav className="flex flex-col gap-3">
               <Link
@@ -101,46 +105,53 @@ export default function Footer() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <img src={link.icon} alt="" className="w-7 h-7" aria-hidden="true" />
+                   <img src={link.icon} alt="" className="w-7 h-7" aria-hidden="true" />
                 </motion.a>
               ))}
+           
             </div>
             <p className="text-xs text-section-bg/60 mt-3">Обновления навигации и новые материалы</p>
           </div>
 
           {/* Блок 4: Юридическая информация */}
-          <div className="md:col-span-1">
-            <h3 className="text-sm font-semibold text-section-bg mb-4">Документы</h3>
-            <nav className="flex flex-col gap-3 mb-4">
-              <Link
-                to="/privacy"
-                className="text-sm text-section-bg/80 hover:text-primary transition-colors w-fit"
-              >
-                Политика конфиденциальности
-              </Link>
-              <Link
-                to="/terms"
-                className="text-sm text-section-bg/80 hover:text-primary transition-colors w-fit"
-              >
-                Пользовательское соглашение
-              </Link>
-              <Link
-                to="/public-offer"
-                className="text-sm text-section-bg/80 hover:text-primary transition-colors w-fit"
-              >
-                Публичная оферта
-              </Link>
-            </nav>
-            <div className="text-xs text-section-bg/60 space-y-1 leading-relaxed pt-2 border-t border-secondary/20">
-              <div>ТОО «ProfiLevelUp»</div>
-              <div>БИН 251140010905</div>
-              <div>Казахстан, город Алматы, Наурызбайский р-н, мкр. Калкаман-2, ул. Казыбеков М. 100, почтовый индекс A30G2M8</div>
+          <div className="md:col-span-1 flex flex-row gap-4 md:flex-col">
+            {/* Документы - слева на mobile */}
+            <div className="flex-1 md:flex-none">
+              <h3 className="text-sm font-semibold text-section-bg mb-4">Документы</h3>
+              <nav className="flex flex-col gap-3 mb-4 md:mb-0">
+                <Link
+                  to="/privacy"
+                  className="text-sm text-section-bg/80 hover:text-primary transition-colors w-fit"
+                >
+                  Политика конфиденциальности
+                </Link>
+                <Link
+                  to="/terms"
+                  className="text-sm text-section-bg/80 hover:text-primary transition-colors w-fit"
+                >
+                  Пользовательское соглашение
+                </Link>
+                <Link
+                  to="/public-offer"
+                  className="text-sm text-section-bg/80 hover:text-primary transition-colors w-fit"
+                >
+                  Публичная оферта
+                </Link>
+              </nav>
+            </div>
+            {/* Информация о компании - справа на mobile */}
+            <div className="flex-1 md:flex-none">
+              <div className="text-xs text-section-bg/60 space-y-1 leading-relaxed pt-2 md:border-t md:border-secondary/20">
+                <div>ТОО «ProfiLevelUp»</div>
+                <div>БИН 251140010905</div>
+                <div>Казахстан, город Алматы, Наурызбайский р-н, мкр. Калкаман-2, ул. Казыбеков М. 100, почтовый индекс A30G2M8</div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Нижняя строка с копирайтом */}
-        <div className="mt-8 pt-6 border-t border-secondary/30 text-center">
+        <div className="mt-2 pt-2 border-t border-secondary/30 text-center">
           <div className="space-y-1">
             <div className="text-sm text-section-bg font-medium">
               © 2026 ProfiLevelUp
