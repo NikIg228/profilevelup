@@ -62,12 +62,18 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
               animate={{ opacity: 1, y: 0, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <h1 className="text-[clamp(22px,6vw,34px)] lg:text-4xl xl:text-5xl font-semibold tracking-[-0.02em] leading-[1.05] mb-4 text-heading text-left max-w-[18ch] sm:max-w-none">
-                <span className="block">Характер — </span>
-                <span className="block">это система.</span>
-                <span className="block">Понимая её — </span>
-                <span className="block">начинаешь управлять.</span>
-              </h1>
+              <h1 className="text-[clamp(22px,6vw,34px)] lg:text-4xl xl:text-5xl font-semibold tracking-[-0.02em] leading-[1.05] mb-4 text-heading text-left">
+  <span className="block">Характер —</span>
+  <span className="block">это система.</span>
+
+  {/* смысловой разрыв */}
+  
+  <span className="block mt-3">Понимая{"\u00A0"}её,</span>
+
+  <span className="block">начинаешь управлять.</span>
+</h1>
+
+
               <p className="hidden lg:block mt-4 text-[14px] sm:text-[16px] lg:text-lg text-muted leading-[1.45] mb-6 text-left max-w-[34ch] lg:max-w-none">
                 Навигационная система для понимания мышления, решений и поведения в реальной жизни.
               </p>
@@ -108,7 +114,7 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
                 <img 
                   src="/logomain.png" 
                   alt="Логотип PROFILEVELUP" 
-                  className="w-[250px] sm:w-[216px] lg:w-full lg:max-w-[520px] h-auto object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.08)]" 
+                  className="w-[165px] sm:w-[216px] lg:w-full lg:max-w-[520px] h-auto object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.08)]" 
                   loading="lazy" 
                 />
               </div>
