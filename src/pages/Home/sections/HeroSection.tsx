@@ -54,7 +54,7 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
 
         {/* Основной контент - единая Grid структура */}
         <div className="relative z-10 w-full container-balanced px-4 lg:px-0 pt-8 lg:pt-6">
-          <div className="grid grid-cols-[1fr_160px] sm:grid-cols-[1fr_200px] lg:grid-cols-2 items-center gap-y-4 gap-x-3 lg:gap-8 w-full">
+          <div className="grid grid-cols-[1fr_192px] sm:grid-cols-[1fr_240px] lg:grid-cols-2 items-center gap-y-4 gap-x-3 lg:gap-8 w-full">
             {/* Колонка 1: Текст (слева) */}
             <motion.div
               className="flex flex-col"
@@ -63,8 +63,10 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               <h1 className="text-[clamp(22px,6vw,34px)] lg:text-4xl xl:text-5xl font-semibold tracking-[-0.02em] leading-[1.05] mb-4 text-heading text-left max-w-[18ch] sm:max-w-none">
-                <span className="block">Характер — это система.</span>
-                <span className="block">Когда понимаешь систему, начинаешь управлять.</span>
+                <span className="block">Характер — </span>
+                <span className="block">это система.</span>
+                <span className="block">Понимая её — </span>
+                <span className="block">начинаешь управлять.</span>
               </h1>
               <p className="hidden lg:block mt-4 text-[14px] sm:text-[16px] lg:text-lg text-muted leading-[1.45] mb-6 text-left max-w-[34ch] lg:max-w-none">
                 Навигационная система для понимания мышления, решений и поведения в реальной жизни.
@@ -106,7 +108,7 @@ function HeroSection({ onStartFree, onScrollToFormats }: HeroSectionProps) {
                 <img 
                   src="/logomain.png" 
                   alt="Логотип PROFILEVELUP" 
-                  className="w-[150px] sm:w-[180px] lg:w-full lg:max-w-[520px] h-auto object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.08)]" 
+                  className="w-[250px] sm:w-[216px] lg:w-full lg:max-w-[520px] h-auto object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.08)]" 
                   loading="lazy" 
                 />
               </div>
