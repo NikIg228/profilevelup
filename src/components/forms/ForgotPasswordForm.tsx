@@ -41,7 +41,7 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
 
       {success ? (
         <div className="space-y-4">
-          <div className="p-4 rounded-lg bg-green-50 border border-green-200 text-green-600 flex items-start gap-3">
+          <div className="p-4 rounded-xl bg-green-50 border border-green-200 text-green-600 flex items-start gap-3">
             <Check className="w-5 h-5 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-medium mb-1">Письмо отправлено!</p>
@@ -54,7 +54,7 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
             <button
               type="button"
               onClick={onBack}
-              className="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
             >
               <ArrowLeft className="w-5 h-5" />
               Вернуться к входу
@@ -77,7 +77,7 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
                   setEmail(e.target.value);
                   setError('');
                 }}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="Ваш email"
                 required
                 disabled={isLoading}
@@ -86,7 +86,7 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
           </div>
 
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
               {error}
             </div>
           )}
@@ -94,7 +94,7 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+            className="w-full py-3 px-4 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
           >
             {isLoading ? (
               <>
@@ -110,7 +110,7 @@ export default function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) 
             <button
               type="button"
               onClick={onBack}
-              className="w-full py-3 px-4 border border-secondary/40 text-heading rounded-lg font-medium hover:bg-secondary/40 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 border border-secondary/40 text-heading rounded-xl font-medium hover:bg-secondary/40 transition-colors flex items-center justify-center gap-2"
               disabled={isLoading}
             >
               <ArrowLeft className="w-5 h-5" />

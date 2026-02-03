@@ -1147,15 +1147,15 @@ body.scrollbar-hide::-webkit-scrollbar {
     padding: 0 !important;
   }
 
-  /* 2) Секция formats — задаём нормальный mobile gap сверху */
-  #formats.container-balanced {
+  /* 2) Секция levels — задаём нормальный mobile gap сверху */
+  #levels.container-balanced {
     margin-top: var(--section-gap-mobile) !important;
     padding-top: 0 !important;
     overflow: hidden;
     max-width: 100%;
   }
 
-  #formats {
+  #levels {
     overflow: hidden;
     max-width: 100%;
   }
@@ -1163,7 +1163,7 @@ body.scrollbar-hide::-webkit-scrollbar {
 
 /* 3) На tablet можно чуть больше gap, но без "пустыни" */
 @media (min-width: 768px) and (max-width: 1023px) {
-  #formats.container-balanced {
+  #levels.container-balanced {
     margin-top: var(--section-gap-tablet) !important;
     padding-top: 0 !important;
   }
@@ -1903,8 +1903,8 @@ html.lenis:not([data-mobile="true"]) #main-content {
     visibility: visible !important;
   }
 
-  /* Показываем подзаголовок секции formats */
-  section#formats p.hidden.lg\\:block {
+  /* Показываем подзаголовок секции levels */
+  section#levels p.hidden.lg\\:block {
     display: block !important;
     visibility: visible !important;
   }

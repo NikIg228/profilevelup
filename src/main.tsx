@@ -22,6 +22,9 @@ const AboutPage = lazy(() => import('./pages/About'));
 const HelpPage = lazy(() => import('./pages/Help'));
 const DetailsPage = lazy(() => import('./pages/Details'));
 const AdminPage = lazy(() => import('./pages/Admin'));
+const AdminReviewsPage = lazy(() => import('./pages/AdminReviews'));
+const AdminPromoCodesPage = lazy(() => import('./pages/AdminPromoCodes'));
+const AdminStats101Page = lazy(() => import('./pages/AdminStats101'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
 const PublicOfferPage = lazy(() => import('./pages/PublicOffer'));
 const AccountPage = lazy(() => import('./pages/Account'));
@@ -161,6 +164,30 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <AdminPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'admin/reviews', 
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AdminReviewsPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'admin/promocodes', 
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AdminPromoCodesPage />
+          </Suspense>
+        ) 
+      },
+      { 
+        path: 'admino101', 
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <AdminStats101Page />
           </Suspense>
         ) 
       },

@@ -144,10 +144,7 @@ export default function Footer() {
           <div className="space-y-1">
             <div className="text-sm text-section-bg font-medium">
               © 2026 ProfiLevelUp
-            </div>
-            <div className="text-xs text-section-bg/60">
-              Ваш психологический навигационный компас
-            </div>
+            </div>         
           </div>
         </div>
       </div>

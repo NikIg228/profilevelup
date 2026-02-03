@@ -246,7 +246,7 @@ function Modal({ open, onClose, children, hideScrollbar = false }: ModalProps) {
               }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ duration: dragY > 0 ? 0 : 0.2, ease: 'easeOut' }}
-              className={`card w-full max-w-lg flex flex-col max-h-[min(90vh,90dvh)] relative ${hideScrollbar ? 'scrollbar-hide' : 'modal-scrollbar'} rounded-t-2xl sm:rounded-2xl rounded-b-none sm:rounded-b-2xl bg-white`}
+              className={`card w-full max-w-lg flex flex-col max-h-[min(90vh,90dvh)] relative overflow-hidden ${hideScrollbar ? 'scrollbar-hide' : 'modal-scrollbar'} rounded-t-2xl sm:rounded-2xl rounded-b-none sm:rounded-b-2xl bg-white`}
               style={{
                 minHeight: 'min(400px, 70dvh)',
                 height: 'auto',

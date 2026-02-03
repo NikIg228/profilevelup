@@ -43,7 +43,7 @@ export default function HomePage() {
   }, [isAuthenticated]);
 
   const scrollToFormats = useCallback(() => {
-    const formatsSection = document.getElementById('formats');
+    const formatsSection = document.getElementById('levels');
     if (formatsSection && lenis) {
       lenis.scrollTo(formatsSection, { offset: -80, duration: 1.2 });
     } else if (formatsSection) {

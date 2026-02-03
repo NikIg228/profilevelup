@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { supabase } from '../lib/supabase';
 import LoginForm from '../components/forms/LoginForm';
@@ -88,6 +89,8 @@ export interface TestReportCard {
 }
 
 export default function AccountPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user, isAuthenticated, logout, checkSession } = useAuthStore();
   const [viewMode, setViewMode] = useState<ViewMode>('login');
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
@@ -169,14 +172,21 @@ export default function AccountPage() {
     handleAuthCallback();
   }, [checkSession]);
 
-  // Обновляем viewMode при изменении авторизации
+  // Обновляем viewMode при изменении авторизации и обрабатываем редирект
   useEffect(() => {
     if (isAuthenticated) {
       setViewMode('account');
+      
+      // Проверяем параметр returnTo для редиректа после авторизации
+      const returnTo = searchParams.get('returnTo');
+      if (returnTo) {
+        // Удаляем параметр из URL и редиректим
+        navigate(returnTo, { replace: true });
+      }
     } else {
       setViewMode('login');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, searchParams, navigate]);
 
   // Загрузка отчётов из Supabase (таблица reports, RLS по user_id)
   useEffect(() => {
@@ -237,8 +247,8 @@ export default function AccountPage() {
             {viewMode === 'login' ? (
               <LoginForm
                 onSuccess={() => {
-                  setViewMode('account');
                   setRegisteredEmail(''); // Очищаем email после успешного входа
+                  // Редирект обработается в useEffect при изменении isAuthenticated
                 }}
                 onSwitchToRegister={() => {
                   setViewMode('register');
@@ -249,7 +259,9 @@ export default function AccountPage() {
               />
             ) : viewMode === 'register' ? (
               <RegisterForm
-                onSuccess={() => setViewMode('account')}
+                onSuccess={() => {
+                  // Редирект обработается в useEffect при изменении isAuthenticated
+                }}
                 onSwitchToLogin={(email) => {
                   setRegisteredEmail(email || '');
                   setViewMode('login');

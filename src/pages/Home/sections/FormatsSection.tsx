@@ -43,7 +43,7 @@ export default function FormatsSection({
   };
 
   return (
-    <section id="formats" className="container-balanced pt-2 pb-8 md:pt-6 lg:pt-4 lg:pb-12">
+    <section id="levels" className="container-balanced pt-2 pb-8 md:pt-6 lg:pt-4 lg:pb-12">
       <div className="relative mb-4 sm:mb-5 lg:mb-6">
         <div className="relative flex flex-col items-center lg:items-start">
           <h2 className="text-2xl sm:text-3xl font-semibold text-heading relative z-10">Уровни навигации</h2>

@@ -314,48 +314,6 @@ export default function StartTestModal({ open, plan, initialTestType = '', onClo
             </motion.p>
           )}
         </div>
-        {/* Email ребёнка: только для бесплатного теста и Персонального разбора (для Семейной навигации не показываем) */}
-        {!isPremiumTest && (
-          <>
-            <div className="space-y-1">
-              <input
-                type="email"
-                id="form-email"
-                name="email"
-                className={`w-full px-4 py-3 rounded-xl border shadow-sm transition-all bg-white ${
-                  errors.email 
-                    ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-                    : 'border-black/10 focus:border-primary'
-                } focus:outline-none focus:ring-2 focus:ring-primary/20 text-ink`}
-                placeholder="Email (обязательно)"
-                value={form.email}
-                onChange={(e) => {
-                  setForm({ ...form, email: e.target.value });
-                  clearError('email');
-                }}
-                onBlur={() => {
-                  const emailValue = form.email.trim();
-                  if (!emailValue) {
-                    setErrors(prev => ({ ...prev, email: 'Укажите email' }));
-                  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-                    setErrors(prev => ({ ...prev, email: 'Введите корректный email' }));
-                  }
-                }}
-                aria-invalid={Boolean(errors.email)}
-              />
-              {errors.email && (
-                <motion.p 
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-xs text-red-500 flex items-center gap-1"
-                >
-                  <AlertCircle className="w-3 h-3" />
-                  {errors.email}
-                </motion.p>
-              )}
-            </div>
-          </>
-        )}
         {isPremiumTest && (
           <>
             <div className="space-y-1">

@@ -1,15 +1,11 @@
-import { PropsWithChildren, useEffect, useState } from 'react';
+import { PropsWithChildren, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+
 const STORAGE_KEY = 'preview_authed_v2';
+const DEFAULT_PASSWORD = '10203';
 
 export default function PreviewGate({ children }: PropsWithChildren) {
-  // В продакшене пароль не показываем — сразу отдаём контент
-  if (import.meta.env.PROD) return <>{children}</>;
-
-  // Экран включается если явно VITE_PREVIEW_ENABLED === 'true'
-  // либо если передан VITE_PREVIEW_PASSWORD (защита включена по факту наличия пароля)
-  const enabled = (import.meta.env.VITE_PREVIEW_ENABLED ?? 'true') === 'true'
-    || Boolean(import.meta.env.VITE_PREVIEW_PASSWORD);
+  const expectedPassword = import.meta.env.VITE_PREVIEW_PASSWORD ?? DEFAULT_PASSWORD;
   const [authed, setAuthed] = useState<boolean>(() => {
     try { return localStorage.getItem(STORAGE_KEY) === 'yes'; } catch { return false; }
   });
@@ -17,17 +13,11 @@ export default function PreviewGate({ children }: PropsWithChildren) {
   const [error, setError] = useState('');
   const [show, setShow] = useState(false);
 
-  if (!enabled) return <>{children}</>;
   if (authed) return <>{children}</>;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const expected = import.meta.env.VITE_PREVIEW_PASSWORD;
-    if (!expected) {
-      setError('Пароль не настроен. Установите VITE_PREVIEW_PASSWORD в переменных окружения.');
-      return;
-    }
-    if (value === expected) {
+    if (value === expectedPassword) {
       try { localStorage.setItem(STORAGE_KEY, 'yes'); } catch {}
       setAuthed(true);
     } else {

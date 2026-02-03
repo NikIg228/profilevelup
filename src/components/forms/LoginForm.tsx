@@ -53,7 +53,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onForgotPassw
               setEmail(e.target.value);
               setError('');
             }}
-            className="w-full pl-10 pr-4 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Ваш email"
             required
             disabled={isLoading}
@@ -75,8 +75,8 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onForgotPassw
               setPassword(e.target.value);
               setError('');
             }}
-            className="w-full pl-10 pr-12 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            placeholder="••••••••"
+            className="w-full pl-10 pr-12 py-3 rounded-xl border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            placeholder="Введите пароль"
             required
             disabled={isLoading}
           />
@@ -110,7 +110,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onForgotPassw
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+        className="w-full py-3 px-4 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
       >
         {isLoading ? (
           <>

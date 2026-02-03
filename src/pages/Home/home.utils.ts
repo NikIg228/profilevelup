@@ -31,11 +31,8 @@ export function validateForm(
 ): Partial<Record<FormErrorKey, string>> {
   const errors: Partial<Record<FormErrorKey, string>> = {};
 
-  const trimmedEmail = form.email.trim();
-  const trimmedEmailConfirm = form.emailConfirm.trim();
   const trimmedParentEmail = form.parentEmail.trim();
   const trimmedParentEmailConfirm = form.parentEmailConfirm.trim();
-  const isBasicTest = plan === 'free' || form.testType === TEST_TYPES.PRIMARY;
   const isPremiumTest = form.testType === TEST_TYPES.FAMILY;
 
   // Валидация имени
@@ -65,15 +62,6 @@ export function validateForm(
   // Валидация типа теста (требуется только если plan === null)
   if (plan === null && !form.testType) {
     errors.testType = 'Выберите тип теста';
-  }
-
-  // Валидация email (для Семейной навигации email ребёнка не собираем — только родительский)
-  if (!isPremiumTest) {
-    if (!trimmedEmail) {
-      errors.email = 'Введите email';
-    } else if (!validateEmail(trimmedEmail)) {
-      errors.email = 'Введите корректный email';
-    }
   }
 
   // Валидация email родителя (для Семейной навигации — только родительский email)
@@ -106,7 +94,6 @@ export function isFormComplete(
   form: FormData,
   plan: 'free' | 'pro' | null
 ): boolean {
-  const trimmedEmail = form.email.trim();
   const trimmedParentEmail = form.parentEmail.trim();
   const trimmedParentEmailConfirm = form.parentEmailConfirm.trim();
   const isPremiumTest = form.testType === TEST_TYPES.FAMILY;
@@ -137,15 +124,11 @@ export function isFormComplete(
     );
   }
 
-  // Первичное понимание и Персональный разбор: только email, без подтверждения
-  const emailValid = Boolean(trimmedEmail);
-
   return Boolean(
     form.name.trim() &&
     ageValid &&
     form.gender &&
     testTypeValid &&
-    emailValid &&
     form.consent
   );
 }

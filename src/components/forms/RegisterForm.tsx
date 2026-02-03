@@ -62,7 +62,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               setFullName(e.target.value);
               setError('');
             }}
-            className="w-full pl-10 pr-4 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Ваше имя"
             disabled={isLoading}
           />
@@ -83,7 +83,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               setEmail(e.target.value);
               setError('');
             }}
-            className="w-full pl-10 pr-4 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Ваш email"
             required
             disabled={isLoading}
@@ -105,7 +105,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               setPassword(e.target.value);
               setError('');
             }}
-            className="w-full pl-10 pr-12 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="w-full pl-10 pr-12 py-3 rounded-xl border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Минимум 6 символов"
             required
             minLength={6}
@@ -136,7 +136,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               setConfirmPassword(e.target.value);
               setError('');
             }}
-            className="w-full pl-10 pr-12 py-3 rounded-lg border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="w-full pl-10 pr-12 py-3 rounded-xl border border-secondary/40 bg-base text-ink placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             placeholder="Повторите пароль"
             required
             disabled={isLoading}
@@ -163,7 +163,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
       </div>
 
       {error && (
-        <div className={`p-3 rounded-lg border text-sm ${
+        <div className={`p-3 rounded-xl border text-sm ${
           success 
             ? 'bg-blue-50 border-blue-200 text-blue-600' 
             : 'bg-red-50 border-red-200 text-red-600'
@@ -175,7 +175,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+        className="w-full py-3 px-4 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
       >
         {isLoading ? (
           <>
